@@ -1,23 +1,43 @@
-// app/api/categories/setup/route.ts
+// app/api/categories/setup/route.ts - Güncellenmiş Kategori Setup API
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 export async function POST() {
   try {
+    console.log('🏗️ Kategori yapısı oluşturma işlemi başlatılıyor...')
+
     // Önce mevcut kategorileri temizle
-    await prisma.$transaction(async (tx) => {
+    const cleanupResult = await prisma.$transaction(async (tx) => {
       // İlişkili kayıtları temizle
-      await tx.furnitureProperty.deleteMany()
-      await tx.furnitureColor.deleteMany()
-      await tx.furnitureImage.deleteMany()
-      await tx.furniture.deleteMany()
+      const deletedFurnitureProperties = await tx.furnitureProperty.deleteMany()
+      const deletedFurnitureColors = await tx.furnitureColor.deleteMany()
+      const deletedFurnitureImages = await tx.furnitureImage.deleteMany()
+      const deletedFurniture = await tx.furniture.deleteMany()
       
       // Kategorileri temizle
-      await tx.category.deleteMany()
+      const deletedCategories = await tx.category.deleteMany()
+      
+      console.log('🧹 Mevcut veriler temizlendi:', {
+        kategoriler: deletedCategories.count,
+        mobilyalar: deletedFurniture.count,
+        mobilyaOzellikleri: deletedFurnitureProperties.count,
+        mobilyaRenkleri: deletedFurnitureColors.count,
+        mobilyaGorselleri: deletedFurnitureImages.count
+      })
+
+      return {
+        deletedCategories: deletedCategories.count,
+        deletedFurniture: deletedFurniture.count,
+        deletedFurnitureProperties: deletedFurnitureProperties.count,
+        deletedFurnitureColors: deletedFurnitureColors.count,
+        deletedFurnitureImages: deletedFurnitureImages.count
+      }
     })
 
     // Yeni kategori yapısını oluştur
     const result = await prisma.$transaction(async (tx) => {
+      console.log('📂 Ana kategoriler oluşturuluyor...')
+
       // 1. ANA KATEGORİLER
       const salonTakimi = await tx.category.create({
         data: {
@@ -49,6 +69,14 @@ export async function POST() {
         }
       })
 
+      console.log('✅ Ana kategoriler oluşturuldu:', {
+        salonTakimi: salonTakimi.categoryId,
+        yatakOdasiTakimi: yatakOdasiTakimi.categoryId,
+        yemekOdasiTakimi: yemekOdasiTakimi.categoryId
+      })
+
+      console.log('📁 Salon takımı alt kategorileri oluşturuluyor...')
+
       // 2. SALON TAKIMI ALT KATEGORİLERİ
       const salonAltKategoriler = await Promise.all([
         tx.category.create({
@@ -71,7 +99,7 @@ export async function POST() {
             isActive: true
           }
         }),
-      tx.category.create({
+        tx.category.create({
           data: {
             categoryName: 'Köşe Takımları',
             description: 'L şeklinde ve köşe koltuk takımları',
@@ -120,16 +148,17 @@ export async function POST() {
             categoryPath: '/salon-takimi/vitrin-dolap',
             isActive: true
           }
-        }),
-
+        })
       ])
+
+      console.log('📁 Yatak odası alt kategorileri oluşturuluyor...')
 
       // 3. YATAK ODASI TAKIMI ALT KATEGORİLERİ
       const yatakOdasiAltKategoriler = await Promise.all([
         tx.category.create({
           data: {
             categoryName: 'Çift Kişilik Yatak',
-            description: 'Çift kişilik',
+            description: 'Çift kişilik yatak modelleri',
             parentId: yatakOdasiTakimi.categoryId,
             categoryLevel: 2,
             categoryPath: '/yatak-odasi-takimi/cift-kisilik-yatak',
@@ -139,7 +168,7 @@ export async function POST() {
         tx.category.create({
           data: {
             categoryName: 'Tek Kişilik Yatak',
-            description: 'tek kişilik',
+            description: 'Tek kişilik yatak modelleri',
             parentId: yatakOdasiTakimi.categoryId,
             categoryLevel: 2,
             categoryPath: '/yatak-odasi-takimi/tek-kisilik-yatak',
@@ -185,9 +214,10 @@ export async function POST() {
             categoryPath: '/yatak-odasi-takimi/makyaj-masasi',
             isActive: true
           }
-        }),
-
+        })
       ])
+
+      console.log('📁 Yemek odası alt kategorileri oluşturuluyor...')
 
       // 4. YEMEK ODASI TAKIMI ALT KATEGORİLERİ
       const yemekOdasiAltKategoriler = await Promise.all([
@@ -231,7 +261,6 @@ export async function POST() {
             isActive: true
           }
         }),
-
         tx.category.create({
           data: {
             categoryName: 'Mutfak Masası',
@@ -244,31 +273,66 @@ export async function POST() {
         })
       ])
 
+      const toplamKategori = 3 + salonAltKategoriler.length + yatakOdasiAltKategoriler.length + yemekOdasiAltKategoriler.length
+
+      console.log('✅ Tüm kategoriler oluşturuldu:', {
+        anaKategori: 3,
+        salonAltKategori: salonAltKategoriler.length,
+        yatakOdasiAltKategori: yatakOdasiAltKategoriler.length,
+        yemekOdasiAltKategori: yemekOdasiAltKategoriler.length,
+        toplam: toplamKategori
+      })
+
       return {
         anaKategoriler: [salonTakimi, yatakOdasiTakimi, yemekOdasiTakimi],
         salonAltKategoriler,
         yatakOdasiAltKategoriler,
         yemekOdasiAltKategoriler,
-        toplamKategori: 3 + salonAltKategoriler.length + yatakOdasiAltKategoriler.length + yemekOdasiAltKategoriler.length
+        toplamKategori
       }
+    }, {
+      timeout: 30000 // 30 saniye timeout
     })
+
+    console.log('🎉 Kategori yapısı başarıyla oluşturuldu!')
 
     return NextResponse.json({
       success: true,
       message: 'Kategori yapısı başarıyla oluşturuldu',
-      data: result
+      data: {
+        cleanup: cleanupResult,
+        created: {
+          anaKategoriler: result.anaKategoriler.length,
+          salonAltKategoriler: result.salonAltKategoriler.length,
+          yatakOdasiAltKategoriler: result.yatakOdasiAltKategoriler.length,
+          yemekOdasiAltKategoriler: result.yemekOdasiAltKategoriler.length,
+          toplamKategori: result.toplamKategori
+        }
+      },
+      stats: {
+        beforeCleanup: {
+          categories: cleanupResult.deletedCategories,
+          furniture: cleanupResult.deletedFurniture
+        },
+        afterCreation: {
+          totalCategories: result.toplamKategori,
+          mainCategories: 3,
+          subCategories: result.toplamKategori - 3
+        }
+      }
     })
 
   } catch (error) {
-    console.error('Kategori setup hatası:', error)
+    console.error('❌ Kategori setup hatası:', error)
     return NextResponse.json({
       success: false,
+      message: 'Kategori yapısı oluşturulurken hata oluştu',
       error: error instanceof Error ? error.message : 'Bilinmeyen hata'
     }, { status: 500 })
   }
 }
 
-// GET metodu - Mevcut kategori yapısını görüntüle
+// GET metodu - Mevcut kategori yapısını görüntüle (geliştirilmiş)
 export async function GET() {
   try {
     // Ana kategoriler ve alt kategorilerini hiyerarşik olarak getir
@@ -298,39 +362,49 @@ export async function GET() {
     })
 
     // Toplam istatistikler
-    const stats = await prisma.category.aggregate({
-      _count: {
-        categoryId: true
-      },
-      where: { isActive: true }
-    })
-
-    // Her seviyedeki kategori sayıları
-    const seviyeIstatistikleri = await Promise.all([
-      prisma.category.count({ 
-        where: { categoryLevel: 1, isActive: true } 
+    const [totalStats, levelStats] = await Promise.all([
+      prisma.category.aggregate({
+        _count: { categoryId: true },
+        where: { isActive: true }
       }),
-      prisma.category.count({ 
-        where: { categoryLevel: 2, isActive: true } 
+      prisma.category.groupBy({
+        by: ['categoryLevel'],
+        _count: { categoryId: true },
+        where: { isActive: true }
       })
     ])
+
+    // Seviye bazında istatistikler
+    const levelBreakdown = levelStats.reduce((acc, item) => {
+      acc[`level${item.categoryLevel}`] = item._count.categoryId
+      return acc
+    }, {} as any)
 
     return NextResponse.json({
       success: true,
       data: {
         anaKategoriler,
         istatistikler: {
-          toplamKategori: stats._count.categoryId,
-          anaKategori: seviyeIstatistikleri[0],
-          altKategori: seviyeIstatistikleri[1]
+          toplamKategori: totalStats._count.categoryId,
+          ...levelBreakdown,
+          hiyerarsi: {
+            anaKategoriler: anaKategoriler.length,
+            toplamAltKategori: anaKategoriler.reduce((sum, cat) => sum + cat._count.children, 0),
+            toplamMobilya: anaKategoriler.reduce((sum, cat) => 
+              sum + cat._count.furnitures + cat.children.reduce((childSum, child) => 
+                childSum + child._count.furnitures, 0
+              ), 0
+            )
+          }
         }
       }
     })
 
   } catch (error) {
+    console.error('❌ Kategori verisi getirme hatası:', error)
     return NextResponse.json({
       success: false,
-      error: 'Kategori verisi getirme hatası'
+      error: 'Kategori verisi getirilemedi'
     }, { status: 500 })
   }
 }
