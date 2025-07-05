@@ -1,39 +1,26 @@
-// app/api/colors/route.ts - Renk CRUD işlemleri
+// app/api/colors/route.ts - Geliştirilmiş Renk API (Kısa)
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-// GET - Tüm renkleri listele
+// GET - Renkleri listele
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
-    const isActive = searchParams.get('active')
     const search = searchParams.get('search')
-    const category = searchParams.get('category')
+    const isActive = searchParams.get('active')
+    const includeStats = searchParams.get('includeStats') === 'true'
 
     let whereClause: any = {}
     
-    // Aktif/pasif filtresi
     if (isActive !== null) {
       whereClause.isActive = isActive === 'true'
     }
 
-    // Arama filtresi
     if (search) {
       whereClause.OR = [
         { colorName: { contains: search, mode: 'insensitive' } },
         { colorCode: { contains: search, mode: 'insensitive' } }
       ]
-    }
-
-    // Kategori filtresi (sadece temel renkler)
-    if (category) {
-      const categoryColors: { [key: string]: string[] } = {
-        'temel': ['Beyaz', 'Siyah', 'Gri', 'Kahverengi', 'Krem', 'Lacivert', 'Bordo', 'Yeşil']
-      }
-
-      if (categoryColors[category]) {
-        whereClause.colorName = { in: categoryColors[category] }
-      }
     }
 
     const colors = await prisma.color.findMany({
@@ -49,11 +36,19 @@ export async function GET(request: Request) {
       orderBy: { colorName: 'asc' }
     })
 
+    let stats = null
+    if (includeStats) {
+      stats = {
+        total: colors.length,
+        active: colors.filter(c => c.isActive).length,
+        used: colors.filter(c => c._count.furnitureColors > 0 || c._count.furnitureSetColors > 0).length
+      }
+    }
+
     return NextResponse.json({
       success: true,
       data: colors,
-      count: colors.length,
-      filters: { isActive, search, category }
+      ...(stats && { stats })
     })
 
   } catch (error) {
@@ -67,38 +62,34 @@ export async function GET(request: Request) {
 // POST - Yeni renk ekle
 export async function POST(request: Request) {
   try {
-    const data = await request.json()
-    const { colorName, colorCode, isActive = true } = data
+    const { colorName, colorCode, isActive = true } = await request.json()
 
-    if (!colorName) {
+    // Validasyon
+    if (!colorName?.trim()) {
       return NextResponse.json({
         success: false,
         error: 'Renk adı zorunludur'
       }, { status: 400 })
     }
 
-    // Renk adı benzersizlik kontrolü
-    const existingColor = await prisma.color.findFirst({
-      where: { 
-        colorName: { 
-          equals: colorName, 
-          mode: 'insensitive' 
-        } 
-      }
-    })
-
-    if (existingColor) {
-      return NextResponse.json({
-        success: false,
-        error: 'Bu renk adı zaten mevcut'
-      }, { status: 400 })
-    }
-
-    // Renk kodu formatı kontrolü
     if (colorCode && !/^#[0-9A-Fa-f]{6}$/.test(colorCode)) {
       return NextResponse.json({
         success: false,
-        error: 'Renk kodu geçersiz format (örnek: #FF0000)'
+        error: 'Geçersiz renk kodu (örnek: #FF0000)'
+      }, { status: 400 })
+    }
+
+    // Benzersizlik kontrolü
+    const existing = await prisma.color.findFirst({
+      where: { 
+        colorName: { equals: colorName.trim(), mode: 'insensitive' } 
+      }
+    })
+
+    if (existing) {
+      return NextResponse.json({
+        success: false,
+        error: 'Bu renk adı zaten mevcut'
       }, { status: 400 })
     }
 
@@ -107,14 +98,6 @@ export async function POST(request: Request) {
         colorName: colorName.trim(),
         colorCode: colorCode || null,
         isActive
-      },
-      include: {
-        _count: {
-          select: {
-            furnitureColors: true,
-            furnitureSetColors: true
-          }
-        }
       }
     })
 
@@ -132,3 +115,87 @@ export async function POST(request: Request) {
   }
 }
 
+// DELETE - Toplu renk silme
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const idsParam = searchParams.get('ids')
+    
+    if (!idsParam) {
+      return NextResponse.json({
+        success: false,
+        error: 'Silinecek renk ID\'leri belirtilmeli'
+      }, { status: 400 })
+    }
+
+    const ids = idsParam.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id))
+    
+    // Kullanım kontrolü
+    const colors = await prisma.color.findMany({
+      where: { colorId: { in: ids } },
+      include: {
+        furnitureColors: true,
+        furnitureSetColors: true
+      }
+    })
+
+    const usedColors = colors.filter(c => 
+      c.furnitureColors.length > 0 || c.furnitureSetColors.length > 0
+    )
+
+    if (usedColors.length > 0) {
+      return NextResponse.json({
+        success: false,
+        error: `${usedColors.length} renk kullanımda olduğu için silinemez`,
+        usedColors: usedColors.map(c => c.colorName)
+      }, { status: 400 })
+    }
+
+    const deleted = await prisma.color.deleteMany({
+      where: { colorId: { in: ids } }
+    })
+
+    return NextResponse.json({
+      success: true,
+      message: `${deleted.count} renk silindi`,
+      deletedCount: deleted.count
+    })
+
+  } catch (error) {
+    return NextResponse.json({
+      success: false,
+      error: 'Renkler silinemedi'
+    }, { status: 500 })
+  }
+}
+
+// PATCH - Toplu aktif/pasif
+export async function PATCH(request: Request) {
+  try {
+    const { ids, isActive } = await request.json()
+
+    if (!ids?.length || typeof isActive !== 'boolean') {
+      return NextResponse.json({
+        success: false,
+        error: 'Geçersiz parametreler'
+      }, { status: 400 })
+    }
+
+    const updated = await prisma.color.updateMany({
+      where: { colorId: { in: ids } },
+      data: { isActive }
+    })
+
+    return NextResponse.json({
+      success: true,
+      message: `${updated.count} renk ${isActive ? 'aktif' : 'pasif'} yapıldı`,
+      updatedCount: updated.count
+    })
+
+  } catch (error) {
+    return NextResponse.json({
+      success: false,
+      error: 'Toplu güncelleme başarısız'
+    }, { status: 500 })
+  }
+}

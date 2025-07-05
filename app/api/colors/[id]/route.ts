@@ -1,14 +1,21 @@
-// app/api/colors/[id]/route.ts - Tekil renk işlemleri
-// GET - Tek renk detayı
+// app/api/colors/[id]/route.ts - Tekil Renk API (Kısa)
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+// GET - Tek renk detayı
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
     const colorId = parseInt(params.id)
+
+    if (isNaN(colorId)) {
+      return NextResponse.json({
+        success: false,
+        error: 'Geçersiz renk ID\'si'
+      }, { status: 400 })
+    }
 
     const color = await prisma.color.findUnique({
       where: { colorId },
@@ -19,21 +26,7 @@ export async function GET(
               select: {
                 furnitureId: true,
                 furnitureName: true,
-                price: true,
-                isActive: true
-              }
-            }
-          },
-          take: 10
-        },
-        furnitureSetColors: {
-          include: {
-            furnitureSet: {
-              select: {
-                setId: true,
-                setName: true,
-                price: true,
-                isActive: true
+                furnitureType: true
               }
             }
           },
@@ -57,7 +50,13 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      data: color
+      data: {
+        ...color,
+        usage: {
+          total: color._count.furnitureColors + color._count.furnitureSetColors,
+          canDelete: color._count.furnitureColors === 0 && color._count.furnitureSetColors === 0
+        }
+      }
     })
 
   } catch (error) {
@@ -75,70 +74,72 @@ export async function PUT(
 ) {
   try {
     const colorId = parseInt(params.id)
-    const data = await request.json()
-    const { colorName, colorCode, isActive } = data
+    const { colorName, colorCode, isActive } = await request.json()
 
-    // Mevcut rengi kontrol et
-    const existingColor = await prisma.color.findUnique({
+    if (isNaN(colorId)) {
+      return NextResponse.json({
+        success: false,
+        error: 'Geçersiz renk ID\'si'
+      }, { status: 400 })
+    }
+
+    const existing = await prisma.color.findUnique({
       where: { colorId }
     })
 
-    if (!existingColor) {
+    if (!existing) {
       return NextResponse.json({
         success: false,
         error: 'Renk bulunamadı'
       }, { status: 404 })
     }
 
-    // Renk adı benzersizlik kontrolü (kendisi hariç)
-    if (colorName && colorName !== existingColor.colorName) {
-      const duplicateColor = await prisma.color.findFirst({
+    // Validasyonlar
+    if (colorName !== undefined && !colorName?.trim()) {
+      return NextResponse.json({
+        success: false,
+        error: 'Renk adı boş olamaz'
+      }, { status: 400 })
+    }
+
+    if (colorCode && !/^#[0-9A-Fa-f]{6}$/.test(colorCode)) {
+      return NextResponse.json({
+        success: false,
+        error: 'Geçersiz renk kodu'
+      }, { status: 400 })
+    }
+
+    // İsim benzersizlik kontrolü
+    if (colorName && colorName !== existing.colorName) {
+      const duplicate = await prisma.color.findFirst({
         where: { 
-          colorName: { 
-            equals: colorName, 
-            mode: 'insensitive' 
-          },
+          colorName: { equals: colorName.trim(), mode: 'insensitive' },
           colorId: { not: colorId }
         }
       })
 
-      if (duplicateColor) {
+      if (duplicate) {
         return NextResponse.json({
           success: false,
-          error: 'Bu renk adı zaten başka bir renk tarafından kullanılıyor'
+          error: 'Bu renk adı zaten kullanılıyor'
         }, { status: 400 })
       }
     }
 
-    // Renk kodu formatı kontrolü
-    if (colorCode && !/^#[0-9A-Fa-f]{6}$/.test(colorCode)) {
-      return NextResponse.json({
-        success: false,
-        error: 'Renk kodu geçersiz format (örnek: #FF0000)'
-      }, { status: 400 })
-    }
+    const updateData: any = {}
+    if (colorName !== undefined) updateData.colorName = colorName.trim()
+    if (colorCode !== undefined) updateData.colorCode = colorCode
+    if (isActive !== undefined) updateData.isActive = isActive
 
-    const updatedColor = await prisma.color.update({
+    const updated = await prisma.color.update({
       where: { colorId },
-      data: {
-        ...(colorName && { colorName: colorName.trim() }),
-        ...(colorCode !== undefined && { colorCode }),
-        ...(isActive !== undefined && { isActive })
-      },
-      include: {
-        _count: {
-          select: {
-            furnitureColors: true,
-            furnitureSetColors: true
-          }
-        }
-      }
+      data: updateData
     })
 
     return NextResponse.json({
       success: true,
-      message: 'Renk başarıyla güncellendi',
-      data: updatedColor
+      message: 'Renk güncellendi',
+      data: updated
     })
 
   } catch (error) {
@@ -157,7 +158,13 @@ export async function DELETE(
   try {
     const colorId = parseInt(params.id)
 
-    // Rengi ve kullanım durumunu kontrol et
+    if (isNaN(colorId)) {
+      return NextResponse.json({
+        success: false,
+        error: 'Geçersiz renk ID\'si'
+      }, { status: 400 })
+    }
+
     const color = await prisma.color.findUnique({
       where: { colorId },
       include: {
@@ -176,10 +183,10 @@ export async function DELETE(
     if (color.furnitureColors.length > 0 || color.furnitureSetColors.length > 0) {
       return NextResponse.json({
         success: false,
-        error: 'Bu renk mobilyalarda kullanılıyor. Önce bu rengi kullanan mobilyaları güncelleyin.',
+        error: 'Bu renk mobilyalarda kullanılıyor',
         usage: {
-          furnitureCount: color.furnitureColors.length,
-          furnitureSetCount: color.furnitureSetColors.length
+          furniture: color.furnitureColors.length,
+          furnitureSets: color.furnitureSetColors.length
         }
       }, { status: 400 })
     }
@@ -190,7 +197,7 @@ export async function DELETE(
 
     return NextResponse.json({
       success: true,
-      message: 'Renk başarıyla silindi'
+      message: `"${color.colorName}" rengi silindi`
     })
 
   } catch (error) {
