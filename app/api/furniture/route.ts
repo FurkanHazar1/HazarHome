@@ -89,7 +89,7 @@ export async function GET(request: Request) {
         .filter((id: number) => !isNaN(id))
       
       if (colorIdArray.length > 0) {
-        whereClause.furnitureColors = {
+        whereClause.colors = {
           some: {
             colorId: { in: colorIdArray },
             isAvailable: true
@@ -118,15 +118,15 @@ export async function GET(request: Request) {
       },
       _count: {
         select: {
-          furnitureColors: true,
-          furnitureProperties: true,
-          furnitureImages: true
+          colors: true,
+          properties: true,
+          images: true
         }
       }
     }
 
     if (includeDetails) {
-      includeOptions.furnitureColors = {
+      includeOptions.colors = {
         where: { isAvailable: true },
         include: {
           color: {
@@ -138,7 +138,7 @@ export async function GET(request: Request) {
           }
         }
       }
-      includeOptions.furnitureProperties = {
+      includeOptions.properties = {
         where: { isActive: true },
         include: {
           property: {
@@ -151,7 +151,7 @@ export async function GET(request: Request) {
         },
         orderBy: { property: { propertyName: 'asc' } }
       }
-      includeOptions.furnitureImages = {
+      includeOptions.images = {
         where: { isActive: true },
         include: {
           image: {
@@ -468,7 +468,7 @@ export async function POST(request: Request) {
               categoryPath: true
             }
           },
-          furnitureColors: {
+          colors: {
             include: {
               color: {
                 select: {
@@ -479,7 +479,7 @@ export async function POST(request: Request) {
               }
             }
           },
-          furnitureProperties: {
+          properties: {
             include: {
               property: {
                 select: {
@@ -490,7 +490,7 @@ export async function POST(request: Request) {
               }
             }
           },
-          furnitureImages: {
+          images: {
             include: {
               image: {
                 select: {
@@ -505,9 +505,9 @@ export async function POST(request: Request) {
           },
           _count: {
             select: {
-              furnitureColors: true,
-              furnitureProperties: true,
-              furnitureImages: true
+              colors: true,
+              properties: true,
+              images: true
             }
           }
         }

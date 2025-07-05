@@ -34,7 +34,7 @@ export async function GET(
             }
           }
         },
-        furnitureColors: {
+        colors: {
           where: { isAvailable: true },
           include: {
             color: {
@@ -48,7 +48,7 @@ export async function GET(
           },
           orderBy: { color: { colorName: 'asc' } }
         },
-        furnitureProperties: {
+        properties: {
           where: { isActive: true },
           include: {
             property: {
@@ -62,7 +62,7 @@ export async function GET(
           },
           orderBy: { property: { propertyName: 'asc' } }
         },
-        furnitureImages: {
+        images: {
           where: { isActive: true },
           include: {
             image: {
@@ -87,9 +87,9 @@ export async function GET(
         },
         _count: {
           select: {
-            furnitureColors: true,
-            furnitureProperties: true,
-            furnitureImages: true
+            colors: true,
+            properties: true,
+            images: true
           }
         }
       }
@@ -118,8 +118,8 @@ export async function GET(
     }
 
     // Ana görsel ve galeri ayır
-    const mainImages = furniture.furnitureImages.filter(fi => fi.imageType === 'main_image')
-    const galleryImages = furniture.furnitureImages.filter(fi => fi.imageType !== 'main_image')
+    const mainImages = furniture.images.filter(fi => fi.imageType === 'main_image')
+    const galleryImages = furniture.images.filter(fi => fi.imageType !== 'main_image')
 
     return NextResponse.json({
       success: true,
@@ -129,12 +129,12 @@ export async function GET(
         imageGallery: {
           mainImages,
           galleryImages,
-          totalImages: furniture._count.furnitureImages
+          totalImages: furniture._count.images
         },
         stats: {
-          totalColors: furniture._count.furnitureColors,
-          totalProperties: furniture._count.furnitureProperties,
-          totalImages: furniture._count.furnitureImages
+          totalColors: furniture._count.colors,
+          totalProperties: furniture._count.properties,
+          totalImages: furniture._count.images
         }
       }
     })
@@ -181,9 +181,9 @@ export async function PUT(
     const existingFurniture = await prisma.furniture.findUnique({
       where: { furnitureId },
       include: {
-        furnitureColors: true,
-        furnitureProperties: true,
-        furnitureImages: true
+        colors: true,
+        properties: true,
+        images: true
       }
     })
 
@@ -442,7 +442,7 @@ export async function PUT(
               categoryPath: true
             }
           },
-          furnitureColors: {
+          colors: {
             include: {
               color: {
                 select: {
@@ -453,7 +453,7 @@ export async function PUT(
               }
             }
           },
-          furnitureProperties: {
+          properties: {
             include: {
               property: {
                 select: {
@@ -464,7 +464,7 @@ export async function PUT(
               }
             }
           },
-          furnitureImages: {
+          images: {
             where: { isActive: true },
             include: {
               image: {
@@ -480,9 +480,9 @@ export async function PUT(
           },
           _count: {
             select: {
-              furnitureColors: true,
-              furnitureProperties: true,
-              furnitureImages: true
+              colors: true,
+              properties: true,
+              images: true
             }
           }
         }
@@ -534,9 +534,9 @@ export async function DELETE(
         furnitureName: true,
         _count: {
           select: {
-            furnitureColors: true,
-            furnitureProperties: true,
-            furnitureImages: true
+            colors: true,
+            properties: true,
+            images: true
           }
         }
       }
@@ -577,9 +577,9 @@ export async function DELETE(
         furnitureId: furniture.furnitureId,
         furnitureName: furniture.furnitureName,
         relatedData: {
-          colors: furniture._count.furnitureColors,
-          properties: furniture._count.furnitureProperties,
-          images: furniture._count.furnitureImages
+          colors: furniture._count.colors,
+          properties: furniture._count.properties,
+          images: furniture._count.images
         }
       }
     })

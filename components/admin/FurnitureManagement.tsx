@@ -1,268 +1,260 @@
-// components/admin/FurnitureManagement.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 
 // TypeScript interfaces
+interface Category {
+  categoryId: number
+  categoryName: string
+  categoryPath: string
+}
+
+interface Color {
+  colorId: number
+  colorName: string
+  colorCode: string
+}
+
+interface Property {
+  propertyId: number
+  propertyName: string
+  propertyType: string
+}
+
+interface FurnitureImage {
+  id: number
+  imageType: string
+  sortOrder: number
+  image: {
+    imageId: number
+    fileName: string
+    filePath: string
+    altText: string
+  }
+}
+
 interface Furniture {
   furnitureId: number
   furnitureName: string
   furnitureType: string
   price: number
+  description: string
   isActive: boolean
   createdAt: string
-  category?: {
-    categoryId: number
-    categoryName: string
-    categoryPath: string
-  }
+  category?: Category
+  colors?: Array<{
+    color: Color
+    isAvailable: boolean
+  }>
+  properties?: Array<{
+    propertyValue: string
+    property: Property
+  }>
+  images?: FurnitureImage[]
   _count: {
-    furnitureColors: number
-    furnitureProperties: number
-    furnitureImages: number
+    colors: number
+    properties: number
+    images: number
   }
 }
 
-interface Category {
-  categoryId: number
-  categoryName: string
+interface FurnitureResponse {
+  success: boolean
+  data: Furniture[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    pages: number
+    hasNext: boolean
+    hasPrev: boolean
+  }
+  stats: {
+    total: number
+    averagePrice: number
+    minPrice: number
+    maxPrice: number
+  }
+  filters: any
 }
 
-interface Pagination {
-  page: number
-  limit: number
-  total: number
-  pages: number
-  hasNext: boolean
-  hasPrev: boolean
-}
-
-interface FurnitureStats {
-  total: number
-  averagePrice: number
-  minPrice: number
-  maxPrice: number
+interface FilterState {
+  search: string
+  categoryId: string
+  isActive: string
+  minPrice: string
+  maxPrice: string
+  furnitureType: string
+  colorIds: string
 }
 
 // Icon components
-const FurnitureIcon = () => <span className="text-2xl">🪑</span>
-const PlusIcon = () => <span className="text-lg">➕</span>
+const FurnitureIcon = () => <span className="text-xl">🪑</span>
 const SearchIcon = () => <span className="text-lg">🔍</span>
-const FilterIcon = () => <span className="text-lg">🔽</span>
-const LoaderIcon = () => <span className="text-lg animate-spin">⏳</span>
+const FilterIcon = () => <span className="text-lg">🔧</span>
+const PlusIcon = () => <span className="text-lg">➕</span>
 const EditIcon = () => <span className="text-sm">✏️</span>
 const DeleteIcon = () => <span className="text-sm">🗑️</span>
 const EyeIcon = () => <span className="text-sm">👁️</span>
-const ToggleIcon = () => <span className="text-sm">🔄</span>
+const ImageIcon = () => <span className="text-sm">🖼️</span>
+const TagIcon = () => <span className="text-sm">🏷️</span>
+const ColorIcon = () => <span className="text-sm">🎨</span>
+const LoaderIcon = () => <span className="text-lg animate-spin">⏳</span>
+const RefreshIcon = () => <span className="text-lg">🔄</span>
+const GridIcon = () => <span className="text-lg">⚏</span>
+const ListIcon = () => <span className="text-lg">📋</span>
 
 export default function FurnitureManagement() {
-  const router = useRouter()
-  
   // State management
   const [furnitures, setFurnitures] = useState<Furniture[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const [colors, setColors] = useState<Color[]>([])
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string>('')
-  const [pagination, setPagination] = useState<Pagination>({
-    page: 1,
-    limit: 20,
-    total: 0,
-    pages: 0,
-    hasNext: false,
-    hasPrev: false
-  })
-  const [stats, setStats] = useState<FurnitureStats | null>(null)
+  const [pagination, setPagination] = useState<any>(null)
+  const [stats, setStats] = useState<any>(null)
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [selectedItems, setSelectedItems] = useState<number[]>([])
+  const [showFilters, setShowFilters] = useState<boolean>(false)
   
-  // Filter states
-  const [filters, setFilters] = useState({
+  // Filter state
+  const [filters, setFilters] = useState<FilterState>({
     search: '',
     categoryId: '',
-    furnitureType: '',
     isActive: '',
     minPrice: '',
     maxPrice: '',
-    sortBy: 'createdAt',
-    sortOrder: 'desc'
+    furnitureType: '',
+    colorIds: ''
   })
 
-  // Mobilyaları yükle
-  const loadFurnitures = async (): Promise<void> => {
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState<number>(1)
+  const [limit] = useState<number>(12)
+
+  // Load furniture data
+  const loadFurnitures = async (page: number = 1, newFilters?: FilterState): Promise<void> => {
     try {
       setLoading(true)
+      const filterParams = newFilters || filters
       
-      const params = new URLSearchParams({
-        page: pagination.page.toString(),
-        limit: pagination.limit.toString(),
-        includeDetails: 'false',
-        ...(filters.search && { search: filters.search }),
-        ...(filters.categoryId && { categoryId: filters.categoryId }),
-        ...(filters.furnitureType && { type: filters.furnitureType }),
-        ...(filters.isActive !== '' && { active: filters.isActive }),
-        ...(filters.minPrice && { minPrice: filters.minPrice }),
-        ...(filters.maxPrice && { maxPrice: filters.maxPrice }),
-        sortBy: filters.sortBy,
-        sortOrder: filters.sortOrder
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+        includeDetails: 'true',
+        ...(filterParams.search && { search: filterParams.search }),
+        ...(filterParams.categoryId && { categoryId: filterParams.categoryId }),
+        ...(filterParams.isActive && { active: filterParams.isActive }),
+        ...(filterParams.minPrice && { minPrice: filterParams.minPrice }),
+        ...(filterParams.maxPrice && { maxPrice: filterParams.maxPrice }),
+        ...(filterParams.furnitureType && { type: filterParams.furnitureType }),
+        ...(filterParams.colorIds && { colorIds: filterParams.colorIds })
       })
 
-      const response = await fetch(`/api/furniture?${params}`)
-      const data = await response.json()
+      const response = await fetch(`/api/furniture?${queryParams}`)
+      const data: FurnitureResponse = await response.json()
 
       if (data.success) {
         setFurnitures(data.data)
         setPagination(data.pagination)
         setStats(data.stats)
-        setError('')
+        setCurrentPage(page)
       } else {
-        setError(data.error || 'Mobilyalar yüklenemedi')
+        setError('Mobilyalar yüklenemedi')
       }
     } catch (err) {
-      console.error('Mobilya yükleme hatası:', err)
-      setError('Mobilyalar yüklenirken hata oluştu')
+      console.error('Furniture loading error:', err)
+      setError('Bağlantı hatası')
     } finally {
       setLoading(false)
     }
   }
 
-  // Kategorileri yükle
-  const loadCategories = async (): Promise<void> => {
+  // Load categories and colors for filters
+  const loadFilterData = async (): Promise<void> => {
     try {
-      const response = await fetch('/api/categories?flat=true&active=true')
-      const data = await response.json()
-      
-      if (data.success) {
-        setCategories(data.data)
-      }
+      const [categoriesRes, colorsRes] = await Promise.all([
+        fetch('/api/categories?flat=true&active=true'),
+        fetch('/api/colors?active=true')
+      ])
+
+      const [categoriesData, colorsData] = await Promise.all([
+        categoriesRes.json(),
+        colorsRes.json()
+      ])
+
+      if (categoriesData.success) setCategories(categoriesData.data)
+      if (colorsData.success) setColors(colorsData.data)
     } catch (err) {
-      console.error('Kategori yükleme hatası:', err)
+      console.error('Filter data loading error:', err)
     }
   }
 
-  // Component mount
-  useEffect(() => {
-    loadCategories()
-  }, [])
-
-  // Filters veya pagination değiştiğinde mobilyaları yeniden yükle
+  // Initial load
   useEffect(() => {
     loadFurnitures()
-  }, [pagination.page, pagination.limit, filters])
+    loadFilterData()
+  }, [])
 
-  // Toplu silme
-  const handleBulkDelete = async (): Promise<void> => {
-    if (selectedItems.length === 0) return
-    
-    const confirmed = window.confirm(`${selectedItems.length} mobilya silinecek. Emin misiniz?`)
+  // Handle filter change
+  const handleFilterChange = (key: keyof FilterState, value: string): void => {
+    const newFilters = { ...filters, [key]: value }
+    setFilters(newFilters)
+    loadFurnitures(1, newFilters)
+  }
+
+  // Handle bulk actions
+  const handleBulkAction = async (action: 'activate' | 'deactivate' | 'delete'): Promise<void> => {
+    if (selectedItems.length === 0) {
+      alert('Lütfen işlem yapmak istediğiniz mobilyaları seçin')
+      return
+    }
+
+    const confirmed = confirm(`Seçili ${selectedItems.length} mobilya için ${action} işlemi yapılacak. Devam edilsin mi?`)
     if (!confirmed) return
 
     try {
       setLoading(true)
-      const response = await fetch(`/api/furniture?ids=${selectedItems.join(',')}`, {
-        method: 'DELETE'
-      })
       
-      const data = await response.json()
-      
-      if (data.success) {
-        setSelectedItems([])
-        await loadFurnitures()
-        alert(data.message)
-      } else {
-        alert(data.error || 'Silme işlemi başarısız')
-      }
-    } catch (err) {
-      console.error('Toplu silme hatası:', err)
-      alert('Silme işleminde hata oluştu')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Toplu aktif/pasif yapma
-  const handleBulkToggleStatus = async (isActive: boolean): Promise<void> => {
-    if (selectedItems.length === 0) return
-
-    try {
-      setLoading(true)
-      const response = await fetch('/api/furniture', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ids: selectedItems,
-          isActive
+      if (action === 'delete') {
+        const response = await fetch(`/api/furniture?ids=${selectedItems.join(',')}`, {
+          method: 'DELETE'
         })
-      })
-      
-      const data = await response.json()
-      
-      if (data.success) {
-        setSelectedItems([])
-        await loadFurnitures()
-        alert(data.message)
+        const data = await response.json()
+        
+        if (data.success) {
+          alert(`${data.deletedCount} mobilya silindi`)
+          setSelectedItems([])
+          loadFurnitures(currentPage)
+        } else {
+          alert('Silme işlemi başarısız: ' + data.error)
+        }
       } else {
-        alert(data.error || 'Güncelleme işlemi başarısız')
+        const response = await fetch('/api/furniture', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ids: selectedItems,
+            isActive: action === 'activate'
+          })
+        })
+        const data = await response.json()
+        
+        if (data.success) {
+          alert(`${data.updatedCount} mobilya ${action === 'activate' ? 'aktif' : 'pasif'} yapıldı`)
+          setSelectedItems([])
+          loadFurnitures(currentPage)
+        } else {
+          alert('Güncelleme işlemi başarısız: ' + data.error)
+        }
       }
     } catch (err) {
-      console.error('Toplu güncelleme hatası:', err)
-      alert('Güncelleme işleminde hata oluştu')
+      console.error('Bulk action error:', err)
+      alert('İşlem sırasında hata oluştu')
     } finally {
       setLoading(false)
     }
-  }
-
-  // Tekil silme
-  const handleDelete = async (furnitureId: number, furnitureName: string): Promise<void> => {
-    const confirmed = window.confirm(`"${furnitureName}" mobilyası silinecek. Emin misiniz?`)
-    if (!confirmed) return
-
-    try {
-      const response = await fetch(`/api/furniture/${furnitureId}`, {
-        method: 'DELETE'
-      })
-      
-      const data = await response.json()
-      
-      if (data.success) {
-        await loadFurnitures()
-        alert(data.message)
-      } else {
-        alert(data.error || 'Silme işlemi başarısız')
-      }
-    } catch (err) {
-      console.error('Silme hatası:', err)
-      alert('Silme işleminde hata oluştu')
-    }
-  }
-
-  // Select all/none
-  const handleSelectAll = (checked: boolean): void => {
-    if (checked) {
-      setSelectedItems(furnitures.map(f => f.furnitureId))
-    } else {
-      setSelectedItems([])
-    }
-  }
-
-  // Select single item
-  const handleSelectItem = (furnitureId: number, checked: boolean): void => {
-    if (checked) {
-      setSelectedItems([...selectedItems, furnitureId])
-    } else {
-      setSelectedItems(selectedItems.filter(id => id !== furnitureId))
-    }
-  }
-
-  // Filter handler
-  const handleFilterChange = (key: string, value: string): void => {
-    setFilters(prev => ({ ...prev, [key]: value }))
-    setPagination(prev => ({ ...prev, page: 1 })) // Reset to first page
-  }
-
-  // Page change
-  const handlePageChange = (newPage: number): void => {
-    setPagination(prev => ({ ...prev, page: newPage }))
   }
 
   // Format price
@@ -278,6 +270,21 @@ export default function FurnitureManagement() {
     return new Date(dateString).toLocaleDateString('tr-TR')
   }
 
+  // Get main image
+  const getMainImage = (images?: FurnitureImage[]): string => {
+    const mainImage = images?.find(img => img.imageType === 'main_image')
+    return mainImage?.image.filePath || '/images/placeholder-furniture.jpg'
+  }
+
+  // Select all/none
+  const handleSelectAll = (): void => {
+    if (selectedItems.length === furnitures.length) {
+      setSelectedItems([])
+    } else {
+      setSelectedItems(furnitures.map(f => f.furnitureId))
+    }
+  }
+
   return (
     <div className="max-w-7xl mx-auto p-6">
       {/* Header */}
@@ -289,17 +296,28 @@ export default function FurnitureManagement() {
               <span>Mobilya Yönetimi</span>
             </h1>
             <p className="text-gray-600 mt-2">
-              Mobilya ekleme, düzenleme ve yönetim işlemleri
+              Mobilyaları görüntüle, düzenle ve yönet
             </p>
           </div>
           
-          <Link
-            href="/admin/furniture/add"
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-          >
-            <PlusIcon />
-            <span>Yeni Mobilya Ekle</span>
-          </Link>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => loadFurnitures(currentPage)}
+              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2"
+              disabled={loading}
+            >
+              <RefreshIcon />
+              <span>Yenile</span>
+            </button>
+            
+            <Link
+              href="/admin/furniture/add"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+            >
+              <PlusIcon />
+              <span>Yeni Mobilya</span>
+            </Link>
+          </div>
         </div>
 
         {/* Stats */}
@@ -307,191 +325,195 @@ export default function FurnitureManagement() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
             <div className="bg-white rounded-lg border border-gray-200 p-4">
               <div className="text-sm text-gray-600">Toplam Mobilya</div>
-              <div className="text-2xl font-bold text-gray-900">{stats.total.toLocaleString('tr-TR')}</div>
+              <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
             </div>
             <div className="bg-white rounded-lg border border-gray-200 p-4">
               <div className="text-sm text-gray-600">Ortalama Fiyat</div>
-              <div className="text-2xl font-bold text-gray-900">{formatPrice(stats.averagePrice || 0)}</div>
+              <div className="text-2xl font-bold text-gray-900">
+                {stats.averagePrice ? formatPrice(stats.averagePrice) : '-'}
+              </div>
             </div>
             <div className="bg-white rounded-lg border border-gray-200 p-4">
               <div className="text-sm text-gray-600">En Düşük Fiyat</div>
-              <div className="text-2xl font-bold text-gray-900">{formatPrice(stats.minPrice || 0)}</div>
+              <div className="text-2xl font-bold text-gray-900">
+                {stats.minPrice ? formatPrice(stats.minPrice) : '-'}
+              </div>
             </div>
             <div className="bg-white rounded-lg border border-gray-200 p-4">
               <div className="text-sm text-gray-600">En Yüksek Fiyat</div>
-              <div className="text-2xl font-bold text-gray-900">{formatPrice(stats.maxPrice || 0)}</div>
+              <div className="text-2xl font-bold text-gray-900">
+                {stats.maxPrice ? formatPrice(stats.maxPrice) : '-'}
+              </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <FilterIcon />
-          <span className="ml-2">Filtreler</span>
-        </h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {/* Arama */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Arama
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <SearchIcon />
-              </div>
-              <input
-                type="text"
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Mobilya adı..."
-                value={filters.search}
-                onChange={(e) => handleFilterChange('search', e.target.value)}
-              />
-            </div>
-          </div>
-
-          {/* Kategori */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Kategori
-            </label>
-            <select
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-              value={filters.categoryId}
-              onChange={(e) => handleFilterChange('categoryId', e.target.value)}
-            >
-              <option value="">Tüm Kategoriler</option>
-              {categories.map(category => (
-                <option key={category.categoryId} value={category.categoryId}>
-                  {category.categoryName}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Mobilya Tipi */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Mobilya Tipi
-            </label>
-            <input
-              type="text"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Koltuk, Masa..."
-              value={filters.furnitureType}
-              onChange={(e) => handleFilterChange('furnitureType', e.target.value)}
-            />
-          </div>
-
-          {/* Durum */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Durum
-            </label>
-            <select
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-              value={filters.isActive}
-              onChange={(e) => handleFilterChange('isActive', e.target.value)}
-            >
-              <option value="">Tümü</option>
-              <option value="true">Aktif</option>
-              <option value="false">Pasif</option>
-            </select>
-          </div>
-
-          {/* Sıralama */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Sıralama
-            </label>
-            <select
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-              value={`${filters.sortBy}-${filters.sortOrder}`}
-              onChange={(e) => {
-                const [sortBy, sortOrder] = e.target.value.split('-')
-                setFilters(prev => ({ ...prev, sortBy, sortOrder }))
-              }}
-            >
-              <option value="createdAt-desc">En Yeni</option>
-              <option value="createdAt-asc">En Eski</option>
-              <option value="furnitureName-asc">İsim (A-Z)</option>
-              <option value="furnitureName-desc">İsim (Z-A)</option>
-              <option value="price-asc">Fiyat (Düşük-Yüksek)</option>
-              <option value="price-desc">Fiyat (Yüksek-Düşük)</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Fiyat Aralığı */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Min Fiyat
-            </label>
-            <input
-              type="number"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-              placeholder="0"
-              value={filters.minPrice}
-              onChange={(e) => handleFilterChange('minPrice', e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Max Fiyat
-            </label>
-            <input
-              type="number"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-              placeholder="999999"
-              value={filters.maxPrice}
-              onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Bulk Actions */}
-      {selectedItems.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-          <div className="flex items-center justify-between">
-            <span className="text-blue-800 font-medium">
-              {selectedItems.length} mobilya seçildi
-            </span>
-            <div className="flex space-x-2">
-              <button
-                onClick={() => handleBulkToggleStatus(true)}
-                className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
-              >
-                Aktif Yap
-              </button>
-              <button
-                onClick={() => handleBulkToggleStatus(false)}
-                className="bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700"
-              >
-                Pasif Yap
-              </button>
-              <button
-                onClick={handleBulkDelete}
-                className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
-              >
-                Sil
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Error State */}
+      {/* Error */}
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
           {error}
         </div>
       )}
 
-      {/* Loading State */}
+      {/* Filters and Controls */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        {/* Filter Toggle and View Mode */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center space-x-2 px-3 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              <FilterIcon />
+              <span>Filtreler</span>
+            </button>
+
+            {/* Bulk Actions */}
+            {selectedItems.length > 0 && (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-600">
+                  {selectedItems.length} seçili
+                </span>
+                <button
+                  onClick={() => handleBulkAction('activate')}
+                  className="px-3 py-1 bg-green-100 text-green-700 rounded text-sm hover:bg-green-200"
+                >
+                  Aktif Yap
+                </button>
+                <button
+                  onClick={() => handleBulkAction('deactivate')}
+                  className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded text-sm hover:bg-yellow-200"
+                >
+                  Pasif Yap
+                </button>
+                <button
+                  onClick={() => handleBulkAction('delete')}
+                  className="px-3 py-1 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200"
+                >
+                  Sil
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-2 rounded ${viewMode === 'grid' ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:bg-gray-100'}`}
+            >
+              <GridIcon />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-2 rounded ${viewMode === 'list' ? 'bg-blue-100 text-blue-700' : 'text-gray-500 hover:bg-gray-100'}`}
+            >
+              <ListIcon />
+            </button>
+          </div>
+        </div>
+
+        {/* Filter Panel */}
+        {showFilters && (
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 pt-4 border-t border-gray-200">
+            {/* Search */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Arama
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={filters.search}
+                  onChange={(e) => handleFilterChange('search', e.target.value)}
+                  placeholder="Mobilya ara..."
+                  className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg text-sm"
+                />
+                <SearchIcon />
+              </div>
+            </div>
+
+            {/* Category */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Kategori
+              </label>
+              <select
+                value={filters.categoryId}
+                onChange={(e) => handleFilterChange('categoryId', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              >
+                <option value="">Tüm Kategoriler</option>
+                {categories.map((category) => (
+                  <option key={category.categoryId} value={category.categoryId}>
+                    {category.categoryName}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Status */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Durum
+              </label>
+              <select
+                value={filters.isActive}
+                onChange={(e) => handleFilterChange('isActive', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              >
+                <option value="">Tümü</option>
+                <option value="true">Aktif</option>
+                <option value="false">Pasif</option>
+              </select>
+            </div>
+
+            {/* Min Price */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Min Fiyat
+              </label>
+              <input
+                type="number"
+                value={filters.minPrice}
+                onChange={(e) => handleFilterChange('minPrice', e.target.value)}
+                placeholder="0"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              />
+            </div>
+
+            {/* Max Price */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Max Fiyat
+              </label>
+              <input
+                type="number"
+                value={filters.maxPrice}
+                onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
+                placeholder="999999"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              />
+            </div>
+
+            {/* Furniture Type */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Mobilya Tipi
+              </label>
+              <input
+                type="text"
+                value={filters.furnitureType}
+                onChange={(e) => handleFilterChange('furnitureType', e.target.value)}
+                placeholder="Koltuk, Masa..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Loading */}
       {loading && (
         <div className="flex items-center justify-center py-12">
           <LoaderIcon />
@@ -499,174 +521,265 @@ export default function FurnitureManagement() {
         </div>
       )}
 
-      {/* Table */}
-      {!loading && (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left">
-                    <input
-                      type="checkbox"
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      checked={selectedItems.length === furnitures.length && furnitures.length > 0}
-                      onChange={(e) => handleSelectAll(e.target.checked)}
+      {/* Furniture Grid/List */}
+      {!loading && furnitures.length > 0 && (
+        <>
+          {viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+              {furnitures.map((furniture) => (
+                <div
+                  key={furniture.furnitureId}
+                  className={`bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow ${
+                    selectedItems.includes(furniture.furnitureId) ? 'ring-2 ring-blue-500' : ''
+                  }`}
+                >
+                  {/* Image */}
+                  <div className="relative h-48 bg-gray-100">
+                    <img
+                      src={getMainImage(furniture.images)}
+                      alt={furniture.furnitureName}
+                      className="w-full h-full object-cover"
                     />
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Mobilya
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Kategori
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Fiyat
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Durum
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Detaylar
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tarih
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    İşlemler
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {furnitures.map((furniture) => (
-                  <tr key={furniture.furnitureId} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
+                    
+                    {/* Checkbox */}
+                    <div className="absolute top-2 left-2">
                       <input
                         type="checkbox"
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         checked={selectedItems.includes(furniture.furnitureId)}
-                        onChange={(e) => handleSelectItem(furniture.furnitureId, e.target.checked)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedItems([...selectedItems, furniture.furnitureId])
+                          } else {
+                            setSelectedItems(selectedItems.filter(id => id !== furniture.furnitureId))
+                          }
+                        }}
+                        className="w-4 h-4 text-blue-600 rounded"
                       />
-                    </td>
-                    <td className="px-6 py-4">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
-                          {furniture.furnitureName}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {furniture.furnitureType}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">
-                        {furniture.category?.categoryName || 'Kategorisiz'}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900">
-                        {formatPrice(furniture.price)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                    </div>
+
+                    {/* Status Badge */}
+                    <div className="absolute top-2 right-2">
+                      <span className={`px-2 py-1 text-xs rounded-full ${
                         furniture.isActive 
                           ? 'bg-green-100 text-green-800' 
                           : 'bg-red-100 text-red-800'
                       }`}>
                         {furniture.isActive ? 'Aktif' : 'Pasif'}
                       </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-xs text-gray-500">
-                        <div>🎨 {furniture._count.furnitureColors} renk</div>
-                        <div>🏷️ {furniture._count.furnitureProperties} özellik</div>
-                        <div>🖼️ {furniture._count.furnitureImages} görsel</div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-500">
-                        {formatDate(furniture.createdAt)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex space-x-2">
-                        <Link
-                          href={`/admin/furniture/${furniture.furnitureId}`}
-                          className="text-blue-600 hover:text-blue-800"
-                          title="Detay"
-                        >
-                          <EyeIcon />
-                        </Link>
-                        <Link
-                          href={`/admin/furniture/${furniture.furnitureId}/edit`}
-                          className="text-green-600 hover:text-green-800"
-                          title="Düzenle"
-                        >
-                          <EditIcon />
-                        </Link>
-                        <button
-                          onClick={() => handleDelete(furniture.furnitureId, furniture.furnitureName)}
-                          className="text-red-600 hover:text-red-800"
-                          title="Sil"
-                        >
-                          <DeleteIcon />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-4">
+                    <h3 className="font-semibold text-gray-900 mb-1 truncate">
+                      {furniture.furnitureName}
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-2">
+                      {furniture.furnitureType}
+                    </p>
+                    <p className="text-lg font-bold text-blue-600 mb-3">
+                      {formatPrice(furniture.price)}
+                    </p>
+
+                    {/* Stats */}
+                    <div className="flex items-center space-x-4 text-xs text-gray-500 mb-3">
+                      <span className="flex items-center space-x-1">
+                        <ImageIcon />
+                        <span>{furniture._count.images}</span>
+                      </span>
+                      <span className="flex items-center space-x-1">
+                        <ColorIcon />
+                        <span>{furniture._count.colors}</span>
+                      </span>
+                      <span className="flex items-center space-x-1">
+                        <TagIcon />
+                        <span>{furniture._count.properties}</span>
+                      </span>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center space-x-2">
+                      <Link
+                        href={`/admin/furniture/${furniture.furnitureId}`}
+                        className="flex-1 bg-blue-50 text-blue-700 px-3 py-2 rounded text-sm text-center hover:bg-blue-100 transition-colors flex items-center justify-center space-x-1"
+                      >
+                        <EyeIcon />
+                        <span>Detay</span>
+                      </Link>
+                      <Link
+                        href={`/admin/furniture/${furniture.furnitureId}/edit`}
+                        className="flex-1 bg-green-50 text-green-700 px-3 py-2 rounded text-sm text-center hover:bg-green-100 transition-colors flex items-center justify-center space-x-1"
+                      >
+                        <EditIcon />
+                        <span>Düzenle</span>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            /* List View */
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden mb-8">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left">
+                        <input
+                          type="checkbox"
+                          checked={selectedItems.length === furnitures.length}
+                          onChange={handleSelectAll}
+                          className="w-4 h-4 text-blue-600 rounded"
+                        />
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Mobilya
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Kategori
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Fiyat
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Durum
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Tarih
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        İşlemler
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {furnitures.map((furniture) => (
+                      <tr key={furniture.furnitureId} className="hover:bg-gray-50">
+                        <td className="px-6 py-4">
+                          <input
+                            type="checkbox"
+                            checked={selectedItems.includes(furniture.furnitureId)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedItems([...selectedItems, furniture.furnitureId])
+                              } else {
+                                setSelectedItems(selectedItems.filter(id => id !== furniture.furnitureId))
+                              }
+                            }}
+                            className="w-4 h-4 text-blue-600 rounded"
+                          />
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center">
+                            <img
+                              src={getMainImage(furniture.images)}
+                              alt={furniture.furnitureName}
+                              className="w-12 h-12 rounded-lg object-cover mr-4"
+                            />
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">
+                                {furniture.furnitureName}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {furniture.furnitureType}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">
+                          {furniture.category?.categoryName || '-'}
+                        </td>
+                        <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                          {formatPrice(furniture.price)}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            furniture.isActive 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {furniture.isActive ? 'Aktif' : 'Pasif'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          {formatDate(furniture.createdAt)}
+                        </td>
+                        <td className="px-6 py-4 text-sm font-medium">
+                          <div className="flex items-center space-x-2">
+                            <Link
+                              href={`/admin/furniture/${furniture.furnitureId}`}
+                              className="text-blue-600 hover:text-blue-900"
+                            >
+                              <EyeIcon />
+                            </Link>
+                            <Link
+                              href={`/admin/furniture/${furniture.furnitureId}/edit`}
+                              className="text-green-600 hover:text-green-900"
+                            >
+                              <EditIcon />
+                            </Link>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
 
           {/* Pagination */}
-          {pagination.pages > 1 && (
-            <div className="bg-white px-4 py-3 border-t border-gray-200 flex items-center justify-between">
-              <div className="flex items-center">
-                <span className="text-sm text-gray-700">
-                  Toplam {pagination.total} kayıttan {((pagination.page - 1) * pagination.limit) + 1}-{Math.min(pagination.page * pagination.limit, pagination.total)} arası gösteriliyor
-                </span>
+          {pagination && pagination.pages > 1 && (
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-gray-700">
+                Toplam {pagination.total} mobilyadan {((pagination.page - 1) * pagination.limit) + 1}-
+                {Math.min(pagination.page * pagination.limit, pagination.total)} arası gösteriliyor
               </div>
-              <div className="flex space-x-2">
+              <div className="flex items-center space-x-2">
                 <button
-                  onClick={() => handlePageChange(pagination.page - 1)}
+                  onClick={() => loadFurnitures(pagination.page - 1)}
                   disabled={!pagination.hasPrev}
-                  className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-3 py-2 text-sm border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                 >
                   Önceki
                 </button>
                 
-                {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
-                  const pageNum = Math.max(1, pagination.page - 2) + i
-                  if (pageNum > pagination.pages) return null
-                  
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => handlePageChange(pageNum)}
-                      className={`px-3 py-1 text-sm border rounded ${
-                        pageNum === pagination.page
-                          ? 'border-blue-500 bg-blue-50 text-blue-700'
-                          : 'border-gray-300 hover:bg-gray-50'
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
+                {Array.from({ length: pagination.pages }, (_, i) => i + 1)
+                  .filter(page => 
+                    page === 1 || 
+                    page === pagination.pages || 
+                    Math.abs(page - pagination.page) <= 2
                   )
-                })}
+                  .map((page, index, array) => (
+                    <div key={page} className="flex items-center">
+                      {index > 0 && array[index - 1] !== page - 1 && (
+                        <span className="px-2 text-gray-500">...</span>
+                      )}
+                      <button
+                        onClick={() => loadFurnitures(page)}
+                        className={`px-3 py-2 text-sm border rounded-lg ${
+                          page === pagination.page
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    </div>
+                  ))}
                 
                 <button
-                  onClick={() => handlePageChange(pagination.page + 1)}
+                  onClick={() => loadFurnitures(pagination.page + 1)}
                   disabled={!pagination.hasNext}
-                  className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-3 py-2 text-sm border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                 >
                   Sonraki
                 </button>
               </div>
             </div>
           )}
-        </div>
+        </>
       )}
 
       {/* Empty State */}
@@ -675,7 +788,10 @@ export default function FurnitureManagement() {
           <FurnitureIcon />
           <h3 className="mt-2 text-sm font-medium text-gray-900">Mobilya bulunamadı</h3>
           <p className="mt-1 text-sm text-gray-500">
-            Filtrelerinizi değiştirin veya yeni mobilya ekleyin.
+            {Object.values(filters).some(v => v) 
+              ? 'Filtrelere uygun mobilya bulunamadı. Filtreleri değiştirmeyi deneyin.'
+              : 'Henüz hiç mobilya eklenmemiş. İlk mobilyayı ekleyerek başlayın.'
+            }
           </p>
           <div className="mt-6">
             <Link

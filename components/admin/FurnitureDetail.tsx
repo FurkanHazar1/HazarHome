@@ -1,4 +1,3 @@
-// components/admin/FurnitureDetail.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -6,71 +5,70 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 // TypeScript interfaces
+interface Category {
+  categoryId: number
+  categoryName: string
+  categoryPath: string
+}
+
+interface Color {
+  colorId: number
+  colorName: string
+  colorCode: string
+  isActive: boolean
+}
+
+interface Property {
+  propertyId: number
+  propertyName: string
+  propertyType: string
+  description?: string
+}
+
+interface FurnitureImage {
+  id: number
+  imageType: string
+  sortOrder: number
+  isActive: boolean
+  image: {
+    imageId: number
+    fileName: string
+    filePath: string
+    altText: string
+    width?: number
+    height?: number
+    fileSize?: number
+  }
+}
+
 interface FurnitureDetail {
   furnitureId: number
   furnitureName: string
   furnitureType: string
-  categoryId: number | null
-  description: string | null
   price: number
+  description: string
   isActive: boolean
   createdAt: string
-  category?: {
-    categoryId: number
-    categoryName: string
-    categoryPath: string
-    categoryLevel: number
-    parent?: {
-      categoryId: number
-      categoryName: string
-    }
-  }
-  furnitureColors: Array<{
-    colorId: number
+  category?: Category
+  colors?: Array<{
+    id: number
     isAvailable: boolean
-    color: {
-      colorId: number
-      colorName: string
-      colorCode: string
-      isActive: boolean
-    }
+    color: Color
   }>
-  furnitureProperties: Array<{
-    propertyId: number
+  properties?: Array<{
+    id: number
     propertyValue: string
     isActive: boolean
-    property: {
-      propertyId: number
-      propertyName: string
-      propertyType: string
-      description: string
-    }
+    property: Property
   }>
-  furnitureImages: Array<{
-    imageId: number
-    sortOrder: number
-    imageType: string
-    isActive: boolean
-    image: {
-      imageId: number
-      fileName: string
-      filePath: string
-      fileSize: number | null
-      fileType: string | null
-      description: string | null
-      altText: string | null
-      width: number | null
-      height: number | null
-      originalFileName: string | null
-    }
-  }>
+  images?: FurnitureImage[]
   breadcrumb: Array<{
     categoryId: number
     categoryName: string
   }>
   imageGallery: {
-    mainImages: any[]
-    galleryImages: any[]
+    mainImages: FurnitureImage[]
+    galleryImages: FurnitureImage[]
     totalImages: number
   }
   stats: {
@@ -85,18 +83,20 @@ interface FurnitureDetailProps {
 }
 
 // Icon components
-const FurnitureIcon = () => <span className="text-2xl">🪑</span>
-const BackIcon = () => <span className="text-lg">⬅️</span>
+const FurnitureIcon = () => <span className="text-xl">🪑</span>
+const BackIcon = () => <span className="text-lg">←</span>
 const EditIcon = () => <span className="text-lg">✏️</span>
 const DeleteIcon = () => <span className="text-lg">🗑️</span>
-const LoaderIcon = () => <span className="text-lg animate-spin">⏳</span>
+const CategoryIcon = () => <span className="text-sm">📂</span>
 const ColorIcon = () => <span className="text-sm">🎨</span>
 const PropertyIcon = () => <span className="text-sm">🏷️</span>
 const ImageIcon = () => <span className="text-sm">🖼️</span>
-const CalendarIcon = () => <span className="text-sm">📅</span>
+const LoaderIcon = () => <span className="text-lg animate-spin">⏳</span>
+const StatusIcon = () => <span className="text-sm">🔄</span>
 const PriceIcon = () => <span className="text-sm">💰</span>
-const CategoryIcon = () => <span className="text-sm">📂</span>
-const ToggleIcon = () => <span className="text-sm">🔄</span>
+const InfoIcon = () => <span className="text-sm">ℹ️</span>
+const StatsIcon = () => <span className="text-sm">📊</span>
+const CalendarIcon = () => <span className="text-sm">📅</span>
 
 export default function FurnitureDetail({ furnitureId }: FurnitureDetailProps) {
   const router = useRouter()
@@ -105,45 +105,48 @@ export default function FurnitureDetail({ furnitureId }: FurnitureDetailProps) {
   const [furniture, setFurniture] = useState<FurnitureDetail | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string>('')
-  const [actionLoading, setActionLoading] = useState<boolean>(false)
+  const [deleting, setDeleting] = useState<boolean>(false)
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0)
 
-  // Mobilya detayını yükle
+  // Load furniture detail
   const loadFurnitureDetail = async (): Promise<void> => {
     try {
       setLoading(true)
+      
       const response = await fetch(`/api/furniture/${furnitureId}`)
       const data = await response.json()
-
+      
       if (data.success) {
         setFurniture(data.data)
-        setError('')
       } else {
-        setError(data.error || 'Mobilya detayı yüklenemedi')
+        setError(data.error || 'Mobilya bulunamadı')
       }
     } catch (err) {
-      console.error('Mobilya detay yükleme hatası:', err)
-      setError('Mobilya detayı yüklenirken hata oluştu')
+      console.error('Furniture detail loading error:', err)
+      setError('Bağlantı hatası')
     } finally {
       setLoading(false)
     }
   }
 
-  // Component mount
+  // Load data on mount
   useEffect(() => {
-    if (furnitureId) {
-      loadFurnitureDetail()
-    }
+    loadFurnitureDetail()
   }, [furnitureId])
 
-  // Mobilya silme
+  // Delete furniture
   const handleDelete = async (): Promise<void> => {
     if (!furniture) return
-
-    const confirmed = window.confirm(`"${furniture.furnitureName}" mobilyası silinecek. Bu işlem geri alınamaz. Emin misiniz?`)
+    
+    const confirmed = confirm(
+      `"${furniture.furnitureName}" mobilyasını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`
+    )
+    
     if (!confirmed) return
-
+    
     try {
-      setActionLoading(true)
+      setDeleting(true)
+      
       const response = await fetch(`/api/furniture/${furnitureId}`, {
         method: 'DELETE'
       })
@@ -151,26 +154,24 @@ export default function FurnitureDetail({ furnitureId }: FurnitureDetailProps) {
       const data = await response.json()
       
       if (data.success) {
-        alert('Mobilya başarıyla silindi!')
         router.push('/admin/furniture')
       } else {
-        alert(data.error || 'Silme işlemi başarısız')
+        setError(data.error || 'Silme işlemi başarısız')
       }
     } catch (err) {
-      console.error('Mobilya silme hatası:', err)
-      alert('Silme işleminde hata oluştu')
+      console.error('Delete error:', err)
+      setError('Silme sırasında hata oluştu')
     } finally {
-      setActionLoading(false)
+      setDeleting(false)
     }
   }
 
-  // Aktif/Pasif toggle
-  const handleToggleStatus = async (): Promise<void> => {
+  // Toggle status
+  const toggleStatus = async (): Promise<void> => {
     if (!furniture) return
-
+    
     try {
-      setActionLoading(true)
-      const response = await fetch('/api/furniture', {
+      const response = await fetch(`/api/furniture`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -182,20 +183,17 @@ export default function FurnitureDetail({ furnitureId }: FurnitureDetailProps) {
       const data = await response.json()
       
       if (data.success) {
-        setFurniture(prev => prev ? { ...prev, isActive: !prev.isActive } : null)
-        alert(data.message)
+        setFurniture(prev => prev ? { ...prev, isActive: !prev.isActive } : prev)
       } else {
-        alert(data.error || 'Durum güncelleme başarısız')
+        setError('Durum değiştirme başarısız')
       }
     } catch (err) {
-      console.error('Durum güncelleme hatası:', err)
-      alert('Durum güncellemede hata oluştu')
-    } finally {
-      setActionLoading(false)
+      console.error('Status toggle error:', err)
+      setError('Durum değiştirme sırasında hata oluştu')
     }
   }
 
-  // Format functions
+  // Format price
   const formatPrice = (price: number): string => {
     return new Intl.NumberFormat('tr-TR', {
       style: 'currency',
@@ -203,6 +201,7 @@ export default function FurnitureDetail({ furnitureId }: FurnitureDetailProps) {
     }).format(price)
   }
 
+  // Format date
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString('tr-TR', {
       year: 'numeric',
@@ -213,409 +212,434 @@ export default function FurnitureDetail({ furnitureId }: FurnitureDetailProps) {
     })
   }
 
-  // Loading state
-  if (loading) {
-    return (
-      <div className="max-w-6xl mx-auto p-6">
-        <div className="flex items-center justify-center py-12">
-          <LoaderIcon />
-          <span className="ml-2 text-gray-600">Mobilya detayı yükleniyor...</span>
-        </div>
-      </div>
-    )
+  // Format file size
+  const formatFileSize = (bytes?: number): string => {
+    if (!bytes) return 'Bilinmiyor'
+    const sizes = ['B', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(1024))
+    return Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + ' ' + sizes[i]
   }
 
-  // Error state
-  if (error) {
-    return (
-      <div className="max-w-6xl mx-auto p-6">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-          {error}
-        </div>
-        <div className="mt-4">
-          <Link
-            href="/admin/furniture"
-            className="text-blue-600 hover:text-blue-800"
-          >
-            ← Mobilya listesine dön
-          </Link>
-        </div>
-      </div>
-    )
+  // Get all images for gallery
+  const getAllImages = (): FurnitureImage[] => {
+    if (!furniture) return []
+    return [...(furniture.imageGallery.mainImages || []), ...(furniture.imageGallery.galleryImages || [])]
   }
 
-  // No furniture found
-  if (!furniture) {
-    return (
-      <div className="max-w-6xl mx-auto p-6">
-        <div className="text-center py-12">
-          <h3 className="text-lg font-medium text-gray-900">Mobilya bulunamadı</h3>
-          <Link
-            href="/admin/furniture"
-            className="text-blue-600 hover:text-blue-800 mt-2 inline-block"
-          >
-            ← Mobilya listesine dön
-          </Link>
-        </div>
-      </div>
-    )
-  }
+  const allImages = getAllImages()
 
   return (
     <div className="max-w-6xl mx-auto p-6">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center space-x-2 text-sm text-gray-500 mb-2">
-              <Link href="/admin/furniture" className="hover:text-blue-600">
-                Mobilyalar
-              </Link>
-              {furniture.breadcrumb.map((crumb, index) => (
-                <span key={crumb.categoryId}>
-                  <span className="mx-1">›</span>
-                  <span>{crumb.categoryName}</span>
-                </span>
-              ))}
-              <span className="mx-1">›</span>
-              <span>{furniture.furnitureName}</span>
-            </div>
-            
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center space-x-3">
-              <FurnitureIcon />
-              <span>{furniture.furnitureName}</span>
-              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                furniture.isActive 
-                  ? 'bg-green-100 text-green-800' 
-                  : 'bg-red-100 text-red-800'
-              }`}>
-                {furniture.isActive ? 'Aktif' : 'Pasif'}
-              </span>
-            </h1>
-            <p className="text-gray-600 mt-2">
-              {furniture.furnitureType} • {formatPrice(furniture.price)}
-            </p>
-          </div>
-          
-          <div className="flex space-x-3">
-            <Link
-              href={`/admin/furniture/${furniture.furnitureId}/edit`}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-            >
-              <EditIcon />
-              <span>Düzenle</span>
-            </Link>
-            
-            <button
-              onClick={handleToggleStatus}
-              disabled={actionLoading}
-              className={`px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 ${
-                furniture.isActive
-                  ? 'bg-yellow-600 text-white hover:bg-yellow-700'
-                  : 'bg-green-600 text-white hover:bg-green-700'
-              } disabled:opacity-50`}
-            >
-              <ToggleIcon />
-              <span>{furniture.isActive ? 'Pasif Yap' : 'Aktif Yap'}</span>
-            </button>
-            
-            <button
-              onClick={handleDelete}
-              disabled={actionLoading}
-              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center space-x-2"
-            >
-              <DeleteIcon />
-              <span>Sil</span>
-            </button>
-            
-            <Link
-              href="/admin/furniture"
-              className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors flex items-center space-x-2"
-            >
-              <BackIcon />
-              <span>Geri</span>
-            </Link>
-          </div>
+      {/* Loading */}
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <LoaderIcon />
+          <span className="ml-2 text-gray-600">Mobilya yükleniyor...</span>
         </div>
-      </div>
+      )}
 
-      {/* Main Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Sol Kolon - Ana Bilgiler */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Temel Bilgiler */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Temel Bilgiler</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Error */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+          {error}
+        </div>
+      )}
+
+      {/* Content */}
+      {!loading && furniture && (
+        <>
+          {/* Header */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between">
               <div>
-                <div className="flex items-center space-x-2 text-sm text-gray-500 mb-1">
+                {/* Breadcrumb */}
+                {furniture.breadcrumb && furniture.breadcrumb.length > 0 && (
+                  <nav className="flex items-center space-x-2 text-sm text-gray-500 mb-2">
+                    <Link href="/admin/furniture" className="hover:text-gray-700">
+                      Mobilyalar
+                    </Link>
+                    {furniture.breadcrumb.map((item, index) => (
+                      <span key={item.categoryId} className="flex items-center space-x-2">
+                        <span>→</span>
+                        <span>{item.categoryName}</span>
+                      </span>
+                    ))}
+                    <span>→</span>
+                    <span className="text-gray-900">{furniture.furnitureName}</span>
+                  </nav>
+                )}
+                
+                <h1 className="text-3xl font-bold text-gray-900 flex items-center space-x-3">
                   <FurnitureIcon />
-                  <span>Mobilya Adı</span>
-                </div>
-                <div className="text-lg font-medium text-gray-900">{furniture.furnitureName}</div>
+                  <span>{furniture.furnitureName}</span>
+                  <span className={`px-3 py-1 text-sm rounded-full ${
+                    furniture.isActive 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    {furniture.isActive ? 'Aktif' : 'Pasif'}
+                  </span>
+                </h1>
+                
+                <p className="text-gray-600 mt-2">
+                  {furniture.furnitureType} • {formatPrice(furniture.price)}
+                </p>
               </div>
-
-              <div>
-                <div className="flex items-center space-x-2 text-sm text-gray-500 mb-1">
-                  <CategoryIcon />
-                  <span>Mobilya Tipi</span>
-                </div>
-                <div className="text-lg font-medium text-gray-900">{furniture.furnitureType}</div>
+              
+              <div className="flex items-center space-x-3">
+                <Link
+                  href="/admin/furniture"
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2"
+                >
+                  <BackIcon />
+                  <span>Geri Dön</span>
+                </Link>
+                
+                <button
+                  onClick={toggleStatus}
+                  className={`px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 ${
+                    furniture.isActive
+                      ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
+                      : 'bg-green-100 text-green-700 hover:bg-green-200'
+                  }`}
+                >
+                  <StatusIcon />
+                  <span>{furniture.isActive ? 'Pasif Yap' : 'Aktif Yap'}</span>
+                </button>
+                
+                <Link
+                  href={`/admin/furniture/${furnitureId}/edit`}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                >
+                  <EditIcon />
+                  <span>Düzenle</span>
+                </Link>
+                
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+                >
+                  {deleting ? <LoaderIcon /> : <DeleteIcon />}
+                  <span>{deleting ? 'Siliniyor...' : 'Sil'}</span>
+                </button>
               </div>
+            </div>
 
-              <div>
-                <div className="flex items-center space-x-2 text-sm text-gray-500 mb-1">
-                  <PriceIcon />
-                  <span>Fiyat</span>
+            {/* Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+              <div className="bg-white rounded-lg border border-gray-200 p-4">
+                <div className="flex items-center space-x-2">
+                  <ImageIcon />
+                  <span className="text-sm text-gray-600">Toplam Görsel</span>
                 </div>
-                <div className="text-lg font-medium text-gray-900">{formatPrice(furniture.price)}</div>
+                <div className="text-2xl font-bold text-gray-900 mt-1">{furniture.stats.totalImages}</div>
               </div>
-
-              <div>
-                <div className="flex items-center space-x-2 text-sm text-gray-500 mb-1">
+              <div className="bg-white rounded-lg border border-gray-200 p-4">
+                <div className="flex items-center space-x-2">
+                  <ColorIcon />
+                  <span className="text-sm text-gray-600">Renk Seçeneği</span>
+                </div>
+                <div className="text-2xl font-bold text-gray-900 mt-1">{furniture.stats.totalColors}</div>
+              </div>
+              <div className="bg-white rounded-lg border border-gray-200 p-4">
+                <div className="flex items-center space-x-2">
+                  <PropertyIcon />
+                  <span className="text-sm text-gray-600">Özellik</span>
+                </div>
+                <div className="text-2xl font-bold text-gray-900 mt-1">{furniture.stats.totalProperties}</div>
+              </div>
+              <div className="bg-white rounded-lg border border-gray-200 p-4">
+                <div className="flex items-center space-x-2">
                   <CalendarIcon />
-                  <span>Oluşturma Tarihi</span>
+                  <span className="text-sm text-gray-600">Oluşturma</span>
                 </div>
-                <div className="text-lg font-medium text-gray-900">{formatDate(furniture.createdAt)}</div>
+                <div className="text-sm font-medium text-gray-900 mt-1">{formatDate(furniture.createdAt)}</div>
               </div>
+            </div>
+          </div>
 
-              {furniture.category && (
-                <div className="md:col-span-2">
-                  <div className="flex items-center space-x-2 text-sm text-gray-500 mb-1">
-                    <CategoryIcon />
-                    <span>Kategori</span>
+          {/* Main Content */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Images */}
+            <div className="space-y-4">
+              {/* Main Image Display */}
+              {allImages.length > 0 && (
+                <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                  <div className="aspect-square bg-gray-100 relative">
+                    <img
+                      src={allImages[selectedImageIndex]?.image.filePath || '/images/placeholder-furniture.jpg'}
+                      alt={allImages[selectedImageIndex]?.image.altText || furniture.furnitureName}
+                      className="w-full h-full object-cover"
+                    />
+                    
+                    {/* Image Type Badge */}
+                    <div className="absolute top-4 left-4">
+                      <span className={`px-3 py-1 text-xs rounded-full ${
+                        allImages[selectedImageIndex]?.imageType === 'main_image'
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {allImages[selectedImageIndex]?.imageType === 'main_image' ? 'Ana Görsel' : 'Galeri'}
+                      </span>
+                    </div>
+
+                    {/* Navigation Arrows */}
+                    {allImages.length > 1 && (
+                      <>
+                        <button
+                          onClick={() => setSelectedImageIndex(prev => prev > 0 ? prev - 1 : allImages.length - 1)}
+                          className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-opacity"
+                        >
+                          ←
+                        </button>
+                        <button
+                          onClick={() => setSelectedImageIndex(prev => prev < allImages.length - 1 ? prev + 1 : 0)}
+                          className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-opacity"
+                        >
+                          →
+                        </button>
+                      </>
+                    )}
+
+                    {/* Image Counter */}
+                    {allImages.length > 1 && (
+                      <div className="absolute bottom-4 right-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
+                        {selectedImageIndex + 1} / {allImages.length}
+                      </div>
+                    )}
                   </div>
-                  <div className="text-lg font-medium text-gray-900">
-                    {furniture.category.parent && `${furniture.category.parent.categoryName} > `}
-                    {furniture.category.categoryName}
+
+                  {/* Image Info */}
+                  <div className="p-4">
+                    <div className="text-sm text-gray-600">
+                      <div className="font-medium">{allImages[selectedImageIndex]?.image.fileName}</div>
+                      {allImages[selectedImageIndex]?.image.width && allImages[selectedImageIndex]?.image.height && (
+                        <div>
+                          {allImages[selectedImageIndex]?.image.width} × {allImages[selectedImageIndex]?.image.height} px
+                        </div>
+                      )}
+                      {allImages[selectedImageIndex]?.image.fileSize && (
+                        <div>{formatFileSize(allImages[selectedImageIndex]?.image.fileSize)}</div>
+                      )}
+                    </div>
                   </div>
+                </div>
+              )}
+
+              {/* Thumbnail Gallery */}
+              {allImages.length > 1 && (
+                <div className="bg-white rounded-lg border border-gray-200 p-4">
+                  <h3 className="text-sm font-medium text-gray-900 mb-3">Tüm Görseller</h3>
+                  <div className="grid grid-cols-4 gap-2">
+                    {allImages.map((image, index) => (
+                      <button
+                        key={image.id}
+                        onClick={() => setSelectedImageIndex(index)}
+                        className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
+                          selectedImageIndex === index ? 'border-blue-500' : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <img
+                          src={image.image.filePath}
+                          alt={image.image.altText}
+                          className="w-full h-full object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* No Images */}
+              {allImages.length === 0 && (
+                <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+                  <ImageIcon />
+                  <p className="text-gray-500 mt-2">Henüz görsel eklenmemiş</p>
                 </div>
               )}
             </div>
 
-            {furniture.description && (
-              <div className="mt-6">
-                <div className="text-sm text-gray-500 mb-2">Açıklama</div>
-                <div className="text-gray-900 whitespace-pre-wrap">{furniture.description}</div>
-              </div>
-            )}
-          </div>
-
-          {/* Renkler */}
-          {furniture.furnitureColors.length > 0 && (
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <ColorIcon />
-                <span className="ml-2">Renk Seçenekleri ({furniture.stats.totalColors})</span>
-              </h2>
-              
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {furniture.furnitureColors.map(({ color, isAvailable }) => (
-                  <div
-                    key={color.colorId}
-                    className={`flex items-center space-x-3 p-3 rounded-lg border ${
-                      isAvailable ? 'border-gray-200 bg-gray-50' : 'border-gray-100 bg-gray-25 opacity-50'
-                    }`}
-                  >
-                    <div
-                      className="w-6 h-6 rounded-full border-2 border-white shadow-sm"
-                      style={{ backgroundColor: color.colorCode }}
-                    />
+            {/* Information */}
+            <div className="space-y-6">
+              {/* Basic Info */}
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+                  <InfoIcon />
+                  <span>Temel Bilgiler</span>
+                </h2>
+                
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <div className="text-sm font-medium text-gray-900">{color.colorName}</div>
-                      <div className="text-xs text-gray-500">
-                        {isAvailable ? 'Mevcut' : 'Mevcut Değil'}
+                      <label className="block text-sm font-medium text-gray-600">Mobilya Adı</label>
+                      <div className="text-sm text-gray-900 mt-1">{furniture.furnitureName}</div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600">Mobilya Tipi</label>
+                      <div className="text-sm text-gray-900 mt-1">{furniture.furnitureType}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600">Fiyat</label>
+                      <div className="text-lg font-bold text-blue-600 mt-1">{formatPrice(furniture.price)}</div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-600">Kategori</label>
+                      <div className="text-sm text-gray-900 mt-1">
+                        {furniture.category?.categoryName || 'Kategori atanmamış'}
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Özellikler */}
-          {furniture.furnitureProperties.length > 0 && (
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <PropertyIcon />
-                <span className="ml-2">Özellikler ({furniture.stats.totalProperties})</span>
-              </h2>
-              
-              <div className="space-y-4">
-                {furniture.furnitureProperties.map(({ property, propertyValue, isActive }) => (
-                  <div
-                    key={property.propertyId}
-                    className={`grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-lg border ${
-                      isActive ? 'border-gray-200 bg-gray-50' : 'border-gray-100 bg-gray-25 opacity-50'
-                    }`}
-                  >
+                  
+                  {furniture.description && (
                     <div>
-                      <div className="text-sm font-medium text-gray-900">{property.propertyName}</div>
-                      <div className="text-xs text-gray-500">{property.propertyType}</div>
+                      <label className="block text-sm font-medium text-gray-600">Açıklama</label>
+                      <div className="text-sm text-gray-900 mt-1 whitespace-pre-wrap">{furniture.description}</div>
                     </div>
-                    <div className="md:col-span-2">
-                      <div className="text-sm text-gray-900">{propertyValue}</div>
-                      {property.description && (
-                        <div className="text-xs text-gray-500 mt-1">{property.description}</div>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  )}
+                </div>
               </div>
-            </div>
-          )}
 
-          {/* Görseller */}
-          {furniture.furnitureImages.length > 0 && (
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <ImageIcon />
-                <span className="ml-2">Görseller ({furniture.stats.totalImages})</span>
-              </h2>
-              
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {furniture.furnitureImages.map(({ image, imageType, sortOrder, isActive }) => (
-                  <div
-                    key={image.imageId}
-                    className={`relative group ${!isActive ? 'opacity-50' : ''}`}
-                  >
-                    <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
-                      {image.filePath ? (
-                        <img
-                          src={image.filePath}
-                          alt={image.altText || furniture.furnitureName}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400">
-                          <ImageIcon />
+              {/* Colors */}
+              {furniture.colors && furniture.colors.length > 0 && (
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+                    <ColorIcon />
+                    <span>Renk Seçenekleri ({furniture.colors.length})</span>
+                  </h2>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    {furniture.colors.map((furnitureColor) => (
+                      <div
+                        key={furnitureColor.id}
+                        className={`border rounded-lg p-3 ${
+                          furnitureColor.isAvailable ? 'border-gray-200' : 'border-gray-100 opacity-50'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-3">
+                          {furnitureColor.color.colorCode && (
+                            <div
+                              className="w-6 h-6 rounded-full border border-gray-300"
+                              style={{ backgroundColor: furnitureColor.color.colorCode }}
+                            />
+                          )}
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {furnitureColor.color.colorName}
+                            </div>
+                            {furnitureColor.color.colorCode && (
+                              <div className="text-xs text-gray-500">
+                                {furnitureColor.color.colorCode}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      )}
-                    </div>
-                    
-                    <div className="mt-2">
-                      <div className="text-xs font-medium text-gray-900">{image.fileName}</div>
-                      <div className="text-xs text-gray-500">
-                        {imageType} • Sıra: {sortOrder}
-                        {image.width && image.height && ` • ${image.width}x${image.height}`}
+                        
+                        {!furnitureColor.isAvailable && (
+                          <div className="text-xs text-red-600 mt-1">Mevcut değil</div>
+                        )}
                       </div>
-                    </div>
-
-                    {imageType === 'main_image' && (
-                      <div className="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded">
-                        Ana Görsel
-                      </div>
-                    )}
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Sağ Kolon - İstatistikler ve Hızlı Bilgiler */}
-        <div className="space-y-6">
-          {/* İstatistikler */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">İstatistikler</h2>
-            
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <ColorIcon />
-                  <span className="text-sm text-gray-600">Renk Sayısı</span>
                 </div>
-                <span className="text-sm font-medium text-gray-900">{furniture.stats.totalColors}</span>
-              </div>
+              )}
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <PropertyIcon />
-                  <span className="text-sm text-gray-600">Özellik Sayısı</span>
+              {/* Properties */}
+              {furniture.properties && furniture.properties.length > 0 && (
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+                    <PropertyIcon />
+                    <span>Özellikler ({furniture.properties.length})</span>
+                  </h2>
+                  
+                  <div className="space-y-3">
+                    {furniture.properties.map((furnitureProperty) => (
+                      <div
+                        key={furnitureProperty.id}
+                        className={`border rounded-lg p-3 ${
+                          furnitureProperty.isActive ? 'border-gray-200' : 'border-gray-100 opacity-50'
+                        }`}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {furnitureProperty.property.propertyName}
+                            </div>
+                            <div className="text-sm text-gray-600 mt-1">
+                              {furnitureProperty.propertyValue}
+                            </div>
+                            {furnitureProperty.property.description && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                {furnitureProperty.property.description}
+                              </div>
+                            )}
+                          </div>
+                          <span className={`text-xs px-2 py-1 rounded ${
+                            furnitureProperty.property.propertyType === 'text' ? 'bg-blue-100 text-blue-800' :
+                            furnitureProperty.property.propertyType === 'number' ? 'bg-green-100 text-green-800' :
+                            furnitureProperty.property.propertyType === 'boolean' ? 'bg-purple-100 text-purple-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {furnitureProperty.property.propertyType}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <span className="text-sm font-medium text-gray-900">{furniture.stats.totalProperties}</span>
-              </div>
+              )}
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <ImageIcon />
-                  <span className="text-sm text-gray-600">Görsel Sayısı</span>
+              {/* System Info */}
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+                  <StatsIcon />
+                  <span>Sistem Bilgileri</span>
+                </h2>
+                
+                <div className="grid grid-cols-1 gap-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Mobilya ID:</span>
+                    <span className="text-gray-900 font-mono">#{furniture.furnitureId}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Oluşturma Tarihi:</span>
+                    <span className="text-gray-900">{formatDate(furniture.createdAt)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Durum:</span>
+                    <span className={`font-medium ${furniture.isActive ? 'text-green-600' : 'text-red-600'}`}>
+                      {furniture.isActive ? 'Aktif' : 'Pasif'}
+                    </span>
+                  </div>
                 </div>
-                <span className="text-sm font-medium text-gray-900">{furniture.stats.totalImages}</span>
               </div>
             </div>
           </div>
+        </>
+      )}
 
-          {/* Hızlı İşlemler */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Hızlı İşlemler</h2>
-            
-            <div className="space-y-3">
-              <Link
-                href={`/admin/furniture/${furniture.furnitureId}/edit`}
-                className="w-full bg-blue-50 text-blue-700 px-4 py-2 rounded-lg text-sm hover:bg-blue-100 transition-colors flex items-center justify-center space-x-2"
-              >
-                <EditIcon />
-                <span>Mobilyayı Düzenle</span>
-              </Link>
-
-              <button
-                onClick={handleToggleStatus}
-                disabled={actionLoading}
-                className={`w-full px-4 py-2 rounded-lg text-sm transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 ${
-                  furniture.isActive
-                    ? 'bg-yellow-50 text-yellow-700 hover:bg-yellow-100'
-                    : 'bg-green-50 text-green-700 hover:bg-green-100'
-                }`}
-              >
-                <ToggleIcon />
-                <span>{furniture.isActive ? 'Pasif Yap' : 'Aktif Yap'}</span>
-              </button>
-
-              <button
-                onClick={handleDelete}
-                disabled={actionLoading}
-                className="w-full bg-red-50 text-red-700 px-4 py-2 rounded-lg text-sm hover:bg-red-100 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
-              >
-                <DeleteIcon />
-                <span>Mobilyayı Sil</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Mobilya Bilgileri */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Sistem Bilgileri</h2>
-            
-            <div className="space-y-3 text-sm">
-              <div>
-                <span className="text-gray-500">Mobilya ID:</span>
-                <span className="ml-2 font-medium text-gray-900">#{furniture.furnitureId}</span>
-              </div>
-              
-              <div>
-                <span className="text-gray-500">Kategori ID:</span>
-                <span className="ml-2 font-medium text-gray-900">
-                  {furniture.categoryId ? `#${furniture.categoryId}` : 'Yok'}
-                </span>
-              </div>
-              
-              <div>
-                <span className="text-gray-500">Oluşturma:</span>
-                <span className="ml-2 font-medium text-gray-900">{formatDate(furniture.createdAt)}</span>
-              </div>
-              
-              <div>
-                <span className="text-gray-500">Durum:</span>
-                <span className={`ml-2 font-medium ${furniture.isActive ? 'text-green-600' : 'text-red-600'}`}>
-                  {furniture.isActive ? 'Aktif' : 'Pasif'}
-                </span>
-              </div>
-            </div>
+      {/* Not Found */}
+      {!loading && !furniture && !error && (
+        <div className="text-center py-12">
+          <FurnitureIcon />
+          <h3 className="mt-2 text-sm font-medium text-gray-900">Mobilya bulunamadı</h3>
+          <p className="mt-1 text-sm text-gray-500">
+            Belirtilen ID'ye sahip mobilya mevcut değil.
+          </p>
+          <div className="mt-6">
+            <Link
+              href="/admin/furniture"
+              className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+            >
+              <BackIcon />
+              <span className="ml-2">Mobilya Listesine Dön</span>
+            </Link>
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
