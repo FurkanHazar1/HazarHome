@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
-// TypeScript interfaces
+// TypeScript interfaces - API'ye uygun
 interface Category {
   categoryId: number
   categoryName: string
@@ -49,6 +49,21 @@ interface UploadedFile {
   optimized: boolean
 }
 
+interface ImageListItem {
+  imageId: number
+  fileName: string
+  originalFileName?: string
+  webPath: string
+  fileSize?: number
+  fileType?: string
+  width?: number
+  height?: number
+  description?: string
+  altText?: string
+  sortOrder: number
+  imageType: string
+}
+
 interface ApiResponse<T> {
   success: boolean
   message?: string
@@ -89,6 +104,10 @@ interface ValidationError {
   message: string
 }
 
+interface FurnitureEditProps {
+  furnitureId: string
+}
+
 // Icon components
 const FurnitureIcon = () => <span className="text-xl">🪑</span>
 const SaveIcon = () => <span className="text-lg">💾</span>
@@ -101,18 +120,18 @@ const LoaderIcon = () => <span className="text-lg animate-spin">⏳</span>
 const PlusIcon = () => <span className="text-sm">➕</span>
 const TrashIcon = () => <span className="text-sm">🗑️</span>
 const UploadIcon = () => <span className="text-sm">📤</span>
-const AddIcon = () => <span className="text-lg">➕</span>
-const WarningIcon = () => <span className="text-sm">⚠️</span>
-const InfoIcon = () => <span className="text-sm">ℹ️</span>
+const EditIcon = () => <span className="text-lg">✏️</span>
+const UpdateIcon = () => <span className="text-sm">📝</span>
 
-export default function FurnitureAdd() {
+export default function FurnitureEdit({ furnitureId }: FurnitureEditProps) {
   const router = useRouter()
   
   // State management
-  const [loading, setLoading] = useState<boolean>(false)
+  const [loading, setLoading] = useState<boolean>(true)
   const [saving, setSaving] = useState<boolean>(false)
   const [uploading, setUploading] = useState<boolean>(false)
-  const [deletingIndex, setDeletingIndex] = useState<number | null>(null)
+  const [deletingImageId, setDeletingImageId] = useState<number | null>(null)
+  const [updatingImageId, setUpdatingImageId] = useState<number | null>(null)
   const [error, setError] = useState<string>('')
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([])
   
@@ -120,10 +139,7 @@ export default function FurnitureAdd() {
   const [categories, setCategories] = useState<Category[]>([])
   const [colors, setColors] = useState<Color[]>([])
   const [properties, setProperties] = useState<Property[]>([])
-  
-  // New state for upload strategy
-  const [uploadStrategy, setUploadStrategy] = useState<'before' | 'after'>('after')
-  const [savedFurnitureId, setSavedFurnitureId] = useState<number | null>(null)
+  const [originalFurniture, setOriginalFurniture] = useState<any>(null)
   
   // Form data
   const [formData, setFormData] = useState<FormData>({
@@ -138,11 +154,9 @@ export default function FurnitureAdd() {
     images: []
   })
 
-  // Load form data
+  // Load dropdown data (categories, colors, properties)
   const loadFormData = async (): Promise<void> => {
     try {
-      setLoading(true)
-      
       const [categoriesRes, colorsRes, propertiesRes] = await Promise.all([
         fetch('/api/categories?flat=true&active=true'),
         fetch('/api/colors?active=true'),
@@ -155,22 +169,95 @@ export default function FurnitureAdd() {
         propertiesRes.json()
       ])
 
-      if (categoriesData.success) setCategories(categoriesData.data || [])
-      if (colorsData.success) setColors(colorsData.data || [])
-      if (propertiesData.success) setProperties(propertiesData.data || [])
+      if (categoriesData.success) setCategories(categoriesData.data)
+      if (colorsData.success) setColors(colorsData.data)
+      if (propertiesData.success) setProperties(propertiesData.data)
       
     } catch (err) {
       console.error('Form data loading error:', err)
       setError('Form verileri yüklenemedi')
-    } finally {
-      setLoading(false)
     }
   }
 
-  // Load data on mount
+  // Load existing furniture data
+  const loadExistingFurniture = async (): Promise<void> => {
+    try {
+      const response = await fetch(`/api/furniture/${furnitureId}`)
+      const data = await response.json()
+      
+      if (data.success) {
+        const furniture = data.data
+        setOriginalFurniture(furniture)
+        
+        // Load images using the API
+        await loadImages()
+        
+        // Populate form with existing data
+        setFormData(prev => ({
+          ...prev,
+          furnitureName: furniture.furnitureName || '',
+          furnitureType: furniture.furnitureType || '',
+          categoryId: furniture.category?.categoryId || null,
+          description: furniture.description || '',
+          price: furniture.price?.toString() || '',
+          isActive: furniture.isActive ?? true,
+          colorIds: furniture.colors?.filter((c: any) => c.isAvailable).map((c: any) => c.color.colorId) || [],
+          properties: furniture.properties?.filter((p: any) => p.isActive).map((p: any) => ({
+            propertyId: p.property.propertyId,
+            propertyValue: p.propertyValue
+          })) || []
+        }))
+      } else {
+        setError(data.error || 'Mobilya bulunamadı')
+      }
+    } catch (err) {
+      console.error('Furniture loading error:', err)
+      setError('Mobilya verileri yüklenemedi')
+    }
+  }
+
+  // Load images using API
+  const loadImages = async (): Promise<void> => {
+    try {
+      const response = await fetch(`/api/upload?furnitureId=${furnitureId}`)
+      const data: ApiResponse<ImageListItem[]> = await response.json()
+      
+      if (data.success && data.data) {
+        const apiImages = data.data.map((img: ImageListItem) => ({
+          imageId: img.imageId,
+          fileName: img.fileName,
+          filePath: img.webPath,
+          webPath: img.webPath,
+          fileSize: img.fileSize,
+          fileType: img.fileType,
+          description: img.description,
+          altText: img.altText,
+          width: img.width,
+          height: img.height,
+          sortOrder: img.sortOrder,
+          imageType: img.imageType as 'main_image' | 'gallery'
+        }))
+        
+        setFormData(prev => ({ ...prev, images: apiImages }))
+      }
+    } catch (err) {
+      console.error('Images loading error:', err)
+    }
+  }
+
+  // Load all data on mount
   useEffect(() => {
-    loadFormData()
-  }, [])
+    const loadAllData = async () => {
+      setLoading(true)
+      await Promise.all([
+        loadFormData(),
+        loadExistingFurniture()
+      ])
+      setLoading(false)
+    }
+    
+    loadAllData()
+  }, [furnitureId])
 
   // Handle input change
   const handleInputChange = (field: keyof FormData, value: any): void => {
@@ -222,76 +309,19 @@ export default function FurnitureAdd() {
     return category?.categoryName || 'Kategori'
   }
 
-  // Save furniture first (new approach)
-  const saveFurnitureFirst = async (): Promise<number | null> => {
-    try {
-      const submitData = {
-        furnitureName: formData.furnitureName.trim(),
-        furnitureType: formData.furnitureType.trim(),
-        categoryId: formData.categoryId,
-        description: formData.description.trim(),
-        price: parseFloat(formData.price),
-        isActive: formData.isActive,
-        colorIds: formData.colorIds,
-        properties: formData.properties,
-        images: [] // No images initially
-      }
-      
-      const response = await fetch('/api/furniture', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(submitData)
-      })
-      
-      const data = await response.json()
-      
-      if (data.success) {
-        return data.data.furnitureId
-      } else {
-        setError(data.error || 'Mobilya kaydedilirken hata oluştu')
-        if (data.validationErrors) {
-          setValidationErrors(data.validationErrors.map((msg: string) => ({
-            field: 'general',
-            message: msg
-          })))
-        }
-        return null
-      }
-    } catch (err) {
-      console.error('Save furniture error:', err)
-      setError('Mobilya kaydedilirken bağlantı hatası oluştu')
-      return null
-    }
-  }
-
-  // Handle image upload using NEW API (requires furnitureId)
+  // Handle image upload using API
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
     const files = event.target.files
     if (!files || files.length === 0) return
 
-    // For "after" strategy, we need to save furniture first
-    if (uploadStrategy === 'after' && !savedFurnitureId) {
-      // Validate form first
-      if (!validateFormBasic()) {
-        setError('Görsel yüklemek için önce temel bilgileri eksiksiz doldurun')
-        return
-      }
-
-      setSaving(true)
-      const furnitureId = await saveFurnitureFirst()
-      setSaving(false)
-      
-      if (!furnitureId) {
-        setError('Önce mobilya kaydedilmeli, görsel yüklenemedi')
-        return
-      }
-      
-      setSavedFurnitureId(furnitureId)
+    // Validation
+    if (!formData.furnitureName.trim()) {
+      setError('Görsel yüklemek için önce mobilya adını giriniz')
+      return
     }
 
-    // If we still don't have furnitureId, something went wrong
-    if (!savedFurnitureId) {
-      setError('Furniture ID bulunamadı, görsel yüklenemedi')
+    if (!formData.categoryId) {
+      setError('Görsel yüklemek için önce kategori seçiniz')
       return
     }
 
@@ -299,9 +329,10 @@ export default function FurnitureAdd() {
       setUploading(true)
       setError('')
 
-      // Prepare form data according to NEW API
+      // Prepare form data according to API
       const uploadFormData = new FormData()
-      uploadFormData.append('furnitureId', savedFurnitureId.toString()) // KEY CHANGE: Use furnitureId
+      uploadFormData.append('categoryName', getCategoryName(formData.categoryId))
+      uploadFormData.append('furnitureName', formData.furnitureName.trim())
       uploadFormData.append('description', formData.description || '')
       uploadFormData.append('altText', `${formData.furnitureName} görseli`)
 
@@ -310,7 +341,7 @@ export default function FurnitureAdd() {
         uploadFormData.append('files', file)
       })
 
-      // Upload files to NEW API
+      // Upload files to API
       const response = await fetch('/api/upload', {
         method: 'POST',
         body: uploadFormData
@@ -354,12 +385,12 @@ export default function FurnitureAdd() {
     }
   }
 
-  // Remove image using API DELETE (if imageId exists) or just from state
+  // Remove image using API DELETE
   const removeImage = async (index: number): Promise<void> => {
     const image = formData.images[index]
     
     if (!image.imageId) {
-      // If no imageId, just remove from state
+      // If no imageId, just remove from state (newly uploaded but not saved)
       const newImages = formData.images.filter((_, i) => i !== index)
       const reorderedImages = newImages.map((img, i) => ({
         ...img,
@@ -371,7 +402,7 @@ export default function FurnitureAdd() {
     }
 
     try {
-      setDeletingIndex(index)
+      setDeletingImageId(image.imageId)
       
       const response = await fetch(`/api/upload?imageId=${image.imageId}`, {
         method: 'DELETE'
@@ -395,12 +426,36 @@ export default function FurnitureAdd() {
       console.error('Delete image error:', err)
       setError('Görsel silinirken hata oluştu')
     } finally {
-      setDeletingIndex(null)
+      setDeletingImageId(null)
+    }
+  }
+
+  // Update image metadata using API PUT
+  const updateImageMetadata = async (imageId: number, metadata: { description?: string; altText?: string; sortOrder?: number }): Promise<void> => {
+    try {
+      setUpdatingImageId(imageId)
+      
+      const response = await fetch(`/api/upload?imageId=${imageId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(metadata)
+      })
+      
+      const data: ApiResponse<any> = await response.json()
+      
+      if (!data.success) {
+        setError(data.error || 'Görsel güncellenirken hata oluştu')
+      }
+    } catch (err) {
+      console.error('Update image error:', err)
+      setError('Görsel güncellenirken hata oluştu')
+    } finally {
+      setUpdatingImageId(null)
     }
   }
 
   // Move image
-  const moveImage = (fromIndex: number, toIndex: number): void => {
+  const moveImage = async (fromIndex: number, toIndex: number): Promise<void> => {
     const newImages = [...formData.images]
     const [movedImage] = newImages.splice(fromIndex, 1)
     newImages.splice(toIndex, 0, movedImage)
@@ -413,17 +468,18 @@ export default function FurnitureAdd() {
     }))
     
     handleInputChange('images', reorderedImages)
+
+    // Update sort orders in API if images have IDs
+    for (let i = 0; i < reorderedImages.length; i++) {
+      const img = reorderedImages[i]
+      if (img.imageId) {
+        await updateImageMetadata(img.imageId, { sortOrder: i + 1 })
+      }
+    }
   }
 
   // Bulk delete images using API PATCH
-  const bulkDeleteImages = async (): Promise<void> => {
-    const imageIds = formData.images.filter(img => img.imageId).map(img => img.imageId!)
-    if (imageIds.length === 0) {
-      // If no imageIds, just clear state
-      handleInputChange('images', [])
-      return
-    }
-
+  const bulkDeleteImages = async (imageIds: number[]): Promise<void> => {
     try {
       const response = await fetch('/api/upload', {
         method: 'PATCH',
@@ -437,8 +493,14 @@ export default function FurnitureAdd() {
       const data: ApiResponse<any> = await response.json()
       
       if (data.success) {
-        // Clear all images from state
-        handleInputChange('images', [])
+        // Remove deleted images from state
+        const newImages = formData.images.filter(img => !imageIds.includes(img.imageId!))
+        const reorderedImages = newImages.map((img, i) => ({
+          ...img,
+          sortOrder: i + 1,
+          imageType: i === 0 ? 'main_image' as const : 'gallery' as const
+        }))
+        handleInputChange('images', reorderedImages)
       } else {
         setError(data.error || 'Görseller silinirken hata oluştu')
       }
@@ -448,27 +510,7 @@ export default function FurnitureAdd() {
     }
   }
 
-  // Validate basic form (without images)
-  const validateFormBasic = (): boolean => {
-    const errors: ValidationError[] = []
-    
-    if (!formData.furnitureName.trim()) {
-      errors.push({ field: 'furnitureName', message: 'Mobilya adı zorunludur' })
-    }
-    
-    if (!formData.furnitureType.trim()) {
-      errors.push({ field: 'furnitureType', message: 'Mobilya tipi zorunludur' })
-    }
-    
-    if (!formData.price || parseFloat(formData.price) <= 0) {
-      errors.push({ field: 'price', message: 'Geçerli bir fiyat giriniz' })
-    }
-    
-    setValidationErrors(errors)
-    return errors.length === 0
-  }
-
-  // Validate full form
+  // Validate form
   const validateForm = (): boolean => {
     const errors: ValidationError[] = []
     
@@ -485,7 +527,7 @@ export default function FurnitureAdd() {
     }
     
     if (formData.images.length === 0) {
-      errors.push({ field: 'images', message: 'En az bir görsel eklemelisiniz' })
+      errors.push({ field: 'images', message: 'En az bir görsel olmalıdır' })
     }
     
     setValidationErrors(errors)
@@ -498,8 +540,9 @@ export default function FurnitureAdd() {
     return error?.message
   }
 
-  // Submit form (NEW WORKFLOW)
+  // Submit form
   const handleSubmit = async (): Promise<void> => {
+    
     if (!validateForm()) {
       setError('Lütfen tüm zorunlu alanları doldurun')
       return
@@ -509,18 +552,49 @@ export default function FurnitureAdd() {
       setSaving(true)
       setError('')
       
-      // If we saved furniture already for image upload, just redirect
-      if (savedFurnitureId) {
-        router.push(`/admin/furniture/${savedFurnitureId}`)
-        return
+      const submitData = {
+        furnitureName: formData.furnitureName.trim(),
+        furnitureType: formData.furnitureType.trim(),
+        categoryId: formData.categoryId,
+        description: formData.description.trim(),
+        price: parseFloat(formData.price),
+        isActive: formData.isActive,
+        colorIds: formData.colorIds,
+        properties: formData.properties,
+        images: formData.images.map(img => ({
+          imageId: img.imageId,
+          fileName: img.fileName,
+          filePath: img.webPath,
+          fileSize: img.fileSize,
+          fileType: img.fileType,
+          description: img.description,
+          altText: img.altText,
+          width: img.width,
+          height: img.height,
+          sortOrder: img.sortOrder,
+          imageType: img.imageType
+        }))
       }
       
-      // Otherwise, save furniture now (this shouldn't happen with new workflow)
-      const furnitureId = await saveFurnitureFirst()
-      if (furnitureId) {
+      const response = await fetch(`/api/furniture/${furnitureId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(submitData)
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
         router.push(`/admin/furniture/${furnitureId}`)
+      } else {
+        setError(data.error || 'Güncelleme sırasında hata oluştu')
+        if (data.validationErrors) {
+          setValidationErrors(data.validationErrors.map((msg: string) => ({
+            field: 'general',
+            message: msg
+          })))
+        }
       }
-      
     } catch (err) {
       console.error('Submit error:', err)
       setError('Bağlantı hatası oluştu')
@@ -546,20 +620,20 @@ export default function FurnitureAdd() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 flex items-center space-x-3">
-              <AddIcon />
-              <span>Yeni Mobilya Ekle</span>
+              <EditIcon />
+              <span>Mobilya Düzenle</span>
             </h1>
             <p className="text-gray-600 mt-2">
-              Sisteme yeni mobilya ekleyin - Yeni API yapısı ile
+              {originalFurniture?.furnitureName || 'Mobilya bilgilerini düzenleyin'}
             </p>
           </div>
           
           <Link
-            href="/admin/furniture"
+            href={`/admin/furniture/${furnitureId}`}
             className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2"
           >
             <BackIcon />
-            <span>Geri Dön</span>
+            <span>Detaya Dön</span>
           </Link>
         </div>
       </div>
@@ -575,32 +649,13 @@ export default function FurnitureAdd() {
       {loading && (
         <div className="flex items-center justify-center py-12">
           <LoaderIcon />
-          <span className="ml-2 text-gray-600">Form yükleniyor...</span>
+          <span className="ml-2 text-gray-600">Mobilya yükleniyor...</span>
         </div>
       )}
 
       {/* Form */}
-      {!loading && (
+      {!loading && originalFurniture && (
         <div className="space-y-8">
-          {/* API Strategy Info */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex items-start space-x-2">
-              <InfoIcon />
-              <div>
-                <h3 className="text-sm font-medium text-blue-800">Yeni API Yapısı</h3>
-                <p className="text-sm text-blue-700 mt-1">
-                  Görseller artık <code>furnitureId</code> klasörlerine kaydediliyor. 
-                  Görsel yüklemek için önce mobilya kaydedilir, sonra görseller eklenir.
-                </p>
-                {savedFurnitureId && (
-                  <p className="text-sm text-green-700 mt-2 font-medium">
-                    ✅ Mobilya kaydedildi (ID: {savedFurnitureId}) - Artık görsel yükleyebilirsiniz
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-
           {/* Basic Information */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">
@@ -729,9 +784,6 @@ export default function FurnitureAdd() {
                   </option>
                 ))}
               </select>
-              <p className="mt-1 text-sm text-gray-500">
-                Görsel yüklemek için temel bilgiler doldurulmalı
-              </p>
             </div>
           </div>
 
@@ -841,46 +893,25 @@ export default function FurnitureAdd() {
             )}
           </div>
 
-          {/* Image Upload */}
+          {/* Image Management */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
               <ImageIcon />
-              <span>Görseller * (Yeni API Yapısı)</span>
+              <span>Görseller * (API Entegreli)</span>
             </h2>
-            
-            {/* Upload Requirements */}
-            {!savedFurnitureId && (
-              <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <div className="flex items-start space-x-2">
-                  <WarningIcon />
-                  <div>
-                    <p className="text-sm text-yellow-700 font-medium">
-                      Yeni API Gereksinimi
-                    </p>
-                    <p className="text-sm text-yellow-700 mt-1">
-                      Görsel yüklemek için önce temel bilgileri doldurun. İlk görsel yüklediğinizde mobilya otomatik kaydedilecek.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
             
             {/* Upload Button */}
             <div className="mb-6">
-              <label className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
-                uploading
-                  ? 'border-gray-200 bg-gray-50 cursor-not-allowed'
-                  : 'border-gray-300 bg-gray-50 hover:bg-gray-100'
-              }`}>
+              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer transition-colors border-gray-300 bg-gray-50 hover:bg-gray-100">
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
                   {uploading ? <LoaderIcon /> : <UploadIcon />}
                   <p className="mb-2 text-sm text-gray-500">
                     <span className="font-semibold">
-                      {uploading ? 'Görseller API\'ye yükleniyor...' : 'Görsel yüklemek için tıklayın'}
+                      {uploading ? 'Görseller API\'ye yükleniyor...' : 'Yeni görsel eklemek için tıklayın'}
                     </span>
                   </p>
                   <p className="text-xs text-gray-500">PNG, JPG veya JPEG (MAX. 10MB, MAX. 10 dosya)</p>
-                  <p className="text-xs text-blue-500 mt-1">FurnitureID bazlı klasör yapısı</p>
+                  <p className="text-xs text-blue-500 mt-1">Sharp optimizasyon ve database kayıt dahil</p>
                 </div>
                 <input
                   type="file"
@@ -901,19 +932,22 @@ export default function FurnitureAdd() {
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-medium text-gray-700">
-                    Yüklenen Görseller ({formData.images.length})
+                    Mevcut Görseller ({formData.images.length})
                   </h3>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (confirm(`${formData.images.length} görseli silmek istediğinizden emin misiniz?`)) {
-                        bulkDeleteImages()
-                      }
-                    }}
-                    className="text-sm px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
-                  >
-                    Hepsini Sil
-                  </button>
+                  {formData.images.some(img => img.imageId) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const imageIds = formData.images.filter(img => img.imageId).map(img => img.imageId!)
+                        if (imageIds.length > 0 && confirm(`${imageIds.length} görseli silmek istediğinizden emin misiniz?`)) {
+                          bulkDeleteImages(imageIds)
+                        }
+                      }}
+                      className="text-sm px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+                    >
+                      Hepsini Sil
+                    </button>
+                  )}
                 </div>
                 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -931,7 +965,7 @@ export default function FurnitureAdd() {
                           {image.imageId ? (
                             <span className="inline-block w-3 h-3 bg-green-500 rounded-full" title="API'de kayıtlı" />
                           ) : (
-                            <span className="inline-block w-3 h-3 bg-yellow-500 rounded-full" title="Yeni yüklendi" />
+                            <span className="inline-block w-3 h-3 bg-yellow-500 rounded-full" title="Yeni yüklendi, henüz kaydedilmedi" />
                           )}
                         </div>
                       </div>
@@ -965,7 +999,8 @@ export default function FurnitureAdd() {
                             <button
                               type="button"
                               onClick={() => moveImage(index, index - 1)}
-                              className="text-xs text-blue-600 hover:text-blue-800 px-2 py-1 bg-blue-50 rounded"
+                              disabled={updatingImageId === image.imageId}
+                              className="text-xs text-blue-600 hover:text-blue-800 px-2 py-1 bg-blue-50 rounded disabled:opacity-50"
                               title="Yukarı taşı"
                             >
                               ↑
@@ -975,7 +1010,8 @@ export default function FurnitureAdd() {
                             <button
                               type="button"
                               onClick={() => moveImage(index, index + 1)}
-                              className="text-xs text-blue-600 hover:text-blue-800 px-2 py-1 bg-blue-50 rounded"
+                              disabled={updatingImageId === image.imageId}
+                              className="text-xs text-blue-600 hover:text-blue-800 px-2 py-1 bg-blue-50 rounded disabled:opacity-50"
                               title="Aşağı taşı"
                             >
                               ↓
@@ -986,11 +1022,11 @@ export default function FurnitureAdd() {
                         <button
                           type="button"
                           onClick={() => removeImage(index)}
-                          disabled={deletingIndex === index}
+                          disabled={deletingImageId === image.imageId}
                           className="text-red-600 hover:text-red-800 px-2 py-1 bg-red-50 rounded disabled:opacity-50"
                           title={image.imageId ? "API'den sil" : "Listeden kaldır"}
                         >
-                          {deletingIndex === index ? <LoaderIcon /> : <TrashIcon />}
+                          {deletingImageId === image.imageId ? <LoaderIcon /> : <TrashIcon />}
                         </button>
                       </div>
                     </div>
@@ -999,10 +1035,11 @@ export default function FurnitureAdd() {
                 
                 <div className="mt-4 p-3 bg-blue-50 rounded-lg">
                   <p className="text-sm text-blue-700">
-                    <strong>Yeni Klasör Yapısı:</strong> /uploads/furniture/furniture_{savedFurnitureId || 'ID'}/
+                    <strong>API Özellikleri:</strong> Sharp optimizasyon, database entegrasyonu, 
+                    fiziksel dosya yönetimi ve metadata güncelleme dahil.
                   </p>
-                  <p className="text-xs text-green-600 mt-1">
-                    İlk görsel ana görsel olarak kullanılacaktır. Sıralamayı değiştirebilirsiniz.
+                  <p className="text-xs text-blue-600 mt-1">
+                    <strong>Klasör:</strong> /uploads/furniture/{getCategoryName(formData.categoryId).toLowerCase()}/{formData.furnitureName.toLowerCase().replace(/\s+/g, '-')}/
                   </p>
                 </div>
               </div>
@@ -1012,7 +1049,7 @@ export default function FurnitureAdd() {
           {/* Submit Button */}
           <div className="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
             <Link
-              href="/admin/furniture"
+              href={`/admin/furniture/${furnitureId}`}
               className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
             >
               İptal
@@ -1021,18 +1058,11 @@ export default function FurnitureAdd() {
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={saving || uploading || deletingIndex !== null}
+              disabled={saving || uploading || deletingImageId !== null || updatingImageId !== null}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
             >
               {saving ? <LoaderIcon /> : <SaveIcon />}
-              <span>
-                {savedFurnitureId 
-                  ? 'Detaya Git' 
-                  : saving 
-                    ? 'Kaydediliyor...' 
-                    : 'Mobilya Ekle'
-                }
-              </span>
+              <span>{saving ? 'Güncelleniyor...' : 'Değişiklikleri Kaydet'}</span>
             </button>
           </div>
         </div>

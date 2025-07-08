@@ -41,6 +41,30 @@ interface FurnitureImage {
   }
 }
 
+// API Response types for upload integration
+interface ApiResponse<T> {
+  success: boolean
+  message?: string
+  error?: string
+  details?: string
+  data?: T
+}
+
+interface ImageListItem {
+  imageId: number
+  fileName: string
+  originalFileName?: string
+  webPath: string
+  fileSize?: number
+  fileType?: string
+  width?: number
+  height?: number
+  description?: string
+  altText?: string
+  sortOrder: number
+  imageType: string
+}
+
 interface FurnitureDetail {
   furnitureId: number
   furnitureName: string
@@ -97,6 +121,8 @@ const PriceIcon = () => <span className="text-sm">💰</span>
 const InfoIcon = () => <span className="text-sm">ℹ️</span>
 const StatsIcon = () => <span className="text-sm">📊</span>
 const CalendarIcon = () => <span className="text-sm">📅</span>
+const TrashIcon = () => <span className="text-sm">🗑️</span>
+const RefreshIcon = () => <span className="text-sm">🔄</span>
 
 export default function FurnitureDetail({ furnitureId }: FurnitureDetailProps) {
   const router = useRouter()
@@ -107,6 +133,8 @@ export default function FurnitureDetail({ furnitureId }: FurnitureDetailProps) {
   const [error, setError] = useState<string>('')
   const [deleting, setDeleting] = useState<boolean>(false)
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0)
+  const [deletingImageId, setDeletingImageId] = useState<number | null>(null)
+  const [refreshingImages, setRefreshingImages] = useState<boolean>(false)
 
   // Load furniture detail
   const loadFurnitureDetail = async (): Promise<void> => {
@@ -129,10 +157,101 @@ export default function FurnitureDetail({ furnitureId }: FurnitureDetailProps) {
     }
   }
 
+  // Load images from upload API
+  const loadImagesFromAPI = async (): Promise<void> => {
+    try {
+      setRefreshingImages(true)
+      
+      const response = await fetch(`/api/upload?furnitureId=${furnitureId}`)
+      const data: ApiResponse<ImageListItem[]> = await response.json()
+      
+      if (data.success && data.data && furniture) {
+        // Convert API images to furniture image format
+        const apiImages: FurnitureImage[] = data.data.map((img, index) => ({
+          id: img.imageId,
+          imageType: img.imageType,
+          sortOrder: img.sortOrder,
+          isActive: true,
+          image: {
+            imageId: img.imageId,
+            fileName: img.fileName,
+            filePath: img.webPath, // Use webPath for display
+            altText: img.altText || img.fileName,
+            width: img.width,
+            height: img.height,
+            fileSize: img.fileSize
+          }
+        }))
+        
+        // Update furniture state with fresh images
+        const mainImages = apiImages.filter(img => img.imageType === 'main_image')
+        const galleryImages = apiImages.filter(img => img.imageType === 'gallery')
+        
+        setFurniture(prev => prev ? {
+          ...prev,
+          images: apiImages,
+          imageGallery: {
+            mainImages,
+            galleryImages,
+            totalImages: apiImages.length
+          },
+          stats: {
+            ...prev.stats,
+            totalImages: apiImages.length
+          }
+        } : null)
+      }
+    } catch (err) {
+      console.error('Images loading error:', err)
+    } finally {
+      setRefreshingImages(false)
+    }
+  }
+
+  // Delete image using upload API
+  const deleteImage = async (imageId: number): Promise<void> => {
+    if (!confirm('Bu görseli silmek istediğinizden emin misiniz?')) return
+    
+    try {
+      setDeletingImageId(imageId)
+      
+      const response = await fetch(`/api/upload?imageId=${imageId}`, {
+        method: 'DELETE'
+      })
+      
+      const data: ApiResponse<any> = await response.json()
+      
+      if (data.success) {
+        // Refresh images from API
+        await loadImagesFromAPI()
+        
+        // Reset selected index if needed
+        const allImages = getAllImages()
+        if (selectedImageIndex >= allImages.length && allImages.length > 0) {
+          setSelectedImageIndex(allImages.length - 1)
+        }
+      } else {
+        setError(data.error || 'Görsel silinirken hata oluştu')
+      }
+    } catch (err) {
+      console.error('Delete image error:', err)
+      setError('Görsel silinirken hata oluştu')
+    } finally {
+      setDeletingImageId(null)
+    }
+  }
+
   // Load data on mount
   useEffect(() => {
     loadFurnitureDetail()
   }, [furnitureId])
+
+  // Load images from API when furniture is loaded
+  useEffect(() => {
+    if (furniture) {
+      loadImagesFromAPI()
+    }
+  }, [furniture?.furnitureId])
 
   // Delete furniture
   const handleDelete = async (): Promise<void> => {
@@ -240,8 +359,14 @@ export default function FurnitureDetail({ furnitureId }: FurnitureDetailProps) {
 
       {/* Error */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
-          {error}
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center justify-between">
+          <span>{error}</span>
+          <button
+            onClick={() => setError('')}
+            className="text-red-500 hover:text-red-700"
+          >
+            ✕
+          </button>
         </div>
       )}
 
@@ -329,9 +454,19 @@ export default function FurnitureDetail({ furnitureId }: FurnitureDetailProps) {
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
               <div className="bg-white rounded-lg border border-gray-200 p-4">
-                <div className="flex items-center space-x-2">
-                  <ImageIcon />
-                  <span className="text-sm text-gray-600">Toplam Görsel</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <ImageIcon />
+                    <span className="text-sm text-gray-600">Toplam Görsel</span>
+                  </div>
+                  <button
+                    onClick={loadImagesFromAPI}
+                    disabled={refreshingImages}
+                    className="text-blue-600 hover:text-blue-800 disabled:opacity-50"
+                    title="Görselleri yenile"
+                  >
+                    {refreshingImages ? <LoaderIcon /> : <RefreshIcon />}
+                  </button>
                 </div>
                 <div className="text-2xl font-bold text-gray-900 mt-1">{furniture.stats.totalImages}</div>
               </div>
@@ -384,6 +519,18 @@ export default function FurnitureDetail({ furnitureId }: FurnitureDetailProps) {
                       </span>
                     </div>
 
+                    {/* Delete Image Button */}
+                    <div className="absolute top-4 right-4">
+                      <button
+                        onClick={() => deleteImage(allImages[selectedImageIndex].image.imageId)}
+                        disabled={deletingImageId === allImages[selectedImageIndex].image.imageId}
+                        className="bg-red-500 bg-opacity-80 text-white p-2 rounded-full hover:bg-opacity-90 transition-opacity disabled:opacity-50"
+                        title="Görseli sil"
+                      >
+                        {deletingImageId === allImages[selectedImageIndex].image.imageId ? <LoaderIcon /> : <TrashIcon />}
+                      </button>
+                    </div>
+
                     {/* Navigation Arrows */}
                     {allImages.length > 1 && (
                       <>
@@ -413,7 +560,10 @@ export default function FurnitureDetail({ furnitureId }: FurnitureDetailProps) {
                   {/* Image Info */}
                   <div className="p-4">
                     <div className="text-sm text-gray-600">
-                      <div className="font-medium">{allImages[selectedImageIndex]?.image.fileName}</div>
+                      <div className="flex items-center justify-between">
+                        <div className="font-medium">{allImages[selectedImageIndex]?.image.fileName}</div>
+                        <div className="text-green-600 text-xs">ID: {allImages[selectedImageIndex]?.image.imageId}</div>
+                      </div>
                       {allImages[selectedImageIndex]?.image.width && allImages[selectedImageIndex]?.image.height && (
                         <div>
                           {allImages[selectedImageIndex]?.image.width} × {allImages[selectedImageIndex]?.image.height} px
@@ -430,13 +580,16 @@ export default function FurnitureDetail({ furnitureId }: FurnitureDetailProps) {
               {/* Thumbnail Gallery */}
               {allImages.length > 1 && (
                 <div className="bg-white rounded-lg border border-gray-200 p-4">
-                  <h3 className="text-sm font-medium text-gray-900 mb-3">Tüm Görseller</h3>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-medium text-gray-900">Tüm Görseller</h3>
+                    <span className="text-xs text-gray-500">API entegreli</span>
+                  </div>
                   <div className="grid grid-cols-4 gap-2">
                     {allImages.map((image, index) => (
                       <button
                         key={image.id}
                         onClick={() => setSelectedImageIndex(index)}
-                        className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
+                        className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors relative ${
                           selectedImageIndex === index ? 'border-blue-500' : 'border-gray-200 hover:border-gray-300'
                         }`}
                       >
@@ -445,6 +598,10 @@ export default function FurnitureDetail({ furnitureId }: FurnitureDetailProps) {
                           alt={image.image.altText}
                           className="w-full h-full object-cover"
                         />
+                        {/* Sort order badge */}
+                        <div className="absolute top-1 left-1 bg-black bg-opacity-60 text-white text-xs px-1 rounded">
+                          {image.sortOrder}
+                        </div>
                       </button>
                     ))}
                   </div>
@@ -456,6 +613,12 @@ export default function FurnitureDetail({ furnitureId }: FurnitureDetailProps) {
                 <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
                   <ImageIcon />
                   <p className="text-gray-500 mt-2">Henüz görsel eklenmemiş</p>
+                  <Link
+                    href={`/admin/furniture/${furnitureId}/edit`}
+                    className="inline-block mt-3 text-blue-600 hover:text-blue-800 text-sm"
+                  >
+                    Görsel eklemek için düzenle
+                  </Link>
                 </div>
               )}
             </div>
@@ -613,6 +776,10 @@ export default function FurnitureDetail({ furnitureId }: FurnitureDetailProps) {
                     <span className={`font-medium ${furniture.isActive ? 'text-green-600' : 'text-red-600'}`}>
                       {furniture.isActive ? 'Aktif' : 'Pasif'}
                     </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">API Entegrasyonu:</span>
+                    <span className="text-green-600 font-medium">✓ Aktif</span>
                   </div>
                 </div>
               </div>
