@@ -1,4 +1,4 @@
-// app/api/furniture/route.ts - Düzeltilmiş Mobilya API
+// app/api/furniture/route.ts - Image API ile uyumlu Mobilya API
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
@@ -8,21 +8,13 @@ interface PropertyInput {
   propertyValue: string;
 }
 
-interface ImageInput {
-  fileName: string;
-  filePath: string;
-  fileSize?: number;
-  fileType?: string;
-  description?: string;
-  altText?: string;
-  width?: number;
-  height?: number;
-  originalFileName?: string;
+interface ImageRelationInput {
+  imageId: number;  // Sadece mevcut image ID'si
   sortOrder?: number;
-  imageType?: string;
+  imageType?: string;  // 'main_image', 'gallery', etc.
 }
 
-// GET - Mobilyaları listele
+// GET - Mobilyaları listele (aynı kalır)
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
@@ -228,7 +220,7 @@ export async function GET(request: Request) {
   }
 }
 
-// POST - Yeni mobilya ekle
+// POST - Yeni mobilya ekle (Image oluşturma kısmı çıkarıldı)
 export async function POST(request: Request) {
   try {
     const data = await request.json()
@@ -242,7 +234,7 @@ export async function POST(request: Request) {
       isActive = true,
       colorIds = [],
       properties = [],
-      images = []
+      images = []  // Sadece mevcut image ID'leri
     } = data
 
     // Temel validasyonlar
@@ -282,7 +274,7 @@ export async function POST(request: Request) {
 
     // properties validasyonu
     if (properties && Array.isArray(properties)) {
-      properties.forEach((prop: { propertyId: number; propertyValue: string }, index: number) => {
+      properties.forEach((prop: PropertyInput, index: number) => {
         if (!prop.propertyId || isNaN(parseInt(String(prop.propertyId)))) {
           validationErrors.push(`Özellik ${index + 1}: Geçerli bir özellik ID\'si gerekli`)
         }
@@ -290,6 +282,21 @@ export async function POST(request: Request) {
           validationErrors.push(`Özellik ${index + 1}: Özellik değeri gerekli`)
         } else if (prop.propertyValue.trim().length > 200) {
           validationErrors.push(`Özellik ${index + 1}: Özellik değeri 200 karakterden uzun olamaz`)
+        }
+      })
+    }
+
+    // images validasyonu (Sadece mevcut image ID'leri kontrol et)
+    if (images && Array.isArray(images)) {
+      images.forEach((img: ImageRelationInput, index: number) => {
+        if (!img.imageId || isNaN(parseInt(String(img.imageId))) || parseInt(String(img.imageId)) <= 0) {
+          validationErrors.push(`Görsel ${index + 1}: Geçerli bir image ID\'si gerekli`)
+        }
+        if (img.sortOrder !== undefined && (isNaN(parseInt(String(img.sortOrder))) || parseInt(String(img.sortOrder)) < 0)) {
+          validationErrors.push(`Görsel ${index + 1}: Sıralama değeri geçerli bir pozitif sayı olmalıdır`)
+        }
+        if (img.imageType && typeof img.imageType !== 'string') {
+          validationErrors.push(`Görsel ${index + 1}: Image tipi string olmalıdır`)
         }
       })
     }
@@ -398,16 +405,6 @@ export async function POST(request: Request) {
             throw new Error('Bazı özellikler bulunamadı veya pasif durumda')
           }
 
-          // Özellik değerlerini validasyon
-          for (const prop of properties) {
-            if (!prop.propertyValue || prop.propertyValue.trim().length === 0) {
-              throw new Error(`Özellik değeri boş olamaz`)
-            }
-            if (prop.propertyValue.length > 200) {
-              throw new Error(`Özellik değeri 200 karakterden uzun olamaz`)
-            }
-          }
-
           await tx.furnitureProperty.createMany({
             data: properties.map((prop: PropertyInput) => ({
               furnitureId: furniture.furnitureId,
@@ -419,40 +416,35 @@ export async function POST(request: Request) {
         }
       }
 
-      // 4. Görselleri ekle
+      // 4. Mevcut görselleri bağla (Yeni görsel oluşturma YOK)
       if (images && images.length > 0) {
-        for (const imageData of images as ImageInput[]) {
-          // Görsel validasyonu
-          if (!imageData.fileName || !imageData.filePath) {
-            throw new Error('Görsel dosya adı ve yolu zorunludur')
-          }
-
-          // Önce image tablosuna ekle
-          const image = await tx.image.create({
-            data: {
-              fileName: imageData.fileName.trim(),
-              filePath: imageData.filePath.trim(),
-              fileSize: imageData.fileSize ? parseInt(String(imageData.fileSize)) : null,
-              fileType: imageData.fileType?.trim() || null,
-              description: imageData.description?.trim() || null,
-              altText: imageData.altText?.trim() || furnitureName.trim(),
-              width: imageData.width ? parseInt(String(imageData.width)) : null,
-              height: imageData.height ? parseInt(String(imageData.height)) : null,
-              originalFileName: imageData.originalFileName?.trim() || imageData.fileName.trim(),
-              sortOrder: imageData.sortOrder ? parseInt(String(imageData.sortOrder)) : 1,
-              isActive: true
-            }
+        const imageIds = images.map((img: ImageRelationInput) => parseInt(String(img.imageId))).filter((id: number) => !isNaN(id))
+        
+        if (imageIds.length > 0) {
+          // Image'ların varlığını ve aktif olduğunu kontrol et
+          const existingImages = await tx.image.findMany({
+            where: { 
+              imageId: { in: imageIds },
+              isActive: true 
+            },
+            select: { imageId: true }
           })
 
-          // Sonra furniture_images tablosuna bağla
-          await tx.furnitureImage.create({
-            data: {
+          if (existingImages.length !== imageIds.length) {
+            const foundImageIds = existingImages.map(img => img.imageId)
+            const notFoundImageIds = imageIds.filter((id: number) => !foundImageIds.includes(id))
+            throw new Error(`Bazı görseller bulunamadı veya pasif durumda: ${notFoundImageIds.join(', ')}`)
+          }
+
+          // Image ilişkilerini oluştur
+          await tx.furnitureImage.createMany({
+            data: images.map((img: ImageRelationInput) => ({
               furnitureId: furniture.furnitureId,
-              imageId: image.imageId,
-              sortOrder: imageData.sortOrder ? parseInt(String(imageData.sortOrder)) : 1,
-              imageType: imageData.imageType?.trim() || 'main_image',
+              imageId: parseInt(String(img.imageId)),
+              sortOrder: img.sortOrder ? parseInt(String(img.sortOrder)) : 1,
+              imageType: img.imageType?.trim() || 'main_image',
               isActive: true
-            }
+            }))
           })
         }
       }
@@ -497,7 +489,9 @@ export async function POST(request: Request) {
                   imageId: true,
                   fileName: true,
                   filePath: true,
-                  altText: true
+                  altText: true,
+                  width: true,
+                  height: true
                 }
               }
             },
@@ -535,7 +529,7 @@ export async function POST(request: Request) {
   }
 }
 
-// DELETE - Toplu mobilya silme
+// DELETE ve PATCH endpoint'leri aynı kalır...
 export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
@@ -589,7 +583,7 @@ export async function DELETE(request: Request) {
     const result = await prisma.$transaction(async (tx) => {
       const foundIds = furnitures.map((f: { furnitureId: number }) => f.furnitureId)
       
-      // İlişkili kayıtları sil
+      // İlişkili kayıtları sil (CASCADE sayesinde otomatik silinecek ama manuel yapalım)
       await tx.furnitureImage.deleteMany({
         where: { furnitureId: { in: foundIds } }
       })
@@ -614,7 +608,10 @@ export async function DELETE(request: Request) {
       success: true,
       message: `${result.count} mobilya başarıyla silindi`,
       deletedCount: result.count,
-      deletedItems: furnitures.map((f: { furnitureId: number; furnitureName: string }) => ({ id: f.furnitureId, name: f.furnitureName }))
+      deletedItems: furnitures.map((f: { furnitureId: number; furnitureName: string }) => ({ 
+        id: f.furnitureId, 
+        name: f.furnitureName 
+      }))
     })
 
   } catch (error) {
@@ -627,7 +624,6 @@ export async function DELETE(request: Request) {
   }
 }
 
-// PATCH - Toplu mobilya durumu değiştirme
 export async function PATCH(request: Request) {
   try {
     const data = await request.json()

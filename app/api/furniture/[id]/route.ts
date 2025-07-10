@@ -1,8 +1,20 @@
-// app/api/furniture/[id]/route.ts - Düzeltilmiş Tekil Mobilya API
+// app/api/furniture/[id]/route.ts - Image API ile uyumlu Tekil Mobilya API
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-// GET - Tek mobilya detayı
+// Type definitions
+interface PropertyInput {
+  propertyId: number;
+  propertyValue: string;
+}
+
+interface ImageRelationInput {
+  imageId: number;  // Sadece mevcut image ID'si
+  sortOrder?: number;
+  imageType?: string;  // 'main_image', 'gallery', etc.
+}
+
+// GET - Tek mobilya detayı (aynı kalır)
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
@@ -149,7 +161,7 @@ export async function GET(
   }
 }
 
-// PUT - Mobilya güncelle
+// PUT - Mobilya güncelle (Image oluşturma kısmı çıkarıldı)
 export async function PUT(
   request: Request,
   { params }: { params: { id: string } }
@@ -174,7 +186,7 @@ export async function PUT(
       isActive,
       colorIds,
       properties,
-      images
+      images  // Sadece mevcut image ID'leri
     } = data
 
     // Mevcut mobilyayı kontrol et
@@ -240,7 +252,7 @@ export async function PUT(
 
     // properties validasyonu
     if (properties !== undefined && properties !== null && Array.isArray(properties)) {
-      properties.forEach((prop: { propertyId: number; propertyValue: string }, index: number) => {
+      properties.forEach((prop: PropertyInput, index: number) => {
         if (!prop.propertyId || isNaN(parseInt(String(prop.propertyId)))) {
           validationErrors.push(`Özellik ${index + 1}: Geçerli bir özellik ID\'si gerekli`)
         }
@@ -248,6 +260,21 @@ export async function PUT(
           validationErrors.push(`Özellik ${index + 1}: Özellik değeri gerekli`)
         } else if (prop.propertyValue.trim().length > 200) {
           validationErrors.push(`Özellik ${index + 1}: Özellik değeri 200 karakterden uzun olamaz`)
+        }
+      })
+    }
+
+    // images validasyonu (Sadece mevcut image ID'leri kontrol et)
+    if (images !== undefined && images !== null && Array.isArray(images)) {
+      images.forEach((img: ImageRelationInput, index: number) => {
+        if (!img.imageId || isNaN(parseInt(String(img.imageId))) || parseInt(String(img.imageId)) <= 0) {
+          validationErrors.push(`Görsel ${index + 1}: Geçerli bir image ID\'si gerekli`)
+        }
+        if (img.sortOrder !== undefined && (isNaN(parseInt(String(img.sortOrder))) || parseInt(String(img.sortOrder)) < 0)) {
+          validationErrors.push(`Görsel ${index + 1}: Sıralama değeri geçerli bir pozitif sayı olmalıdır`)
+        }
+        if (img.imageType && typeof img.imageType !== 'string') {
+          validationErrors.push(`Görsel ${index + 1}: Image tipi string olmalıdır`)
         }
       })
     }
@@ -358,7 +385,7 @@ export async function PUT(
 
         // Yeni özellikleri ekle
         if (Array.isArray(properties) && properties.length > 0) {
-          const propertyIds = properties.map((p: { propertyId: number }) => parseInt(String(p.propertyId))).filter((id: number) => !isNaN(id))
+          const propertyIds = properties.map((p: PropertyInput) => parseInt(String(p.propertyId))).filter((id: number) => !isNaN(id))
           
           if (propertyIds.length > 0) {
             const existingProperties = await tx.property.findMany({
@@ -373,7 +400,7 @@ export async function PUT(
             }
 
             await tx.furnitureProperty.createMany({
-              data: properties.map((prop: { propertyId: number; propertyValue: string }) => ({
+              data: properties.map((prop: PropertyInput) => ({
                 furnitureId,
                 propertyId: parseInt(String(prop.propertyId)),
                 propertyValue: prop.propertyValue.trim(),
@@ -384,7 +411,7 @@ export async function PUT(
         }
       }
 
-      // 4. Görselleri güncelle
+      // 4. Mevcut görselleri bağla (Yeni görsel oluşturma YOK)
       if (images !== undefined) {
         // Mevcut görsel ilişkilerini pasif yap
         await tx.furnitureImage.updateMany({
@@ -394,13 +421,33 @@ export async function PUT(
 
         // Yeni görsel ilişkileri ekle
         if (Array.isArray(images) && images.length > 0) {
-          for (const imageData of images) {
-            if (imageData.imageId && !isNaN(parseInt(String(imageData.imageId)))) {
+          const imageIds = images.map((img: ImageRelationInput) => parseInt(String(img.imageId))).filter((id: number) => !isNaN(id))
+          
+          if (imageIds.length > 0) {
+            // Image'ların varlığını ve aktif olduğunu kontrol et
+            const existingImages = await tx.image.findMany({
+              where: { 
+                imageId: { in: imageIds },
+                isActive: true 
+              },
+              select: { imageId: true }
+            })
+
+            if (existingImages.length !== imageIds.length) {
+              const foundImageIds = existingImages.map(img => img.imageId)
+              const notFoundImageIds = imageIds.filter(id => !foundImageIds.includes(id))
+              throw new Error(`Bazı görseller bulunamadı veya pasif durumda: ${notFoundImageIds.join(', ')}`)
+            }
+
+            // Her image için ilişki oluştur
+            for (const imageData of images as ImageRelationInput[]) {
+              const imageId = parseInt(String(imageData.imageId))
+              
               // Önce mevcut ilişkiyi kontrol et
               const existingRelation = await tx.furnitureImage.findFirst({
                 where: {
                   furnitureId,
-                  imageId: parseInt(String(imageData.imageId))
+                  imageId: imageId
                 }
               })
 
@@ -419,7 +466,7 @@ export async function PUT(
                 await tx.furnitureImage.create({
                   data: {
                     furnitureId,
-                    imageId: parseInt(String(imageData.imageId)),
+                    imageId: imageId,
                     sortOrder: imageData.sortOrder ? parseInt(String(imageData.sortOrder)) : 1,
                     imageType: imageData.imageType?.trim() || 'main_image',
                     isActive: true
@@ -472,7 +519,9 @@ export async function PUT(
                   imageId: true,
                   fileName: true,
                   filePath: true,
-                  altText: true
+                  altText: true,
+                  width: true,
+                  height: true
                 }
               }
             },
@@ -511,7 +560,7 @@ export async function PUT(
   }
 }
 
-// DELETE - Mobilya sil
+// DELETE - Mobilya sil (aynı kalır)
 export async function DELETE(
   request: Request,
   { params }: { params: { id: string } }

@@ -1,6 +1,9 @@
-// app/api/images/route.ts - Images API
+// app/api/images/route.ts - Fiziksel Dosya Yükleme ile Images API
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { writeFile, mkdir, unlink } from 'fs/promises'
+import { join } from 'path'
+import { existsSync } from 'fs'
 
 // Type definitions
 interface ImageCreateData {
@@ -17,7 +20,170 @@ interface ImageCreateData {
   isActive?: boolean;
 }
 
-// GET - Images listele
+// File upload utility functions for Images
+class ImageFileUploadService {
+  private static readonly UPLOAD_DIR = 'uploads/images'
+  private static readonly MAX_FILE_SIZE = 20 * 1024 * 1024 // 20MB (images için daha büyük limit)
+  private static readonly ALLOWED_TYPES = [
+    'image/jpeg', 
+    'image/png', 
+    'image/webp', 
+    'image/gif', 
+    'image/svg+xml',
+    'image/bmp',
+    'image/tiff'
+  ]
+
+  static async createUploadDirectories() {
+    const baseDir = join(process.cwd(), 'public', this.UPLOAD_DIR)
+    const generalDir = join(baseDir, 'general')
+    
+    if (!existsSync(baseDir)) {
+      await mkdir(baseDir, { recursive: true })
+    }
+    
+    if (!existsSync(generalDir)) {
+      await mkdir(generalDir, { recursive: true })
+    }
+    
+    return generalDir
+  }
+
+  static validateFile(file: File): { isValid: boolean; error?: string } {
+    if (!file) {
+      return { isValid: false, error: 'Dosya bulunamadı' }
+    }
+
+    if (file.size === 0) {
+      return { isValid: false, error: 'Dosya boş olamaz' }
+    }
+
+    if (file.size > this.MAX_FILE_SIZE) {
+      return { isValid: false, error: 'Dosya boyutu 20MB\'dan büyük olamaz' }
+    }
+
+    if (!this.ALLOWED_TYPES.includes(file.type)) {
+      return { 
+        isValid: false, 
+        error: 'Sadece JPG, PNG, WebP, GIF, SVG, BMP ve TIFF dosyaları kabul edilir' 
+      }
+    }
+
+    // Dosya adı güvenlik kontrolü
+    const fileName = file.name
+    if (!/^[a-zA-Z0-9._-]+$/.test(fileName)) {
+      return { 
+        isValid: false, 
+        error: 'Dosya adı sadece harf, rakam, nokta, tire ve alt çizgi içerebilir' 
+      }
+    }
+
+    // Dosya uzantısı kontrolü
+    const extension = fileName.split('.').pop()?.toLowerCase()
+    const validExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'bmp', 'tiff', 'tif']
+    if (!extension || !validExtensions.includes(extension)) {
+      return { 
+        isValid: false, 
+        error: 'Geçersiz dosya uzantısı' 
+      }
+    }
+
+    return { isValid: true }
+  }
+
+  static generateFileName(originalName: string, imageId?: number): string {
+    const timestamp = Date.now()
+    const randomId = Math.random().toString(36).substring(2, 8)
+    const extension = originalName.split('.').pop()?.toLowerCase() || 'jpg'
+    const sanitizedName = originalName.split('.')[0].replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30)
+    
+    const prefix = imageId ? `image_${imageId}` : `temp_${randomId}`
+    
+    return `${prefix}_${sanitizedName}_${timestamp}.${extension}`
+  }
+
+  static async saveFile(file: File, filePath: string): Promise<{ width?: number; height?: number }> {
+    const bytes = await file.arrayBuffer()
+    const buffer = Buffer.from(bytes)
+    
+    await writeFile(filePath, buffer)
+    
+    // Görsel boyutlarını almaya çalış
+    try {
+      // Bu örnekte basit boyut tespiti yapıyoruz
+      // Gerçek projede sharp, jimp veya image-size kütüphanesi kullanılabilir
+      if (file.type === 'image/svg+xml') {
+        return {  width: undefined, height: undefined} // SVG için boyut dinamik
+      }
+      
+      // Diğer formatlar için boyut tespiti yapmaya çalış
+      return await this.getImageDimensions(buffer, file.type)
+    } catch (error) {
+      console.warn('Görsel boyutları alınamadı:', error)
+      return {}
+    }
+  }
+
+  static async getImageDimensions(buffer: Buffer, mimeType: string): Promise<{ width?: number; height?: number }> {
+    // Bu basit bir implementasyon. Gerçek projede image-size veya sharp kullanın
+    try {
+      // Temel JPEG ve PNG boyut okuma
+      if (mimeType === 'image/jpeg') {
+        // JPEG boyut okuma (basitleştirilmiş)
+        return {  width: undefined, height: undefined}
+      } else if (mimeType === 'image/png') {
+        // PNG boyut okuma (basitleştirilmiş)
+        return {  width: undefined, height: undefined }
+      }
+      
+      return {}
+    } catch (error) {
+      return {}
+    }
+  }
+
+  static async deleteFile(filePath: string): Promise<boolean> {
+    try {
+      if (!filePath) return false
+      
+      // Relative path'i absolute path'e çevir
+      const fullPath = filePath.startsWith('/') 
+        ? join(process.cwd(), 'public', filePath) 
+        : join(process.cwd(), 'public', '/', filePath)
+      
+      await unlink(fullPath)
+      return true
+    } catch (error) {
+      console.error('Dosya silinirken hata:', error)
+      return false
+    }
+  }
+
+  static getRelativePath(fileName: string): string {
+    return `/${this.UPLOAD_DIR}/general/${fileName}`
+  }
+
+  static async moveFile(oldPath: string, newPath: string): Promise<boolean> {
+    try {
+      const oldFullPath = join(process.cwd(), 'public', oldPath)
+      const newFullPath = join(process.cwd(), 'public', newPath)
+      
+      // Eski dosyayı yeni konuma kopyala
+      const buffer = await require('fs/promises').readFile(oldFullPath)
+      await writeFile(newFullPath, buffer)
+      
+      // Eski dosyayı sil
+      await unlink(oldFullPath)
+      
+      return true
+    } catch (error) {
+      console.error('Dosya taşınırken hata:', error)
+      return false
+    }
+  }
+}
+
+// GET - Images listele (aynı kalır)
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
@@ -220,50 +386,30 @@ export async function GET(request: Request) {
   }
 }
 
-// POST - Yeni image ekle
+// POST - Yeni image ekle (Fiziksel dosya yükleme ile)
 export async function POST(request: Request) {
   try {
-    const data = await request.json()
+    const formData = await request.formData()
     
-    const {
-      fileName,
-      filePath,
-      fileSize,
-      fileType,
-      description,
-      altText,
-      width,
-      height,
-      originalFileName,
-      sortOrder = 1,
-      isActive = true
-    } = data
+    // Dosyayı al
+    const file = formData.get('file') as File
+    
+    // Diğer verileri al
+    const description = formData.get('description') as string
+    const altText = formData.get('altText') as string
+    const sortOrder = formData.get('sortOrder') as string
+    const isActive = formData.get('isActive') === 'true'
 
     // Temel validasyonlar
     const validationErrors = []
 
-    if (!fileName || typeof fileName !== 'string' || fileName.trim().length === 0) {
-      validationErrors.push('Dosya adı zorunludur')
-    } else if (fileName.trim().length > 255) {
-      validationErrors.push('Dosya adı 255 karakterden uzun olamaz')
-    }
-
-    if (!filePath || typeof filePath !== 'string' || filePath.trim().length === 0) {
-      validationErrors.push('Dosya yolu zorunludur')
-    } else if (filePath.trim().length > 500) {
-      validationErrors.push('Dosya yolu 500 karakterden uzun olamaz')
-    }
-
-    if (fileSize !== undefined && fileSize !== null) {
-      if (isNaN(parseInt(String(fileSize))) || parseInt(String(fileSize)) < 0) {
-        validationErrors.push('Dosya boyutu geçerli bir sayı olmalıdır')
-      } else if (parseInt(String(fileSize)) > 104857600) { // 100MB limit
-        validationErrors.push('Dosya boyutu 100MB\'dan büyük olamaz')
+    if (!file) {
+      validationErrors.push('Dosya zorunludur')
+    } else {
+      const validation = ImageFileUploadService.validateFile(file)
+      if (!validation.isValid) {
+        validationErrors.push(validation.error!)
       }
-    }
-
-    if (fileType && (typeof fileType !== 'string' || fileType.trim().length > 10)) {
-      validationErrors.push('Dosya tipi 10 karakterden uzun olamaz')
     }
 
     if (description && typeof description === 'string' && description.length > 1000) {
@@ -274,27 +420,7 @@ export async function POST(request: Request) {
       validationErrors.push('Alt text 255 karakterden uzun olamaz')
     }
 
-    if (width !== undefined && width !== null) {
-      if (isNaN(parseInt(String(width))) || parseInt(String(width)) <= 0) {
-        validationErrors.push('Genişlik geçerli bir pozitif sayı olmalıdır')
-      } else if (parseInt(String(width)) > 10000) {
-        validationErrors.push('Genişlik 10000 piksel\'den büyük olamaz')
-      }
-    }
-
-    if (height !== undefined && height !== null) {
-      if (isNaN(parseInt(String(height))) || parseInt(String(height)) <= 0) {
-        validationErrors.push('Yükseklik geçerli bir pozitif sayı olmalıdır')
-      } else if (parseInt(String(height)) > 10000) {
-        validationErrors.push('Yükseklik 10000 piksel\'den büyük olamaz')
-      }
-    }
-
-    if (originalFileName && (typeof originalFileName !== 'string' || originalFileName.length > 255)) {
-      validationErrors.push('Orijinal dosya adı 255 karakterden uzun olamaz')
-    }
-
-    if (sortOrder !== undefined && (isNaN(parseInt(String(sortOrder))) || parseInt(String(sortOrder)) < 0)) {
+    if (sortOrder && (isNaN(parseInt(sortOrder)) || parseInt(sortOrder) < 0)) {
       validationErrors.push('Sıralama değeri geçerli bir pozitif sayı olmalıdır')
     }
 
@@ -306,46 +432,58 @@ export async function POST(request: Request) {
       }, { status: 400 })
     }
 
-    // Aynı dosya yolu kontrolü
-    const existingImage = await prisma.image.findFirst({
-      where: {
-        filePath: {
-          equals: filePath.trim(),
-          mode: 'insensitive'
+    // Upload klasörünü oluştur
+    await ImageFileUploadService.createUploadDirectories()
+
+    // Transaction ile image oluştur
+    const result = await prisma.$transaction(async (tx) => {
+      // Önce veritabanına kayıt oluştur (dosya adını almak için)
+      const tempImage = await tx.image.create({
+        data: {
+          fileName: 'temp_' + Date.now(),
+          filePath: 'temp',
+          fileSize: file.size,
+          fileType: file.type,
+          description: description?.trim() || null,
+          altText: altText?.trim() || file.name.split('.')[0],
+          width: null,
+          height: null,
+          originalFileName: file.name,
+          sortOrder: sortOrder ? parseInt(sortOrder) : 1,
+          isActive: Boolean(isActive)
         }
-      }
-    })
+      })
 
-    if (existingImage) {
-      return NextResponse.json({
-        success: false,
-        error: 'Bu dosya yolu zaten kullanılıyor'
-      }, { status: 400 })
-    }
+      // Dosya adını oluştur
+      const fileName = ImageFileUploadService.generateFileName(file.name, tempImage.imageId)
+      const relativePath = ImageFileUploadService.getRelativePath(fileName)
+      const fullPath = join(process.cwd(), 'public', relativePath)
 
-    // Image oluştur
-    const result = await prisma.image.create({
-      data: {
-        fileName: fileName.trim(),
-        filePath: filePath.trim(),
-        fileSize: fileSize ? parseInt(String(fileSize)) : null,
-        fileType: fileType?.trim() || null,
-        description: description?.trim() || null,
-        altText: altText?.trim() || null,
-        width: width ? parseInt(String(width)) : null,
-        height: height ? parseInt(String(height)) : null,
-        originalFileName: originalFileName?.trim() || fileName.trim(),
-        sortOrder: parseInt(String(sortOrder)),
-        isActive: Boolean(isActive)
-      },
-      include: {
-        _count: {
-          select: {
-            furnitureImages: true,
-            furnitureSetImages: true
+      // Dosyayı kaydet
+      const dimensions = await ImageFileUploadService.saveFile(file, fullPath)
+
+      // Veritabanı kaydını güncelle
+      const updatedImage = await tx.image.update({
+        where: { imageId: tempImage.imageId },
+        data: {
+          fileName: fileName,
+          filePath: relativePath,
+          width: dimensions.width || null,
+          height: dimensions.height || null
+        },
+        include: {
+          _count: {
+            select: {
+              furnitureImages: true,
+              furnitureSetImages: true
+            }
           }
         }
-      }
+      })
+
+      return updatedImage
+    }, {
+      timeout: 60000 // 60 saniye timeout
     })
 
     return NextResponse.json({
@@ -365,7 +503,7 @@ export async function POST(request: Request) {
   }
 }
 
-// DELETE - Toplu image silme
+// DELETE - Toplu image silme (Fiziksel dosyaları da siler)
 export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
@@ -396,6 +534,7 @@ export async function DELETE(request: Request) {
       select: {
         imageId: true,
         fileName: true,
+        filePath: true,
         _count: {
           select: {
             furnitureImages: true,
@@ -413,7 +552,7 @@ export async function DELETE(request: Request) {
     }
 
     if (images.length !== ids.length) {
-      const foundIds = images.map((img: { imageId: number }) => img.imageId)
+      const foundIds = images.map((img: any) => img.imageId)
       const notFoundIds = ids.filter((id: number) => !foundIds.includes(id))
       
       return NextResponse.json({
@@ -445,7 +584,7 @@ export async function DELETE(request: Request) {
 
     // Transaction ile sil
     const result = await prisma.$transaction(async (tx) => {
-      const foundIds = images.map((img: { imageId: number }) => img.imageId)
+      const foundIds = images.map((img: any) => img.imageId)
       
       // İlişkili kayıtları sil (force delete durumunda)
       if (forceDelete) {
@@ -466,15 +605,29 @@ export async function DELETE(request: Request) {
       return deleted
     })
 
+    // Transaction başarılı olduktan sonra fiziksel dosyaları sil
+    let deletedFilesCount = 0
+    for (const image of images) {
+      if (image.filePath) {
+        const success = await ImageFileUploadService.deleteFile(image.filePath)
+        if (success) deletedFilesCount++
+      }
+    }
+
     return NextResponse.json({
       success: true,
       message: `${result.count} image başarıyla silindi`,
       deletedCount: result.count,
-      deletedItems: images.map((img: { imageId: number; fileName: string }) => ({ 
+      deletedItems: images.map((img: any) => ({ 
         id: img.imageId, 
         fileName: img.fileName 
       })),
-      forceDelete
+      forceDelete,
+      filesDeletionSummary: {
+        totalFiles: images.length,
+        deletedFiles: deletedFilesCount,
+        failedDeletions: images.length - deletedFilesCount
+      }
     })
 
   } catch (error) {
@@ -487,7 +640,7 @@ export async function DELETE(request: Request) {
   }
 }
 
-// PATCH - Toplu image durumu değiştirme
+// PATCH - Toplu image durumu değiştirme (aynı kalır, fiziksel dosya işlemi yok)
 export async function PATCH(request: Request) {
   try {
     const data = await request.json()
@@ -554,6 +707,191 @@ export async function PATCH(request: Request) {
       success: false,
       error: 'Image durumları güncellenemedi',
       details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined
+    }, { status: 500 })
+  }
+}
+
+// PUT - Image güncelle (Dosya değiştirme ile)
+export async function PUT(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const imageId = parseInt(searchParams.get('id') || '0')
+    
+    if (isNaN(imageId) || imageId <= 0) {
+      return NextResponse.json({
+        success: false,
+        error: 'Geçersiz image ID\'si'
+      }, { status: 400 })
+    }
+
+    const formData = await request.formData()
+    
+    // Yeni dosya (opsiyonel)
+    const file = formData.get('file') as File
+    
+    // Diğer güncelleme verileri
+    const description = formData.get('description') as string
+    const altText = formData.get('altText') as string
+    const sortOrder = formData.get('sortOrder') as string
+    const isActive = formData.get('isActive')
+
+    // Mevcut image'ı kontrol et
+    const existingImage = await prisma.image.findUnique({
+      where: { imageId },
+      include: {
+        _count: {
+          select: {
+            furnitureImages: true,
+            furnitureSetImages: true
+          }
+        }
+      }
+    })
+
+    if (!existingImage) {
+      return NextResponse.json({
+        success: false,
+        error: 'Image bulunamadı'
+      }, { status: 404 })
+    }
+
+    // Validasyonlar
+    const validationErrors = []
+
+    if (file) {
+      const validation = ImageFileUploadService.validateFile(file)
+      if (!validation.isValid) {
+        validationErrors.push(validation.error!)
+      }
+    }
+
+    if (description && typeof description === 'string' && description.length > 1000) {
+      validationErrors.push('Açıklama 1000 karakterden uzun olamaz')
+    }
+
+    if (altText && (typeof altText !== 'string' || altText.length > 255)) {
+      validationErrors.push('Alt text 255 karakterden uzun olamaz')
+    }
+
+    if (sortOrder && (isNaN(parseInt(sortOrder)) || parseInt(sortOrder) < 0)) {
+      validationErrors.push('Sıralama değeri geçerli bir pozitif sayı olmalıdır')
+    }
+
+    if (validationErrors.length > 0) {
+      return NextResponse.json({
+        success: false,
+        error: 'Validasyon hatası',
+        validationErrors
+      }, { status: 400 })
+    }
+
+    // Transaction ile güncelle
+    const result = await prisma.$transaction(async (tx) => {
+      let newFilePath = existingImage.filePath
+      let newFileName = existingImage.fileName
+      let newFileSize = existingImage.fileSize
+      let newFileType = existingImage.fileType
+      let newWidth = existingImage.width
+      let newHeight = existingImage.height
+      let oldFilePath = existingImage.filePath
+
+      // Eğer yeni dosya varsa
+      if (file && file.size > 0) {
+        // Yeni dosya adını oluştur
+        newFileName = ImageFileUploadService.generateFileName(file.name, imageId)
+        newFilePath = ImageFileUploadService.getRelativePath(newFileName)
+        const fullPath = join(process.cwd(), 'public', newFilePath)
+
+        // Yeni dosyayı kaydet
+        await ImageFileUploadService.createUploadDirectories()
+        const dimensions = await ImageFileUploadService.saveFile(file, fullPath)
+
+        newFileSize = file.size
+        newFileType = file.type
+        newWidth = dimensions.width || null
+        newHeight = dimensions.height || null
+      }
+
+      // Güncelleme verilerini hazırla
+      const updateData: any = {}
+      
+      if (file) {
+        updateData.fileName = newFileName
+        updateData.filePath = newFilePath
+        updateData.fileSize = newFileSize
+        updateData.fileType = newFileType
+        updateData.width = newWidth
+        updateData.height = newHeight
+        updateData.originalFileName = file.name
+      }
+
+      if (description !== undefined) updateData.description = description?.trim() || null
+      if (altText !== undefined) updateData.altText = altText?.trim() || null
+      if (sortOrder !== undefined) updateData.sortOrder = sortOrder ? parseInt(sortOrder) : 1
+      if (isActive !== undefined) updateData.isActive = isActive === 'true'
+
+      // Veritabanını güncelle
+      const updatedImage = await tx.image.update({
+        where: { imageId },
+        data: updateData,
+        include: {
+          furnitureImages: {
+            include: {
+              furniture: {
+                select: {
+                  furnitureId: true,
+                  furnitureName: true,
+                  furnitureType: true,
+                  isActive: true
+                }
+              }
+            }
+          },
+          furnitureSetImages: {
+            include: {
+              furnitureSet: {
+                select: {
+                  setId: true,
+                  setName: true,
+                  isActive: true
+                }
+              }
+            }
+          },
+          _count: {
+            select: {
+              furnitureImages: true,
+              furnitureSetImages: true
+            }
+          }
+        }
+      })
+
+      return { updatedImage, oldFilePath, fileChanged: !!file }
+    }, {
+      timeout: 60000
+    })
+
+    // Transaction başarılı olduktan sonra eski dosyayı sil (yeni dosya yüklendiğinde)
+    if (result.fileChanged && result.oldFilePath && result.oldFilePath !== result.updatedImage.filePath) {
+      await ImageFileUploadService.deleteFile(result.oldFilePath)
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Image başarıyla güncellendi',
+      data: result.updatedImage,
+      fileChanged: result.fileChanged
+    })
+
+  } catch (error) {
+    console.error('Image güncelleme hatası:', error)
+    
+    return NextResponse.json({
+      success: false,
+      message: 'Image güncellenirken hata oluştu',
+      error: error instanceof Error ? error.message : 'Bilinmeyen hata',
+      details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.stack : String(error)) : undefined
     }, { status: 500 })
   }
 }
