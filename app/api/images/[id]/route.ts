@@ -1,6 +1,101 @@
-// app/api/images/[id]/route.ts - Tekil Image API
+// app/api/images/[id]/route.ts - Updated Tekil Image API with File Management
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import fs from 'fs/promises'
+import path from 'path'
+
+// Helper function to generate file path
+async function generateFilePath(furnitureId: number, imageId: number, fileName: string) {
+  const furniture = await prisma.furniture.findUnique({
+    where: { furnitureId },
+    include: {
+      category: {
+        include: {
+          parent: {
+            select: {
+              categoryName: true
+            }
+          }
+        }
+      }
+    }
+  })
+
+  if (!furniture) {
+    throw new Error('Furniture not found')
+  }
+
+  const level1 = furniture.category?.parent?.categoryName || 'uncategorized'
+  const level2 = furniture.category?.categoryName || 'uncategorized'
+  const furnitureFolderName = `furniture_${furnitureId}_${furniture.furnitureName.replace(/[^a-zA-Z0-9]/g, '_')}`
+  
+  const extension = path.extname(fileName)
+  const newFileName = `${imageId}${extension}`
+  
+  return {
+    directory: path.join('uploads', 'furniture', level1, level2, furnitureFolderName),
+    filePath: path.join('uploads', 'furniture', level1, level2, furnitureFolderName, newFileName),
+    fileName: newFileName
+  }
+}
+
+// Helper function to ensure directory exists
+async function ensureDirectoryExists(dirPath: string) {
+  try {
+    await fs.access(dirPath)
+  } catch {
+    await fs.mkdir(dirPath, { recursive: true })
+  }
+}
+
+// Helper function to save physical file
+async function savePhysicalFile(filePath: string, fileBuffer: Buffer) {
+  const directory = path.dirname(filePath)
+  await ensureDirectoryExists(directory)
+  await fs.writeFile(filePath, fileBuffer)
+}
+
+// Helper function to delete physical file
+async function deletePhysicalFile(filePath: string) {
+  try {
+    await fs.unlink(filePath)
+    
+    // Try to remove empty directories
+    const directory = path.dirname(filePath)
+    try {
+      const files = await fs.readdir(directory)
+      if (files.length === 0) {
+        await fs.rmdir(directory)
+        
+        // Try to remove parent directories if empty
+        const parentDir = path.dirname(directory)
+        try {
+          const parentFiles = await fs.readdir(parentDir)
+          if (parentFiles.length === 0) {
+            await fs.rmdir(parentDir)
+          }
+        } catch {}
+      }
+    } catch {}
+  } catch (error) {
+    console.warn(`Could not delete file ${filePath}:`, error)
+  }
+}
+
+// Helper function to move physical file
+async function movePhysicalFile(oldPath: string, newPath: string) {
+  try {
+    const directory = path.dirname(newPath)
+    await ensureDirectoryExists(directory)
+    await fs.rename(oldPath, newPath)
+    
+    // Clean up old directory if empty
+    await deletePhysicalFile(oldPath + '.temp') // This will trigger directory cleanup
+  } catch (error) {
+    console.warn(`Could not move file from ${oldPath} to ${newPath}:`, error)
+    throw error
+  }
+}
 
 // GET - Tek image detayı
 export async function GET(
@@ -102,6 +197,17 @@ export async function GET(
       ? (image.width / image.height).toFixed(2)
       : null
 
+    // File exists check
+    let fileExists = false
+    if (image.filePath) {
+      try {
+        await fs.access(image.filePath)
+        fileExists = true
+      } catch {
+        fileExists = false
+      }
+    }
+
     return NextResponse.json({
       success: true,
       data: {
@@ -110,7 +216,8 @@ export async function GET(
         fileInfo: {
           formattedSize: formatFileSize(image.fileSize),
           resolution,
-          aspectRatio
+          aspectRatio,
+          fileExists
         }
       }
     })
@@ -125,7 +232,7 @@ export async function GET(
   }
 }
 
-// PUT - Image güncelle
+// PUT - Image güncelle with file replacement
 export async function PUT(
   request: Request,
   { params }: { params: { id: string } }
@@ -140,17 +247,30 @@ export async function PUT(
       }, { status: 400 })
     }
 
-    const data = await request.json()
+    const contentType = request.headers.get('content-type') || ''
+    let data: any = {}
+    let file: File | null = null
+
+    // FormData (file upload) veya JSON güncelleme
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await request.formData()
+      file = formData.get('file') as File
+      data = {
+        description: formData.get('description') as string,
+        altText: formData.get('altText') as string,
+        imageType: formData.get('imageType') as string,
+        sortOrder: formData.get('sortOrder') as string,
+        isActive: formData.get('isActive') as string
+      }
+    } else {
+      data = await request.json()
+    }
+
     const {
-      fileName,
-      filePath,
-      fileSize,
-      fileType,
       description,
       altText,
       width,
       height,
-      originalFileName,
       sortOrder,
       isActive
     } = data
@@ -159,6 +279,23 @@ export async function PUT(
     const existingImage = await prisma.image.findUnique({
       where: { imageId },
       include: {
+        furnitureImages: {
+          include: {
+            furniture: {
+              include: {
+                category: {
+                  include: {
+                    parent: {
+                      select: {
+                        categoryName: true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         _count: {
           select: {
             furnitureImages: true,
@@ -178,32 +315,15 @@ export async function PUT(
     // Validasyonlar
     const validationErrors = []
 
-    if (fileName !== undefined) {
-      if (!fileName || typeof fileName !== 'string' || fileName.trim().length === 0) {
-        validationErrors.push('Dosya adı boş olamaz')
-      } else if (fileName.trim().length > 255) {
-        validationErrors.push('Dosya adı 255 karakterden uzun olamaz')
-      }
-    }
-
-    if (filePath !== undefined) {
-      if (!filePath || typeof filePath !== 'string' || filePath.trim().length === 0) {
-        validationErrors.push('Dosya yolu boş olamaz')
-      } else if (filePath.trim().length > 500) {
-        validationErrors.push('Dosya yolu 500 karakterden uzun olamaz')
-      }
-    }
-
-    if (fileSize !== undefined && fileSize !== null) {
-      if (isNaN(parseInt(String(fileSize))) || parseInt(String(fileSize)) < 0) {
-        validationErrors.push('Dosya boyutu geçerli bir sayı olmalıdır')
-      } else if (parseInt(String(fileSize)) > 104857600) {
+    if (file) {
+      if (file.size > 104857600) { // 100MB limit
         validationErrors.push('Dosya boyutu 100MB\'dan büyük olamaz')
       }
-    }
 
-    if (fileType !== undefined && fileType !== null && (typeof fileType !== 'string' || fileType.trim().length > 10)) {
-      validationErrors.push('Dosya tipi 10 karakterden uzun olamaz')
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+      if (!allowedTypes.includes(file.type)) {
+        validationErrors.push('Desteklenmeyen dosya tipi. Sadece JPEG, PNG, GIF, WebP dosyaları kabul edilir')
+      }
     }
 
     if (description !== undefined && description !== null && typeof description === 'string' && description.length > 1000) {
@@ -230,29 +350,8 @@ export async function PUT(
       }
     }
 
-    if (originalFileName !== undefined && originalFileName !== null && (typeof originalFileName !== 'string' || originalFileName.length > 255)) {
-      validationErrors.push('Orijinal dosya adı 255 karakterden uzun olamaz')
-    }
-
     if (sortOrder !== undefined && sortOrder !== null && (isNaN(parseInt(String(sortOrder))) || parseInt(String(sortOrder)) < 0)) {
       validationErrors.push('Sıralama değeri geçerli bir pozitif sayı olmalıdır')
-    }
-
-    // Dosya yolu değişiyorsa, aynı yolu kullanıp kullanmadığını kontrol et
-    if (filePath !== undefined && filePath.trim() !== existingImage.filePath) {
-      const duplicateImage = await prisma.image.findFirst({
-        where: {
-          filePath: {
-            equals: filePath.trim(),
-            mode: 'insensitive'
-          },
-          imageId: { not: imageId }
-        }
-      })
-
-      if (duplicateImage) {
-        validationErrors.push('Bu dosya yolu başka bir image tarafından kullanılıyor')
-      }
     }
 
     if (validationErrors.length > 0) {
@@ -263,61 +362,96 @@ export async function PUT(
       }, { status: 400 })
     }
 
-    // Güncelle
-    const updateData: any = {}
-    
-    if (fileName !== undefined) updateData.fileName = fileName.trim()
-    if (filePath !== undefined) updateData.filePath = filePath.trim()
-    if (fileSize !== undefined) updateData.fileSize = fileSize ? parseInt(String(fileSize)) : null
-    if (fileType !== undefined) updateData.fileType = fileType?.trim() || null
-    if (description !== undefined) updateData.description = description?.trim() || null
-    if (altText !== undefined) updateData.altText = altText?.trim() || null
-    if (width !== undefined) updateData.width = width ? parseInt(String(width)) : null
-    if (height !== undefined) updateData.height = height ? parseInt(String(height)) : null
-    if (originalFileName !== undefined) updateData.originalFileName = originalFileName?.trim() || null
-    if (sortOrder !== undefined) updateData.sortOrder = sortOrder ? parseInt(String(sortOrder)) : 1
-    if (isActive !== undefined) updateData.isActive = Boolean(isActive)
+    // Transaction ile güncelle
+    const result = await prisma.$transaction(async (tx) => {
+      let updateData: any = {}
+      let oldFilePath = existingImage.filePath
+      
+      // Meta data güncellemeleri
+      if (description !== undefined) updateData.description = description?.trim() || null
+      if (altText !== undefined) updateData.altText = altText?.trim() || null
+      if (width !== undefined) updateData.width = width ? parseInt(String(width)) : null
+      if (height !== undefined) updateData.height = height ? parseInt(String(height)) : null
+      if (sortOrder !== undefined) updateData.sortOrder = sortOrder ? parseInt(String(sortOrder)) : 1
+      if (isActive !== undefined) updateData.isActive = Boolean(isActive === 'true' || isActive === true)
 
-    const result = await prisma.image.update({
-      where: { imageId },
-      data: updateData,
-      include: {
-        furnitureImages: {
-          include: {
-            furniture: {
-              select: {
-                furnitureId: true,
-                furnitureName: true,
-                furnitureType: true,
-                isActive: true
-              }
-            }
-          }
-        },
-        furnitureSetImages: {
-          include: {
-            furnitureSet: {
-              select: {
-                setId: true,
-                setName: true,
-                isActive: true
-              }
-            }
-          }
-        },
-        _count: {
-          select: {
-            furnitureImages: true,
-            furnitureSetImages: true
-          }
+      // Eğer yeni dosya varsa
+      if (file) {
+        // İlk furniture ilişkisini al (dosya yolu için)
+        const firstFurnitureRelation = existingImage.furnitureImages[0]
+        if (firstFurnitureRelation) {
+          const furnitureId = firstFurnitureRelation.furnitureId
+          
+          // Yeni dosya yolu oluştur
+          const { filePath: newFilePath, fileName: newFileName } = await generateFilePath(
+            furnitureId,
+            imageId,
+            file.name
+          )
+
+          // Fiziksel dosyayı kaydet
+          const fileBuffer = Buffer.from(await file.arrayBuffer())
+          await savePhysicalFile(newFilePath, fileBuffer)
+
+          // Database güncellemeleri
+          updateData.fileName = newFileName
+          updateData.filePath = newFilePath
+          updateData.fileSize = file.size
+          updateData.fileType = file.type.split('/')[1]
+          updateData.originalFileName = file.name
         }
       }
+
+      // Database'i güncelle
+      const updatedImage = await tx.image.update({
+        where: { imageId },
+        data: updateData,
+        include: {
+          furnitureImages: {
+            include: {
+              furniture: {
+                select: {
+                  furnitureId: true,
+                  furnitureName: true,
+                  furnitureType: true,
+                  isActive: true
+                }
+              }
+            }
+          },
+          furnitureSetImages: {
+            include: {
+              furnitureSet: {
+                select: {
+                  setId: true,
+                  setName: true,
+                  isActive: true
+                }
+              }
+            }
+          },
+          _count: {
+            select: {
+              furnitureImages: true,
+              furnitureSetImages: true
+            }
+          }
+        }
+      })
+
+      // Eski dosyayı sil (eğer yeni dosya yüklendiyse)
+      if (file && oldFilePath && oldFilePath !== updatedImage.filePath) {
+        await deletePhysicalFile(oldFilePath)
+      }
+
+      return updatedImage
     })
 
     return NextResponse.json({
       success: true,
       message: 'Image başarıyla güncellendi',
-      data: result
+      data: result,
+      fileReplaced: !!file
     })
 
   } catch (error) {
@@ -332,7 +466,7 @@ export async function PUT(
   }
 }
 
-// DELETE - Image sil
+// DELETE - Image sil with physical file deletion
 export async function DELETE(
   request: Request,
   { params }: { params: { id: string } }
@@ -401,11 +535,16 @@ export async function DELETE(
         })
       }
 
-      // Image'ı sil
+      // Database'den image'ı sil
       await tx.image.delete({
         where: { imageId }
       })
     })
+
+    // Fiziksel dosyayı sil
+    if (image.filePath) {
+      await deletePhysicalFile(image.filePath)
+    }
 
     return NextResponse.json({
       success: true,

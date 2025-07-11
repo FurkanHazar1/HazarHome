@@ -1,14 +1,91 @@
-// app/api/furniture/[id]/route.ts - Düzeltilmiş Tekil Mobilya API
+// app/api/furniture/[id]/route.ts - Optimized Single Furniture API
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+
+// Helper function to process image files
+async function processImageFiles(files: File[], furnitureName: string): Promise<Array<{
+  imageData: any;
+  fileBuffer: string;
+  sortOrder: number;
+  imageType: string;
+}>> {
+  const processedImages = []
+  
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i]
+    
+    // File validasyonu
+    if (file.size > 104857600) { // 100MB
+      throw new Error(`Dosya ${file.name} 100MB'dan büyük`)
+    }
+
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      throw new Error(`Desteklenmeyen dosya tipi: ${file.type}`)
+    }
+
+    // File'ı base64'e çevir
+    const arrayBuffer = await file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+    const base64 = buffer.toString('base64')
+
+    processedImages.push({
+      imageData: {
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type.split('/')[1],
+        originalFileName: file.name,
+        altText: `${furnitureName} - Image ${i + 1}`
+      },
+      fileBuffer: base64,
+      sortOrder: i + 1,
+      imageType: 'gallery_image'
+    })
+  }
+
+  return processedImages
+}
+
+// Helper function to create images via internal API
+async function createImagesForFurniture(furnitureId: number, processedImages: any[]) {
+  const results = []
+  
+  for (const imageData of processedImages) {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/images`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          furnitureId,
+          imageData: imageData.imageData,
+          fileBuffer: imageData.fileBuffer,
+          sortOrder: imageData.sortOrder,
+          imageType: imageData.imageType
+        })
+      })
+
+      const result = await response.json()
+      if (result.success) {
+        results.push(result.data)
+      }
+    } catch (error) {
+      console.warn(`Image oluşturulurken hata:`, error)
+    }
+  }
+
+  return results
+}
 
 // GET - Tek mobilya detayı
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const furnitureId = parseInt(params.id)
+    const { id } = await params
+    const furnitureId = parseInt(id)
 
     if (isNaN(furnitureId) || furnitureId <= 0) {
       return NextResponse.json({
@@ -143,19 +220,19 @@ export async function GET(
     console.error('Mobilya detay hatası:', error)
     return NextResponse.json({
       success: false,
-      error: 'Mobilya getirilemedi',
-      details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined
+      error: 'Mobilya getirilemedi'
     }, { status: 500 })
   }
 }
 
-// PUT - Mobilya güncelle
+// PUT - Mobilya güncelle (Optimized with proper transaction handling)
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const furnitureId = parseInt(params.id)
+    const { id } = await params
+    const furnitureId = parseInt(id)
     
     if (isNaN(furnitureId) || furnitureId <= 0) {
       return NextResponse.json({
@@ -164,7 +241,35 @@ export async function PUT(
       }, { status: 400 })
     }
 
-    const data = await request.json()
+    const contentType = request.headers.get('content-type') || ''
+    let data: any = {}
+    let imageFiles: File[] = []
+
+    // FormData (file uploads) veya JSON
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await request.formData()
+      
+      // Mobilya verileri
+      data = {
+        furnitureName: formData.get('furnitureName') as string,
+        furnitureType: formData.get('furnitureType') as string,
+        categoryId: formData.get('categoryId') as string,
+        description: formData.get('description') as string,
+        price: formData.get('price') as string,
+        isActive: formData.get('isActive') as string,
+        colorIds: formData.get('colorIds') as string,
+        properties: formData.get('properties') as string,
+        removeImageIds: formData.get('removeImageIds') as string
+      }
+
+      // Yeni image dosyaları
+      const files = formData.getAll('newImages') as File[]
+      imageFiles = files.filter(file => file.size > 0)
+
+    } else {
+      data = await request.json()
+    }
+
     const {
       furnitureName,
       furnitureType,
@@ -174,17 +279,27 @@ export async function PUT(
       isActive,
       colorIds,
       properties,
-      images
+      removeImageIds
     } = data
+
+    // JSON string'leri parse et
+    let parsedColorIds = colorIds
+    let parsedProperties = properties
+    let parsedRemoveImageIds = removeImageIds
+
+    if (typeof colorIds === 'string') {
+      parsedColorIds = colorIds ? JSON.parse(colorIds) : undefined
+    }
+    if (typeof properties === 'string') {
+      parsedProperties = properties ? JSON.parse(properties) : undefined
+    }
+    if (typeof removeImageIds === 'string') {
+      parsedRemoveImageIds = removeImageIds ? JSON.parse(removeImageIds) : []
+    }
 
     // Mevcut mobilyayı kontrol et
     const existingFurniture = await prisma.furniture.findUnique({
-      where: { furnitureId },
-      include: {
-        colors: true,
-        properties: true,
-        images: true
-      }
+      where: { furnitureId }
     })
 
     if (!existingFurniture) {
@@ -205,67 +320,9 @@ export async function PUT(
       }
     }
 
-    if (furnitureType !== undefined) {
-      if (!furnitureType || typeof furnitureType !== 'string' || furnitureType.trim().length === 0) {
-        validationErrors.push('Mobilya tipi boş olamaz')
-      } else if (furnitureType.trim().length > 50) {
-        validationErrors.push('Mobilya tipi 50 karakterden uzun olamaz')
-      }
-    }
-
     if (price !== undefined) {
       if (price === null || isNaN(parseFloat(price)) || parseFloat(price) <= 0) {
         validationErrors.push('Geçerli bir fiyat girilmelidir')
-      } else if (parseFloat(price) > 999999999.99) {
-        validationErrors.push('Fiyat çok yüksek')
-      }
-    }
-
-    if (categoryId !== undefined && categoryId !== null) {
-      if (isNaN(parseInt(categoryId)) || parseInt(categoryId) <= 0) {
-        validationErrors.push('Geçerli bir kategori ID\'si girilmelidir')
-      }
-    }
-
-    if (description !== undefined && description !== null && typeof description === 'string' && description.length > 1000) {
-      validationErrors.push('Açıklama 1000 karakterden uzun olamaz')
-    }
-
-    // colorIds validasyonu
-    if (colorIds !== undefined && colorIds !== null) {
-      if (!Array.isArray(colorIds) || colorIds.some((id: number) => isNaN(parseInt(String(id))))) {
-        validationErrors.push('Renk ID\'leri geçerli sayılar olmalıdır')
-      }
-    }
-
-    // properties validasyonu
-    if (properties !== undefined && properties !== null && Array.isArray(properties)) {
-      properties.forEach((prop: { propertyId: number; propertyValue: string }, index: number) => {
-        if (!prop.propertyId || isNaN(parseInt(String(prop.propertyId)))) {
-          validationErrors.push(`Özellik ${index + 1}: Geçerli bir özellik ID\'si gerekli`)
-        }
-        if (!prop.propertyValue || typeof prop.propertyValue !== 'string' || prop.propertyValue.trim().length === 0) {
-          validationErrors.push(`Özellik ${index + 1}: Özellik değeri gerekli`)
-        } else if (prop.propertyValue.trim().length > 200) {
-          validationErrors.push(`Özellik ${index + 1}: Özellik değeri 200 karakterden uzun olamaz`)
-        }
-      })
-    }
-
-    // Aynı isimde başka mobilya var mı kontrol et (sadece furnitureName değişiyorsa)
-    if (furnitureName !== undefined && furnitureName.trim() !== existingFurniture.furnitureName) {
-      const duplicateFurniture = await prisma.furniture.findFirst({
-        where: {
-          furnitureName: {
-            equals: furnitureName.trim(),
-            mode: 'insensitive'
-          },
-          furnitureId: { not: furnitureId }
-        }
-      })
-
-      if (duplicateFurniture) {
-        validationErrors.push('Bu isimde başka bir mobilya zaten mevcut')
       }
     }
 
@@ -283,23 +340,23 @@ export async function PUT(
         where: { categoryId: parseInt(categoryId) }
       })
       
-      if (!category) {
+      if (!category || !category.isActive) {
         return NextResponse.json({
           success: false,
-          error: 'Belirtilen kategori bulunamadı'
-        }, { status: 400 })
-      }
-
-      if (!category.isActive) {
-        return NextResponse.json({
-          success: false,
-          error: 'Pasif kategoriye mobilya atanamaz'
+          error: 'Geçerli bir kategori seçiniz'
         }, { status: 400 })
       }
     }
 
-    // Transaction ile güncelle
-    const result = await prisma.$transaction(async (tx) => {
+    // Image dosyalarını işle (eğer varsa)
+    let processedImages: any[] = []
+    if (imageFiles.length > 0) {
+      const furnitureNameForImages = furnitureName?.trim() || existingFurniture.furnitureName
+      processedImages = await processImageFiles(imageFiles, furnitureNameForImages)
+    }
+
+    // Ana transaction - Sadece mobilya verilerini güncelle
+    const updatedFurniture = await prisma.$transaction(async (tx) => {
       // 1. Ana mobilya bilgilerini güncelle
       const updateData: any = {}
       
@@ -308,23 +365,21 @@ export async function PUT(
       if (categoryId !== undefined) updateData.categoryId = categoryId ? parseInt(categoryId) : null
       if (description !== undefined) updateData.description = description?.trim() || null
       if (price !== undefined) updateData.price = parseFloat(price)
-      if (isActive !== undefined) updateData.isActive = Boolean(isActive)
+      if (isActive !== undefined) updateData.isActive = Boolean(isActive === 'true' || isActive === true)
 
-      const updatedFurniture = await tx.furniture.update({
+      const furniture = await tx.furniture.update({
         where: { furnitureId },
         data: updateData
       })
 
       // 2. Renkleri güncelle
-      if (colorIds !== undefined) {
-        // Mevcut renkleri sil
+      if (parsedColorIds !== undefined) {
         await tx.furnitureColor.deleteMany({
           where: { furnitureId }
         })
 
-        // Yeni renkleri ekle
-        if (Array.isArray(colorIds) && colorIds.length > 0) {
-          const colorIdNumbers = colorIds.map((id: number) => parseInt(String(id))).filter((id: number) => !isNaN(id))
+        if (Array.isArray(parsedColorIds) && parsedColorIds.length > 0) {
+          const colorIdNumbers = parsedColorIds.map((id: number) => parseInt(String(id))).filter((id: number) => !isNaN(id))
           
           if (colorIdNumbers.length > 0) {
             const existingColors = await tx.color.findMany({
@@ -334,31 +389,27 @@ export async function PUT(
               }
             })
 
-            if (existingColors.length !== colorIdNumbers.length) {
-              throw new Error('Bazı renkler bulunamadı veya pasif durumda')
+            if (existingColors.length === colorIdNumbers.length) {
+              await tx.furnitureColor.createMany({
+                data: colorIdNumbers.map((colorId: number) => ({
+                  furnitureId,
+                  colorId,
+                  isAvailable: true
+                }))
+              })
             }
-
-            await tx.furnitureColor.createMany({
-              data: colorIdNumbers.map((colorId: number) => ({
-                furnitureId,
-                colorId,
-                isAvailable: true
-              }))
-            })
           }
         }
       }
 
       // 3. Özellikleri güncelle
-      if (properties !== undefined) {
-        // Mevcut özellikleri sil
+      if (parsedProperties !== undefined) {
         await tx.furnitureProperty.deleteMany({
           where: { furnitureId }
         })
 
-        // Yeni özellikleri ekle
-        if (Array.isArray(properties) && properties.length > 0) {
-          const propertyIds = properties.map((p: { propertyId: number }) => parseInt(String(p.propertyId))).filter((id: number) => !isNaN(id))
+        if (Array.isArray(parsedProperties) && parsedProperties.length > 0) {
+          const propertyIds = parsedProperties.map((p: { propertyId: number }) => parseInt(String(p.propertyId))).filter((id: number) => !isNaN(id))
           
           if (propertyIds.length > 0) {
             const existingProperties = await tx.property.findMany({
@@ -368,136 +419,125 @@ export async function PUT(
               }
             })
 
-            if (existingProperties.length !== propertyIds.length) {
-              throw new Error('Bazı özellikler bulunamadı veya pasif durumda')
-            }
-
-            await tx.furnitureProperty.createMany({
-              data: properties.map((prop: { propertyId: number; propertyValue: string }) => ({
-                furnitureId,
-                propertyId: parseInt(String(prop.propertyId)),
-                propertyValue: prop.propertyValue.trim(),
-                isActive: true
-              }))
-            })
-          }
-        }
-      }
-
-      // 4. Görselleri güncelle
-      if (images !== undefined) {
-        // Mevcut görsel ilişkilerini pasif yap
-        await tx.furnitureImage.updateMany({
-          where: { furnitureId },
-          data: { isActive: false }
-        })
-
-        // Yeni görsel ilişkileri ekle
-        if (Array.isArray(images) && images.length > 0) {
-          for (const imageData of images) {
-            if (imageData.imageId && !isNaN(parseInt(String(imageData.imageId)))) {
-              // Önce mevcut ilişkiyi kontrol et
-              const existingRelation = await tx.furnitureImage.findFirst({
-                where: {
+            if (existingProperties.length === propertyIds.length) {
+              await tx.furnitureProperty.createMany({
+                data: parsedProperties.map((prop: { propertyId: number; propertyValue: string }) => ({
                   furnitureId,
-                  imageId: parseInt(String(imageData.imageId))
-                }
+                  propertyId: parseInt(String(prop.propertyId)),
+                  propertyValue: prop.propertyValue.trim(),
+                  isActive: true
+                }))
               })
-
-              if (existingRelation) {
-                // Mevcut ilişkiyi güncelle
-                await tx.furnitureImage.update({
-                  where: { id: existingRelation.id },
-                  data: {
-                    isActive: true,
-                    sortOrder: imageData.sortOrder ? parseInt(String(imageData.sortOrder)) : 1,
-                    imageType: imageData.imageType?.trim() || 'main_image'
-                  }
-                })
-              } else {
-                // Yeni ilişki oluştur
-                await tx.furnitureImage.create({
-                  data: {
-                    furnitureId,
-                    imageId: parseInt(String(imageData.imageId)),
-                    sortOrder: imageData.sortOrder ? parseInt(String(imageData.sortOrder)) : 1,
-                    imageType: imageData.imageType?.trim() || 'main_image',
-                    isActive: true
-                  }
-                })
-              }
             }
           }
         }
       }
 
-      // Güncellenmiş mobilyayı getir
-      const finalFurniture = await tx.furniture.findUnique({
-        where: { furnitureId },
-        include: {
-          category: {
-            select: {
-              categoryId: true,
-              categoryName: true,
-              categoryPath: true
-            }
-          },
-          colors: {
-            include: {
-              color: {
-                select: {
-                  colorId: true,
-                  colorName: true,
-                  colorCode: true
-                }
-              }
-            }
-          },
-          properties: {
-            include: {
-              property: {
-                select: {
-                  propertyId: true,
-                  propertyName: true,
-                  propertyType: true
-                }
-              }
-            }
-          },
-          images: {
-            where: { isActive: true },
-            include: {
-              image: {
-                select: {
-                  imageId: true,
-                  fileName: true,
-                  filePath: true,
-                  altText: true
-                }
-              }
-            },
-            orderBy: { sortOrder: 'asc' }
-          },
-          _count: {
-            select: {
-              colors: true,
-              properties: true,
-              images: true
-            }
-          }
-        }
-      })
-
-      return finalFurniture
+      return furniture
     }, {
       timeout: 30000
     })
 
-    return NextResponse.json({
+    // Transaction başarılı olduktan sonra image işlemlerini yap
+
+    // 1. Silinecek image'lar varsa sil
+    let imageDeleteResults = []
+    if (parsedRemoveImageIds && parsedRemoveImageIds.length > 0) {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/images?ids=${parsedRemoveImageIds.join(',')}&force=true`, {
+          method: 'DELETE'
+        })
+        const imageDeleteResult = await response.json()
+        imageDeleteResults.push(imageDeleteResult)
+      } catch (error) {
+        console.warn('Image silme hatası:', error)
+      }
+    }
+
+    // 2. Yeni image dosyaları varsa ekle
+    let imageUploadResults = []
+    if (processedImages.length > 0) {
+      try {
+        imageUploadResults = await createImagesForFurniture(furnitureId, processedImages)
+      } catch (error) {
+        console.warn('Image yükleme hatası:', error)
+      }
+    }
+
+    // Güncellenmiş mobilyayı getir
+    const finalFurniture = await prisma.furniture.findUnique({
+      where: { furnitureId },
+      include: {
+        category: {
+          select: {
+            categoryId: true,
+            categoryName: true,
+            categoryPath: true
+          }
+        },
+        colors: {
+          include: {
+            color: {
+              select: {
+                colorId: true,
+                colorName: true,
+                colorCode: true
+              }
+            }
+          }
+        },
+        properties: {
+          include: {
+            property: {
+              select: {
+                propertyId: true,
+                propertyName: true,
+                propertyType: true
+              }
+            }
+          }
+        },
+        images: {
+          where: { isActive: true },
+          include: {
+            image: {
+              select: {
+                imageId: true,
+                fileName: true,
+                filePath: true,
+                altText: true
+              }
+            }
+          },
+          orderBy: { sortOrder: 'asc' }
+        },
+        _count: {
+          select: {
+            colors: true,
+            properties: true,
+            images: true
+          }
+        }
+      }
+    })
+
+    const response: any = {
       success: true,
       message: 'Mobilya başarıyla güncellendi',
-      data: result
-    })
+      data: finalFurniture
+    }
+
+    // Image işlem sonuçlarını ekle
+    if (imageFiles.length > 0 || (parsedRemoveImageIds && parsedRemoveImageIds.length > 0)) {
+      response.imageOperations = {
+        uploaded: imageUploadResults.length,
+        deleted: imageDeleteResults.length,
+        uploadResults: imageUploadResults,
+        deleteResults: imageDeleteResults
+      }
+    }
+
+    return NextResponse.json(response)
 
   } catch (error) {
     console.error('Mobilya güncelleme hatası:', error)
@@ -505,8 +545,7 @@ export async function PUT(
     return NextResponse.json({
       success: false,
       message: 'Mobilya güncellenirken hata oluştu',
-      error: error instanceof Error ? error.message : 'Bilinmeyen hata',
-      details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.stack : String(error)) : undefined
+      error: error instanceof Error ? error.message : 'Bilinmeyen hata'
     }, { status: 500 })
   }
 }
@@ -514,10 +553,11 @@ export async function PUT(
 // DELETE - Mobilya sil
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const furnitureId = parseInt(params.id)
+    const { id } = await params
+    const furnitureId = parseInt(id)
 
     if (isNaN(furnitureId) || furnitureId <= 0) {
       return NextResponse.json({
@@ -526,12 +566,20 @@ export async function DELETE(
       }, { status: 400 })
     }
 
-    // Mobilyayı kontrol et
+    // Mobilyayı ve ilişkili image'ları kontrol et
     const furniture = await prisma.furniture.findUnique({
       where: { furnitureId },
-      select: {
-        furnitureId: true,
-        furnitureName: true,
+      include: {
+        images: {
+          include: {
+            image: {
+              select: {
+                imageId: true,
+                fileName: true
+              }
+            }
+          }
+        },
         _count: {
           select: {
             colors: true,
@@ -549,7 +597,10 @@ export async function DELETE(
       }, { status: 404 })
     }
 
-    // Transaction ile sil
+    // Image ID'lerini topla
+    const imageIds = furniture.images.map(fi => fi.image.imageId)
+
+    // Transaction ile mobilyayı sil
     await prisma.$transaction(async (tx) => {
       // İlişkili kayıtları sil
       await tx.furnitureImage.deleteMany({
@@ -570,6 +621,20 @@ export async function DELETE(
       })
     })
 
+    // Transaction başarılı olduktan sonra image'ları sil
+    let imageDeleteResults = []
+    if (imageIds.length > 0) {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/images?ids=${imageIds.join(',')}&force=true`, {
+          method: 'DELETE'
+        })
+        const imageDeleteResult = await response.json()
+        imageDeleteResults.push(imageDeleteResult)
+      } catch (error) {
+        console.warn('Image silme hatası:', error)
+      }
+    }
+
     return NextResponse.json({
       success: true,
       message: `"${furniture.furnitureName}" mobilyası başarıyla silindi`,
@@ -581,7 +646,8 @@ export async function DELETE(
           properties: furniture._count.properties,
           images: furniture._count.images
         }
-      }
+      },
+      imageDeleteResults
     })
 
   } catch (error) {
@@ -590,8 +656,7 @@ export async function DELETE(
     return NextResponse.json({
       success: false,
       message: 'Mobilya silinirken hata oluştu',
-      error: error instanceof Error ? error.message : 'Bilinmeyen hata',
-      details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.stack : String(error)) : undefined
+      error: error instanceof Error ? error.message : 'Bilinmeyen hata'
     }, { status: 500 })
   }
 }
