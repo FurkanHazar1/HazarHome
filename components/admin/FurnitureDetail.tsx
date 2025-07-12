@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
-// TypeScript interfaces
+// TypeScript interfaces (aynı kalıyor)
 interface Category {
   categoryId: number
   categoryName: string
@@ -108,7 +108,7 @@ interface StatusUpdateResponse {
   error?: string
 }
 
-// Modern Icon components using SVG
+// Icon components (aynı kalıyor)
 const FurnitureIcon = () => (
   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
@@ -237,7 +237,7 @@ export default function FurnitureDetail({ furnitureId }: FurnitureDetailProps) {
   const [showImageModal, setShowImageModal] = useState<boolean>(false)
   const [imageLoadError, setImageLoadError] = useState<Set<number>>(new Set())
 
-  // Enhanced image component with better loading states
+  // Geliştirilmiş ImageWithFallback component
   const ImageWithFallback = ({ 
     filePath, 
     alt, 
@@ -252,91 +252,85 @@ export default function FurnitureDetail({ furnitureId }: FurnitureDetailProps) {
     onError?: () => void
   }) => {
     const [currentUrlIndex, setCurrentUrlIndex] = useState(0)
-    const [imageError, setImageError] = useState(false)
-    const [imageLoading, setImageLoading] = useState(true)
+    const [showFallback, setShowFallback] = useState(false)
     const [imageLoaded, setImageLoaded] = useState(false)
     
     const urls = useMemo(() => {
       if (!filePath) return []
       
+      console.log('🔧 Processing image path:', filePath)
+      
       const normalizedPath = filePath.replace(/\\/g, '/')
       const cleanPath = normalizedPath.replace(/^uploads\//, '')
       
-      return [
-        `/api/images/serve/${cleanPath}`,           // API serving (works!)
-        `/uploads/${cleanPath}`,                    // Static serving (fallback)
+      const urlOptions = [
+        `/api/images/serve/${cleanPath}`,
+        `/uploads/${cleanPath}`,
+        `/${normalizedPath}`,
+        `/${cleanPath}`
       ]
+      
+      console.log('🔗 Generated URLs:', urlOptions)
+      return urlOptions
     }, [filePath])
     
-    const handleImageError = () => {
-      console.error(`❌ Image failed to load (attempt ${currentUrlIndex + 1}):`, {
-        url: urls[currentUrlIndex],
-        filePath: filePath
-      })
+    const handleImageError = useCallback(() => {
+      console.log(`❌ Image failed to load: ${urls[currentUrlIndex]}`)
       
       if (currentUrlIndex < urls.length - 1) {
-        console.log(`🔄 Trying fallback URL ${currentUrlIndex + 2}:`, urls[currentUrlIndex + 1])
+        console.log(`🔄 Trying next URL: ${urls[currentUrlIndex + 1]}`)
         setCurrentUrlIndex(prev => prev + 1)
-        setImageLoading(true) // Reset loading state for new URL
       } else {
-        console.error('❌ All URL attempts failed for:', filePath)
-        setImageError(true)
-        setImageLoading(false)
+        console.log('😞 All URLs failed, showing fallback')
+        setShowFallback(true)
         onError?.()
       }
-    }
+    }, [currentUrlIndex, urls, onError])
     
-    const handleImageLoad = () => {
-      console.log(`✅ Image loaded successfully on attempt ${currentUrlIndex + 1}:`, urls[currentUrlIndex])
+    const handleImageLoad = useCallback(() => {
+      console.log(`✅ Image loaded successfully: ${urls[currentUrlIndex]}`)
+      setShowFallback(false)
       setImageLoaded(true)
-      setImageLoading(false)
-      setImageError(false)
       onLoad?.()
-    }
-    
-    const handleImageLoadStart = () => {
-      setImageLoading(true)
+    }, [currentUrlIndex, urls, onLoad])
+
+    // URL değiştiğinde state'i resetle
+    useEffect(() => {
       setImageLoaded(false)
-    }
+      setShowFallback(false)
+      setCurrentUrlIndex(0)
+    }, [filePath])
     
-    if (imageError || !urls[currentUrlIndex]) {
+    if (showFallback || !urls[currentUrlIndex]) {
       return (
-        <div className={`${className} bg-gray-100 flex flex-col items-center justify-center border-2 border-dashed border-gray-300`}>
-          <ImageIcon />
-          <p className="text-xs text-gray-500 mt-1 text-center px-2">
-            Yüklenemedi
-          </p>
-          <p className="text-xs text-gray-400 mt-1 text-center px-2">
-            {filePath.split('/').pop()}
-          </p>
+        <div className={`${className} bg-gray-100 flex items-center justify-center border border-gray-200`}>
+          <div className="text-center p-4">
+            <ImageIcon />
+            <span className="text-gray-500 text-sm mt-2 block">Yüklenemedi</span>
+            <span className="text-gray-400 text-xs block truncate max-w-32" title={filePath}>
+              {filePath}
+            </span>
+          </div>
         </div>
       )
     }
     
     return (
-      <div className={`${className} relative`}>
-        {/* Loading overlay */}
-        {imageLoading && !imageLoaded && (
-          <div className="absolute inset-0 bg-gray-200 flex items-center justify-center animate-pulse">
-            <div className="flex flex-col items-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-              <p className="text-xs text-gray-600 mt-2">Yükleniyor...</p>
-            </div>
+      <div className={`${className} relative bg-gray-50`}>
+        {!imageLoaded && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-100 animate-pulse">
+            <LoaderIcon />
           </div>
         )}
-        
         <img
-          key={`${currentUrlIndex}-${urls[currentUrlIndex]}`} // Force re-render on URL change
           src={urls[currentUrlIndex]}
           alt={alt}
-          className={`${className} ${imageLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}
-          onLoadStart={handleImageLoadStart}
+          className={`w-full h-full transition-opacity duration-300 ${
+            imageLoaded ? 'opacity-100' : 'opacity-0'
+          }`}
           onLoad={handleImageLoad}
           onError={handleImageError}
-          style={{
-            minHeight: '100%',
-            objectFit: 'cover'
-          }}
+          style={{ objectFit: 'cover' }}
         />
       </div>
     )
@@ -1003,28 +997,27 @@ export default function FurnitureDetail({ furnitureId }: FurnitureDetailProps) {
               {allImages.length > 0 ? (
                 <div className="space-y-6">
                   {/* Main Images */}
-                  {furniture.imageGallery.mainImages.length > 0 && (
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                        <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
-                        Ana Görseller ({furniture.imageGallery.mainImages.length})
-                      </h3>
-                      <div className="space-y-3">
-                        {furniture.imageGallery.mainImages.map((furnitureImage, index) => (
-                          <div
-                            key={furnitureImage.image.imageId}
-                            className="relative group cursor-pointer"
-                            onClick={() => {
-                              setSelectedImageIndex(index)
-                              setShowImageModal(true)
-                            }}
-                          >
-                            <div className="aspect-video rounded-lg overflow-hidden border-2 border-yellow-200 shadow-sm">
-                              {!imageLoadError.has(furnitureImage.image.imageId) ? (
+                    {furniture.imageGallery.mainImages.length > 0 && (
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                          <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
+                          Ana Görseller ({furniture.imageGallery.mainImages.length})
+                        </h3>
+                        <div className="space-y-3">
+                          {furniture.imageGallery.mainImages.map((furnitureImage, index) => (
+                            <div
+                              key={furnitureImage.image.imageId}
+                              className="relative group cursor-pointer"
+                              onClick={() => {
+                                setSelectedImageIndex(index)
+                                setShowImageModal(true)
+                              }}
+                            >
+                              <div className="aspect-video rounded-lg overflow-hidden border-2 border-yellow-200 shadow-sm ">
                                 <ImageWithFallback
                                   filePath={furnitureImage.image.filePath}
                                   alt={furnitureImage.image.altText || 'Ana görsel'}
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                  className="w-full h-full group-hover:scale-105 transition-transform duration-300"
                                   onLoad={() => {
                                     console.log('✅ Main image loaded:', furnitureImage.image.fileName)
                                   }}
@@ -1037,69 +1030,55 @@ export default function FurnitureDetail({ furnitureId }: FurnitureDetailProps) {
                                     handleImageError(furnitureImage.image.imageId)
                                   }}
                                 />
-                              ) : (
-                                <div className="w-full h-full bg-gray-100 flex flex-col items-center justify-center">
-                                  <ImageIcon />
-                                  <p className="text-xs text-gray-500 mt-1">Yüklenemedi</p>
-                                </div>
-                              )}
-                            </div>
-                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 rounded-lg flex items-center justify-center">
-                              <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white bg-opacity-90 rounded-full p-2">
-                                <ExpandIcon />
+                              </div>
+                              {/* Bu arka plan efekti kaldırıldı */}
+                              <div className="absolute top-2 left-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                                Ana Görsel
                               </div>
                             </div>
-                            <div className="absolute top-2 left-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded-full font-medium">
-                              Ana Görsel
-                            </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Gallery Images */}
-                  {furniture.imageGallery.galleryImages.length > 0 && (
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                        <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                        Galeri Görselleri ({furniture.imageGallery.galleryImages.length})
-                      </h3>
-                      <div className="grid grid-cols-2 gap-3">
-                        {furniture.imageGallery.galleryImages.map((furnitureImage, index) => (
-                          <div
-                            key={furnitureImage.image.imageId}
-                            className="relative group cursor-pointer"
-                            onClick={() => {
-                              setSelectedImageIndex(furniture.imageGallery.mainImages.length + index)
-                              setShowImageModal(true)
-                            }}
-                          >
-                            <div className="aspect-square rounded-lg overflow-hidden border border-gray-200 shadow-sm">
-                              {!imageLoadError.has(furnitureImage.image.imageId) ? (
-                                <ImageWithFallback
-                                  filePath={furnitureImage.image.filePath}
-                                  alt={furnitureImage.image.altText || 'Galeri görseli'}
-                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                                  onError={() => handleImageError(furnitureImage.image.imageId)}
-                                />
-                              ) : (
-                                <div className="w-full h-full bg-gray-100 flex flex-col items-center justify-center">
-                                  <ImageIcon />
-                                  <p className="text-xs text-gray-500 mt-1">Yüklenemedi</p>
+
+                        {/* Gallery Images */}
+                        {furniture.imageGallery.galleryImages.length > 0 && (
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                              <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                              Galeri Görselleri ({furniture.imageGallery.galleryImages.length})
+                            </h3>
+                            <div className="grid grid-cols-2 gap-3">
+                              {furniture.imageGallery.galleryImages.map((furnitureImage, index) => (
+                                <div
+                                  key={furnitureImage.image.imageId}
+                                  className="relative group cursor-pointer"
+                                  onClick={() => {
+                                    setSelectedImageIndex(furniture.imageGallery.mainImages.length + index)
+                                    setShowImageModal(true)
+                                  }}
+                                >
+                                  <div className="aspect-square rounded-lg overflow-hidden border border-gray-200 shadow-sm bg-white">
+                                    <ImageWithFallback
+                                      filePath={furnitureImage.image.filePath}
+                                      alt={furnitureImage.image.altText || 'Galeri görseli'}
+                                      className="w-full h-full group-hover:scale-110 transition-transform duration-300"
+                                      onError={() => handleImageError(furnitureImage.image.imageId)}
+                                    />
+                                  </div>
+
+                                  {/* Hover arka planı kaldırıldı, sadece ikon kaldı */}
+                                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white bg-opacity-90 rounded-full p-1.5">
+                                    <ExpandIcon />
+                                  </div>
                                 </div>
-                              )}
-                            </div>
-                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 rounded-lg flex items-center justify-center">
-                              <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white bg-opacity-90 rounded-full p-1.5">
-                                <ExpandIcon />
-                              </div>
+                              ))}
                             </div>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                        )}
+
+
                   
                   {/* Gallery Summary */}
                   <div className="bg-gray-50 rounded-lg p-4">
@@ -1173,11 +1152,11 @@ export default function FurnitureDetail({ furnitureId }: FurnitureDetailProps) {
 
               {/* Image Container */}
               <div className="relative bg-white rounded-lg overflow-hidden shadow-2xl">
-                <div className="relative min-h-[60vh] flex items-center justify-center">
+                <div className="relative min-h-[60vh] bg-white flex items-center justify-center">
                   <ImageWithFallback
                     filePath={allImages[selectedImageIndex].image.filePath}
                     alt={allImages[selectedImageIndex].image.altText || 'Furniture image'}
-                    className="max-w-full max-h-[80vh] object-contain mx-auto block"
+                    className="max-w-full max-h-[80vh] w-auto h-auto object-contain"
                   />
                 </div>
                 

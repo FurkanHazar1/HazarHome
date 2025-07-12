@@ -5,9 +5,22 @@ import Link from 'next/link'
 
 // Utility function for image URLs
 const getImageUrl = (filePath: string): string => {
-  if (!filePath) return ''
-  const cleanPath = filePath.replace(/^uploads\//, '')
-  return `/api/images/serve/${cleanPath}`
+      if (!filePath) return ''
+      
+      console.log('🔧 Processing image path:', filePath)
+      
+      const normalizedPath = filePath.replace(/\\/g, '/')
+      const cleanPath = normalizedPath.replace(/^uploads\//, '')
+      
+      const urlOptions = [
+        `/api/images/serve/${cleanPath}`,
+        `/uploads/${cleanPath}`,
+        `/${normalizedPath}`,
+        `/${cleanPath}`
+      ]
+      
+      console.log('🔗 Generated URLs:', urlOptions)
+      return urlOptions[0]
 }
 
 // TypeScript interfaces
@@ -836,7 +849,7 @@ export default function FurnitureManagement() {
                                   if (fallback) fallback.classList.remove('hidden');
                                 }}
                               />
-                              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-lg transition-all"></div>
+                              <div className="absolute inset-0  group-hover:bg-opacity-10 rounded-lg transition-all"></div>
                               <div className="fallback-image hidden w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
                                 <ImageIcon />
                               </div>

@@ -218,7 +218,7 @@ const ImagePreviewComponent: React.FC<ImagePreviewComponentProps> = ({
       </div>
       
       {/* Hover controls */}
-      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 rounded-xl flex items-center justify-center">
+      <div className="absolute inset-0 group-hover:bg-opacity-40 transition-all duration-200 rounded-xl flex items-center justify-center">
         <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <button
             type="button"
