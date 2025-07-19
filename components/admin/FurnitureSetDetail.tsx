@@ -21,7 +21,7 @@ const getImageUrl = (filePath: string): string[] => {
   return urlOptions
 }
 
-// Types - matching API response
+// Types (same as original but condensed for space)
 interface Category {
   categoryId: number
   categoryName: string
@@ -29,11 +29,6 @@ interface Category {
   categoryLevel?: number
   description?: string
   isActive?: boolean
-  parent?: {
-    categoryId: number
-    categoryName: string
-    categoryPath: string
-  }
 }
 
 interface Color {
@@ -64,7 +59,7 @@ interface ImageData {
   url?: string
 }
 
-interface FurnitureImage {
+interface FurnitureSetImage {
   sortOrder: number
   imageType: string
   isActive: boolean
@@ -72,13 +67,13 @@ interface FurnitureImage {
 }
 
 interface ImageGallery {
-  main?: FurnitureImage[]
-  gallery?: FurnitureImage[]
-  thumbnails?: FurnitureImage[]
+  main?: FurnitureSetImage[]
+  gallery?: FurnitureSetImage[]
+  thumbnails?: FurnitureSetImage[]
   totalImages: number
 }
 
-interface FurnitureProperty {
+interface FurnitureSetProperty {
   propertyId: number
   propertyName: string
   propertyValue: string
@@ -86,53 +81,68 @@ interface FurnitureProperty {
   isActive: boolean
 }
 
-interface BreadcrumbItem {
-  categoryId: number
-  categoryName: string
-  categoryPath: string
+interface FurnitureItem {
+  furnitureId: number
+  quantity: number
+  sortOrder: number
+  itemTotalPrice: number
+  formattedItemPrice: string
+  formattedItemTotalPrice: string
+  furniture: {
+    furnitureId: number
+    furnitureName: string
+    furnitureType: string
+    price: number
+    isActive: boolean
+    images?: Array<{
+      image: ImageData
+      imageType: string
+      sortOrder: number
+      isActive: boolean
+    }>
+  }
 }
 
-interface FurnitureStats {
+interface PricingAnalysis {
+  setPrice: number
+  totalIndividualPrice: number
+  savings: number
+  savingsPercentage: number
+  isSetCheaper: boolean
+  formattedSetPrice: string
+  formattedIndividualPrice: string
+  formattedSavings: string
+}
+
+interface FurnitureSetStats {
   totalColors: number
   totalProperties: number
   totalImages: number
-  activeColors: number
-  activeProperties: number
-  activeImages: number
+  totalFurnitureItems: number
+  totalQuantity: number
+  uniqueFurnitureCount: number
+  activeFurnitureCount: number
 }
 
-interface FurnitureMetadata {
-  formattedPrice: string
-  categoryLevel?: number
-  hasMainImage: boolean
-  hasGalleryImages: boolean
-  hasThumbnails: boolean
-  categoryBasedPath?: string
-}
-
-interface FurnitureDetail {
-  furnitureId: number
-  furnitureName: string
-  furnitureType: string
+interface FurnitureSetDetail {
+  setId: number
+  setName: string
   description?: string
   price: number
   isActive: boolean
   createdAt: string
-  updatedAt?: string
   category?: Category
-  breadcrumb: BreadcrumbItem[]
   imageGallery: ImageGallery
   colorOptions: Color[]
-  propertiesByType: { [key: string]: FurnitureProperty[] }
-  stats: FurnitureStats
-  metadata: FurnitureMetadata
-}
-
-interface ApiResponse {
-  success: boolean
-  data?: FurnitureDetail
-  error?: string
-  details?: string
+  propertiesByType: { [key: string]: FurnitureSetProperty[] }
+  furnitureItems: FurnitureItem[]
+  pricingAnalysis?: PricingAnalysis
+  stats: FurnitureSetStats
+  metadata: {
+    formattedPrice: string
+    hasMainImage: boolean
+    hasGalleryImages: boolean
+  }
 }
 
 // Modern Dark Theme Icons
@@ -184,33 +194,32 @@ const CalendarIcon = () => (
   </svg>
 )
 
+const CurrencyIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+)
+
+const PackageIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+  </svg>
+)
+
 const ColorIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM7 3H5a2 2 0 00-2 2v12a4 4 0 004 4h2a2 2 0 002-2V5a2 2 0 00-2-2z" />
   </svg>
 )
 
-const InfoIcon = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-  </svg>
-)
-
-const FurnitureIcon = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m7 21-3-3h16l-3 3" />
-  </svg>
-)
-
 const StarIcon = () => (
-  <svg className="w-5 h-5 fill-current" viewBox="0 0 20 20">
+  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
   </svg>
 )
 
 // Enhanced Image Component with Dark Theme
-const FurnitureImageDisplay = ({ 
+const FurnitureSetImageDisplay = ({ 
   image, 
   alt, 
   className = "w-full h-full",
@@ -335,7 +344,7 @@ const ImageZoomModal = ({
         <div className="relative">
           <Image
             src={imageUrl}
-            alt={image.altText || 'Furniture image'}
+            alt={image.altText || 'Furniture set image'}
             width={image.width || 800}
             height={image.height || 600}
             className="max-w-full max-h-[90vh] object-contain rounded-xl"
@@ -352,15 +361,18 @@ const ImageZoomModal = ({
   )
 }
 
-interface FurnitureDetailProps {
-  furnitureId: number
+interface ApiResponse {
+  success: boolean
+  data?: FurnitureSetDetail
+  error?: string
+  details?: string
 }
 
-export default function ModernFurnitureDetail({ furnitureId }: FurnitureDetailProps) {
+export default function ModernFurnitureSetDetail({ setId }: { setId: number }) {
   const router = useRouter()
   
   // State management
-  const [furniture, setFurniture] = useState<FurnitureDetail | null>(null)
+  const [furnitureSet, setFurnitureSet] = useState<FurnitureSetDetail | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string>('')
   
@@ -368,21 +380,23 @@ export default function ModernFurnitureDetail({ furnitureId }: FurnitureDetailPr
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0)
   const [showImageZoom, setShowImageZoom] = useState<boolean>(false)
   const [zoomImage, setZoomImage] = useState<ImageData | null>(null)
-
-  // Load furniture details from API
-  const loadFurnitureDetail = useCallback(async () => {
+  
+  // Load furniture set details from API
+  const loadFurnitureSetDetail = useCallback(async () => {
     try {
       setLoading(true)
       setError('')
       
       const params = new URLSearchParams({
         groupImagesByType: 'true',
+        includeFurnitureDetails: 'true',
+        calculatePricing: 'true',
         includeInactive: 'false'
       })
 
-      console.log('🔄 Loading furniture detail:', furnitureId)
+      console.log('🔄 Loading furniture set detail:', setId)
 
-      const response = await fetch(`/api/furniture/${furnitureId}?${params}`)
+      const response = await fetch(`/api/furniture-sets/${setId}?${params}`)
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
@@ -391,38 +405,38 @@ export default function ModernFurnitureDetail({ furnitureId }: FurnitureDetailPr
       const data: ApiResponse = await response.json()
       
       if (data.success && data.data) {
-        setFurniture(data.data)
-        console.log('✅ Furniture detail loaded:', data.data)
+        setFurnitureSet(data.data)
+        console.log('✅ Furniture set detail loaded:', data.data)
       } else {
-        setError(data.error || 'Mobilya detayları yüklenemedi')
+        setError(data.error || 'Mobilya takımı detayları yüklenemedi')
       }
     } catch (err) {
-      console.error('❌ Furniture detail loading error:', err)
-      setError('Mobilya detayları yüklenemedi. Lütfen tekrar deneyin.')
+      console.error('❌ Furniture set detail loading error:', err)
+      setError('Mobilya takımı detayları yüklenemedi. Lütfen tekrar deneyin.')
     } finally {
       setLoading(false)
     }
-  }, [furnitureId])
+  }, [setId])
 
-  // Delete furniture
+  // Delete furniture set
   const handleDelete = async () => {
-    if (!furniture) return
+    if (!furnitureSet) return
     
     const confirmed = window.confirm(
-      `"${furniture.furnitureName}" mobilyasını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`
+      `"${furnitureSet.setName}" mobilya takımını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`
     )
     
     if (!confirmed) return
 
     try {
-      const response = await fetch(`/api/furniture/${furniture.furnitureId}`, {
+      const response = await fetch(`/api/furniture-sets/${furnitureSet.setId}`, {
         method: 'DELETE'
       })
 
       const result = await response.json()
 
       if (result.success) {
-        router.push('/admin/furniture?deleted=true')
+        router.push('/admin/furniture-sets?deleted=true')
       } else {
         setError(result.error || 'Silme işlemi başarısız')
       }
@@ -432,22 +446,35 @@ export default function ModernFurnitureDetail({ furnitureId }: FurnitureDetailPr
     }
   }
 
+  // Load data on mount
+  useEffect(() => {
+    loadFurnitureSetDetail()
+  }, [loadFurnitureSetDetail])
+
+  // Auto-hide error after 5 seconds
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(''), 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [error])
+
   // Image gallery functions
   const getAllImages = useMemo(() => {
-    if (!furniture?.imageGallery) return []
+    if (!furnitureSet?.imageGallery) return []
     
-    const allImages: FurnitureImage[] = []
+    const allImages: FurnitureSetImage[] = []
     
-    if (furniture.imageGallery.main) {
-      allImages.push(...furniture.imageGallery.main)
+    if (furnitureSet.imageGallery.main) {
+      allImages.push(...furnitureSet.imageGallery.main)
     }
     
-    if (furniture.imageGallery.gallery) {
-      allImages.push(...furniture.imageGallery.gallery)
+    if (furnitureSet.imageGallery.gallery) {
+      allImages.push(...furnitureSet.imageGallery.gallery)
     }
     
     return allImages.sort((a, b) => a.sortOrder - b.sortOrder)
-  }, [furniture?.imageGallery])
+  }, [furnitureSet?.imageGallery])
 
   const selectedImage = useMemo(() => {
     return getAllImages[selectedImageIndex]?.image || null
@@ -468,19 +495,6 @@ export default function ModernFurnitureDetail({ furnitureId }: FurnitureDetailPr
     })
   }, [])
 
-  // Load data on mount
-  useEffect(() => {
-    loadFurnitureDetail()
-  }, [loadFurnitureDetail])
-
-  // Auto-hide error after 5 seconds
-  useEffect(() => {
-    if (error) {
-      const timer = setTimeout(() => setError(''), 5000)
-      return () => clearTimeout(timer)
-    }
-  }, [error])
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Animated Background Elements */}
@@ -497,7 +511,7 @@ export default function ModernFurnitureDetail({ furnitureId }: FurnitureDetailPr
             <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-12 border border-white/20 shadow-2xl">
               <div className="flex items-center space-x-4">
                 <LoaderIcon />
-                <span className="text-white font-medium text-lg">Mobilya detayları yükleniyor...</span>
+                <span className="text-white font-medium text-lg">Mobilya takımı detayları yükleniyor...</span>
               </div>
             </div>
           </div>
@@ -514,7 +528,7 @@ export default function ModernFurnitureDetail({ furnitureId }: FurnitureDetailPr
         )}
 
         {/* Content */}
-        {!loading && furniture && (
+        {!loading && furnitureSet && (
           <>
             {/* Header */}
             <div className="mb-8">
@@ -529,7 +543,7 @@ export default function ModernFurnitureDetail({ furnitureId }: FurnitureDetailPr
                 
                 <div className="flex items-center space-x-4">
                   <Link
-                    href={`/admin/furniture/${furniture?.furnitureId || 0}/edit`}
+                    href={`/admin/furniture-sets/${furnitureSet?.setId || 0}/edit`}
                     className="group flex items-center space-x-3 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
                   >
                     <EditIcon />
@@ -549,36 +563,45 @@ export default function ModernFurnitureDetail({ furnitureId }: FurnitureDetailPr
               {/* Title Section */}
               <div className="text-center mb-12">
                 <div className="inline-flex items-center space-x-3 px-6 py-2 bg-white/10 backdrop-blur-sm rounded-full mb-4 border border-white/20">
-                  <FurnitureIcon />
-                  <span className="text-white/80 font-medium">{furniture?.category?.categoryName || 'Kategorisiz'}</span>
+                  <TagIcon />
+                  <span className="text-white/80 font-medium">{furnitureSet?.category?.categoryName || 'Kategorisiz'}</span>
                 </div>
                 
                 <h1 className="text-5xl font-bold bg-gradient-to-r from-white via-blue-100 to-indigo-200 bg-clip-text text-transparent mb-4 leading-tight">
-                  {furniture?.furnitureName || 'Mobilya'}
+                  {furnitureSet?.setName || 'Mobilya Takımı'}
                 </h1>
                 
                 <div className="flex items-center justify-center space-x-6 text-white/80">
                   <div className="flex items-center space-x-2">
-                    <TagIcon />
-                    <span>{furniture?.furnitureType || 'Tip Bilinmiyor'}</span>
+                    <PackageIcon />
+                    <span>{furnitureSet?.stats?.uniqueFurnitureCount || 0} Mobilya</span>
+                  </div>
+                  <div className="w-2 h-2 bg-white/40 rounded-full"></div>
+                  <div className="flex items-center space-x-2">
+                    <span>{furnitureSet?.stats?.totalQuantity || 0} Adet</span>
                   </div>
                   <div className="w-2 h-2 bg-white/40 rounded-full"></div>
                   <div className={`inline-flex items-center px-4 py-1 rounded-full text-sm font-medium ${
-                    furniture?.isActive 
+                    furnitureSet?.isActive 
                       ? 'bg-green-500/20 text-green-300 border border-green-500/30' 
                       : 'bg-red-500/20 text-red-300 border border-red-500/30'
                   }`}>
-                    {furniture?.isActive ? '✓ Aktif' : '✕ Pasif'}
+                    {furnitureSet?.isActive ? '✓ Aktif' : '✕ Pasif'}
                   </div>
                 </div>
 
                 <div className="mt-6">
                   <div className="text-6xl font-bold bg-gradient-to-r from-green-400 to-emerald-300 bg-clip-text text-transparent">
-                    {furniture?.metadata?.formattedPrice || '₺0'}
+                    {furnitureSet?.metadata?.formattedPrice || '₺0'}
                   </div>
-                  <div className="mt-2 text-white/60">
-                    ID: {furniture?.furnitureId || 0}
-                  </div>
+                  {furnitureSet?.pricingAnalysis?.isSetCheaper && (
+                    <div className="mt-2 inline-flex items-center space-x-2 px-4 py-2 bg-green-500/20 backdrop-blur-sm rounded-full border border-green-500/30">
+                      <StarIcon />
+                      <span className="text-green-300 font-medium">
+                        {furnitureSet.pricingAnalysis.formattedSavings} tasarruf
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -591,9 +614,9 @@ export default function ModernFurnitureDetail({ furnitureId }: FurnitureDetailPr
                 <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-6 border border-white/10 shadow-2xl">
                   <div className="aspect-square relative rounded-2xl overflow-hidden mb-6">
                     {selectedImage ? (
-                      <FurnitureImageDisplay
+                      <FurnitureSetImageDisplay
                         image={selectedImage}
-                        alt={furniture.furnitureName}
+                        alt={furnitureSet.setName}
                         showZoom={true}
                         onZoom={() => handleImageZoom(selectedImage)}
                         priority={true}
@@ -621,9 +644,9 @@ export default function ModernFurnitureDetail({ furnitureId }: FurnitureDetailPr
                               : 'border-white/20 hover:border-white/40'
                           }`}
                         >
-                          <FurnitureImageDisplay
+                          <FurnitureSetImageDisplay
                             image={imageItem.image}
-                            alt={`${furniture.furnitureName} - ${index + 1}`}
+                            alt={`${furnitureSet.setName} - ${index + 1}`}
                           />
                         </button>
                       ))}
@@ -633,9 +656,9 @@ export default function ModernFurnitureDetail({ furnitureId }: FurnitureDetailPr
                   {/* Image Stats */}
                   <div className="mt-6 grid grid-cols-3 gap-4">
                     {[
-                      { label: "Toplam Görsel", value: furniture?.stats?.totalImages || 0, color: "from-blue-500 to-blue-600" },
-                      { label: "Ana Görsel", value: furniture?.imageGallery?.main?.length || 0, color: "from-purple-500 to-purple-600" },
-                      { label: "Galeri", value: furniture?.imageGallery?.gallery?.length || 0, color: "from-green-500 to-green-600" }
+                      { label: "Toplam Görsel", value: furnitureSet?.stats?.totalImages || 0, color: "from-blue-500 to-blue-600" },
+                      { label: "Ana Görsel", value: furnitureSet?.imageGallery?.main?.length || 0, color: "from-purple-500 to-purple-600" },
+                      { label: "Galeri", value: furnitureSet?.imageGallery?.gallery?.length || 0, color: "from-green-500 to-green-600" }
                     ].map((stat, index) => (
                       <div key={index} className="text-center p-4 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10">
                         <div className={`text-2xl font-bold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent`}>
@@ -651,67 +674,79 @@ export default function ModernFurnitureDetail({ furnitureId }: FurnitureDetailPr
               {/* Info Panel - 5 columns */}
               <div className="xl:col-span-5 space-y-6">
                 
-                {/* Quick Info Cards */}
-                <div className="grid grid-cols-1 gap-6">
-                  <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-8 border border-white/10 shadow-2xl">
-                    <div className="flex items-center space-x-3 mb-6">
-                      <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center">
-                        <TagIcon />
-                      </div>
-                      <div>
-                        <h3 className="text-2xl font-bold text-white">Kategori</h3>
-                        <p className="text-white/70">{furniture?.category?.categoryName || 'Kategorisiz'}</p>
-                      </div>
-                    </div>
-                    {furniture?.category?.description && (
-                      <p className="text-white/60">{furniture.category.description}</p>
-                    )}
-                  </div>
-
+                {/* Pricing Analysis */}
+                {furnitureSet.pricingAnalysis && (
                   <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-8 border border-white/10 shadow-2xl">
                     <div className="flex items-center space-x-3 mb-6">
                       <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center">
-                        <CalendarIcon />
+                        <CurrencyIcon />
                       </div>
-                      <div>
-                        <h3 className="text-2xl font-bold text-white">Oluşturulma</h3>
-                        <p className="text-white/70">{furniture?.createdAt ? formatDate(furniture.createdAt) : 'Bilinmiyor'}</p>
+                      <h3 className="text-2xl font-bold text-white">Fiyat Analizi</h3>
+                    </div>
+                    
+                    <div className="space-y-6">
+                      <div className="flex justify-between items-center p-4 bg-white/5 rounded-xl">
+                        <span className="text-white/80 font-medium">Takım Fiyatı:</span>
+                        <span className="text-2xl font-bold text-blue-300">{furnitureSet?.pricingAnalysis?.formattedSetPrice || '₺0'}</span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center p-4 bg-white/5 rounded-xl">
+                        <span className="text-white/80 font-medium">Tek Tek Fiyat:</span>
+                        <span className="text-xl font-medium text-white">{furnitureSet?.pricingAnalysis?.formattedIndividualPrice || '₺0'}</span>
+                      </div>
+                      
+                      <div className="border-t border-white/20 pt-6">
+                        <div className="flex justify-between items-center p-6 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-xl border border-green-500/30">
+                          <span className="font-bold text-white text-lg">
+                            {furnitureSet?.pricingAnalysis?.isSetCheaper ? 'Toplam Tasarruf:' : 'Fark:'}
+                          </span>
+                          <div className="text-right">
+                            <span className={`text-3xl font-bold ${
+                              furnitureSet?.pricingAnalysis?.isSetCheaper ? 'text-green-300' : 'text-red-300'
+                            }`}>
+                              {furnitureSet?.pricingAnalysis?.isSetCheaper ? '-' : '+'}
+                              {furnitureSet?.pricingAnalysis?.formattedSavings || '₺0'}
+                            </span>
+                            <div className={`text-sm ${
+                              furnitureSet?.pricingAnalysis?.isSetCheaper ? 'text-green-400' : 'text-red-400'
+                            }`}>
+                              (%{Math.abs(furnitureSet?.pricingAnalysis?.savingsPercentage || 0).toFixed(1)})
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    {furniture?.updatedAt && furniture.updatedAt !== furniture.createdAt && (
-                      <p className="text-white/60 text-sm">
-                        Güncellendi: {formatDate(furniture.updatedAt)}
-                      </p>
-                    )}
                   </div>
-                </div>
+                )}
 
                 {/* Description */}
-                {furniture?.description && (
+                {furnitureSet.description && (
                   <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-8 border border-white/10 shadow-2xl">
                     <div className="flex items-center space-x-3 mb-6">
                       <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center">
-                        <InfoIcon />
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
                       </div>
                       <h3 className="text-2xl font-bold text-white">Açıklama</h3>
                     </div>
-                    <p className="text-white/80 leading-relaxed text-lg">{furniture.description}</p>
+                    <p className="text-white/80 leading-relaxed text-lg">{furnitureSet?.description || 'Açıklama bulunmuyor.'}</p>
                   </div>
                 )}
 
                 {/* Colors */}
-                {furniture?.colorOptions && furniture.colorOptions.length > 0 && (
+                {furnitureSet?.colorOptions && furnitureSet.colorOptions.length > 0 && (
                   <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-8 border border-white/10 shadow-2xl">
                     <div className="flex items-center space-x-3 mb-6">
                       <div className="w-12 h-12 bg-gradient-to-r from-pink-500 to-rose-500 rounded-xl flex items-center justify-center">
                         <ColorIcon />
                       </div>
                       <h3 className="text-2xl font-bold text-white">
-                        Renkler ({furniture.colorOptions.length})
+                        Renkler ({furnitureSet.colorOptions.length})
                       </h3>
                     </div>
                     <div className="grid grid-cols-1 gap-4">
-                      {furniture.colorOptions.map(color => (
+                      {furnitureSet.colorOptions.map(color => (
                         <div key={color.colorId} className="flex items-center space-x-4 p-4 bg-white/5 rounded-xl border border-white/10">
                           <div
                             className="w-12 h-12 rounded-full border-4 border-white/30 shadow-lg ring-2 ring-white/20"
@@ -733,10 +768,10 @@ export default function ModernFurnitureDetail({ furnitureId }: FurnitureDetailPr
                   <h3 className="text-2xl font-bold text-white mb-6">İstatistikler</h3>
                   <div className="grid grid-cols-2 gap-4">
                     {[
-                      { label: "Toplam Renk", value: furniture?.stats?.totalColors || 0, color: "from-purple-500 to-purple-600", icon: "🎨" },
-                      { label: "Özellikler", value: furniture?.stats?.totalProperties || 0, color: "from-yellow-500 to-yellow-600", icon: "🏷️" },
-                      { label: "Aktif Renkler", value: furniture?.stats?.activeColors || 0, color: "from-green-500 to-green-600", icon: "✅" },
-                      { label: "Aktif Özellikler", value: furniture?.stats?.activeProperties || 0, color: "from-blue-500 to-blue-600", icon: "📋" }
+                      { label: "Toplam Adet", value: furnitureSet?.stats?.totalQuantity || 0, color: "from-blue-500 to-blue-600", icon: "📦" },
+                      { label: "Farklı Mobilya", value: furnitureSet?.stats?.uniqueFurnitureCount || 0, color: "from-green-500 to-green-600", icon: "🪑" },
+                      { label: "Renkler", value: furnitureSet?.stats?.totalColors || 0, color: "from-purple-500 to-purple-600", icon: "🎨" },
+                      { label: "Özellikler", value: furnitureSet?.stats?.totalProperties || 0, color: "from-yellow-500 to-yellow-600", icon: "🏷️" }
                     ].map((stat, index) => (
                       <div key={index} className="text-center p-6 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 group hover:bg-white/10 transition-all duration-300">
                         <div className="text-3xl mb-2">{stat.icon}</div>
@@ -748,22 +783,118 @@ export default function ModernFurnitureDetail({ furnitureId }: FurnitureDetailPr
                     ))}
                   </div>
                 </div>
+
+                {/* Created Date */}
+                <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-6 border border-white/10 shadow-2xl">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-gradient-to-r from-gray-500 to-slate-500 rounded-lg flex items-center justify-center">
+                      <CalendarIcon />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-white">Oluşturulma Tarihi</h4>
+                      <p className="text-white/70">{furnitureSet?.createdAt ? formatDate(furnitureSet.createdAt) : 'Bilinmiyor'}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Furniture Items Section */}
+            <div className="bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10 shadow-2xl overflow-hidden mb-12">
+              <div className="bg-gradient-to-r from-orange-600/80 to-red-600/80 backdrop-blur-sm px-8 py-6 border-b border-white/10">
+                <h2 className="text-3xl font-bold text-white flex items-center space-x-3">
+                  <PackageIcon />
+                  <span>Takımdaki Mobilyalar ({furnitureSet?.stats?.uniqueFurnitureCount || 0})</span>
+                </h2>
+              </div>
+              
+              <div className="p-8">
+                {furnitureSet?.furnitureItems && furnitureSet.furnitureItems.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {furnitureSet.furnitureItems.map((item, index) => (
+                      <div key={item.furnitureId} className="group bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+                        {/* Furniture Image */}
+                        <div className="aspect-square mb-6 rounded-xl overflow-hidden bg-slate-800/50">
+                          {item.furniture?.images && item.furniture.images.length > 0 ? (
+                            <FurnitureSetImageDisplay
+                              image={item.furniture.images[0].image}
+                              alt={item.furniture.furnitureName}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <ImageIcon />
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Furniture Info */}
+                        <div className="space-y-4">
+                          <div>
+                            <h3 className="font-bold text-white text-lg mb-1">{item.furniture?.furnitureName || 'Bilinmeyen Mobilya'}</h3>
+                            <p className="text-white/60">{item.furniture?.furnitureType || 'Bilinmeyen Tip'}</p>
+                          </div>
+                          
+                          <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                            <span className="text-white/80 font-medium">Adet:</span>
+                            <span className="font-bold text-blue-300 text-xl">{item.quantity || 0}</span>
+                          </div>
+                          
+                          <div className="border-t border-white/20 pt-4 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-white/80">Birim Fiyat:</span>
+                              <span className="font-medium text-white">{item.formattedItemPrice || '₺0'}</span>
+                            </div>
+                            <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-lg border border-green-500/30">
+                              <span className="font-bold text-white">Toplam:</span>
+                              <span className="font-bold text-2xl text-green-300">{item.formattedItemTotalPrice || '₺0'}</span>
+                            </div>
+                          </div>
+                          
+                          <div className="pt-2">
+                            <Link
+                              href={`/admin/furniture/${item.furniture?.furnitureId || 0}`}
+                              className="inline-flex items-center text-blue-300 hover:text-blue-200 font-medium group-hover:translate-x-1 transition-all duration-200"
+                            >
+                              Detayları Gör
+                              <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                            </Link>
+                          </div>
+                          
+                          {item.furniture && !item.furniture.isActive && (
+                            <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-3">
+                              <span className="text-sm text-red-300 font-medium">⚠️ Bu mobilya artık aktif değil</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="text-white/40 mb-4">
+                      <PackageIcon />
+                    </div>
+                    <p className="text-white/60">Bu takımda henüz mobilya bulunmuyor.</p>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Properties Section */}
-            {furniture?.propertiesByType && Object.keys(furniture.propertiesByType).length > 0 && (
+            {furnitureSet?.propertiesByType && Object.keys(furnitureSet.propertiesByType).length > 0 && (
               <div className="bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
                 <div className="bg-gradient-to-r from-green-600/80 to-teal-600/80 backdrop-blur-sm px-8 py-6 border-b border-white/10">
                   <h2 className="text-3xl font-bold text-white flex items-center space-x-3">
                     <TagIcon />
-                    <span>Özellikler ({furniture?.stats?.totalProperties || 0})</span>
+                    <span>Özellikler ({furnitureSet?.stats?.totalProperties || 0})</span>
                   </h2>
                 </div>
                 
                 <div className="p-8">
                   <div className="space-y-8">
-                    {Object.entries(furniture.propertiesByType).map(([type, properties]) => (
+                    {Object.entries(furnitureSet.propertiesByType).map(([type, properties]) => (
                       <div key={type} className="border-l-4 border-gradient-to-b from-blue-500 to-purple-500 pl-8">
                         <h3 className="text-2xl font-bold text-white mb-6 capitalize flex items-center space-x-2">
                           <span>{type}</span>
@@ -795,33 +926,6 @@ export default function ModernFurnitureDetail({ furnitureId }: FurnitureDetailPr
                 </div>
               </div>
             )}
-
-            {/* Metadata Section */}
-            <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-8 border border-white/10 shadow-2xl mt-8">
-              <h3 className="text-2xl font-bold text-white mb-6">Teknik Bilgiler</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {[
-                  { label: "Mobilya ID", value: furniture?.furnitureId || 'Bilinmiyor' },
-                  { label: "Kategori Seviyesi", value: furniture?.metadata?.categoryLevel || 'Bilinmiyor' },
-                  { label: "Ana Görsel", value: furniture?.metadata?.hasMainImage ? 'Var' : 'Yok' },
-                  { label: "Galeri Görselleri", value: furniture?.metadata?.hasGalleryImages ? 'Var' : 'Yok' }
-                ].map((item, index) => (
-                  <div key={index} className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-                    <span className="font-medium text-white/70 text-sm">{item.label}:</span>
-                    <p className="text-white font-semibold">{item.value}</p>
-                  </div>
-                ))}
-              </div>
-              
-              {furniture?.metadata?.categoryBasedPath && (
-                <div className="mt-6 pt-6 border-t border-white/20">
-                  <span className="font-medium text-white/70">Kategori Tabanlı Path:</span>
-                  <p className="text-sm text-white/80 font-mono mt-2 bg-white/5 backdrop-blur-sm rounded-lg p-3 border border-white/10">
-                    {furniture.metadata.categoryBasedPath}
-                  </p>
-                </div>
-              )}
-            </div>
           </>
         )}
 
