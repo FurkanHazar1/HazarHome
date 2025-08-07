@@ -28,9 +28,9 @@ export interface ThumbnailConfig {
 
 // Thumbnail configurations
 export const THUMBNAIL_CONFIGS: Record<string, ThumbnailConfig> = {
-  main_thumb: { width: 300, height: 300, quality: 80 },
-  gallery_thumb: { width: 200, height: 200, quality: 75 },
-  small_thumb: { width: 150, height: 150, quality: 70 }
+  main_thumb: { width: 500, height: 500, quality: 80 },
+  gallery_thumb: { width: 400, height: 400, quality: 75 },
+  small_thumb: { width: 250, height: 250, quality: 70 }
 }
 
 /**
@@ -589,4 +589,18 @@ export function convertLegacyPathToNew(
     originalFileName,
     sortOrder
   )
+}
+export function convertImageType(dbImageType: string): 'main' | 'gallery' | 'thumbnail' {
+  switch (dbImageType) {
+    case 'main_image':
+    case 'main':
+      return 'main'
+    case 'gallery':
+      return 'gallery'
+    case 'thumbnail':
+      return 'thumbnail'
+    default:
+      console.warn(`Unknown image type: ${dbImageType}, defaulting to 'gallery'`)
+      return 'gallery'
+  }
 }

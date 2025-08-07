@@ -1,5 +1,6 @@
-// app/api/images/[id]/route.ts - Updated Single Image API with Category-Based System
+// app/api/images/[id]/route.ts - FIXED: Removed duplications and import errors
 import { NextResponse } from 'next/server'
+import path from 'path' // FIXED: Added missing path import
 import { prisma } from '@/lib/prisma'
 import { 
   generateCategoryBasedPath,
@@ -14,7 +15,13 @@ import {
   getAspectRatio,
   THUMBNAIL_CONFIGS
 } from '@/lib/image-utils'
+import { 
+  reorganizeFurnitureImages,
+  generatePhysicalUpdatePlan,
+  executePhysicalUpdates
+} from '@/lib/image-physical-update'
 import sharp from 'sharp'
+import { convertImageType } from '@/lib/image-utils'
 
 // GET - Enhanced single image details with category metadata
 export async function GET(
@@ -237,7 +244,10 @@ export async function PUT(
         imageType: formData.get('imageType') as string,
         sortOrder: formData.get('sortOrder') as string,
         isActive: formData.get('isActive') as string,
-        generateThumbnails: formData.get('generateThumbnails') as string
+        generateThumbnails: formData.get('generateThumbnails') as string,
+        updateFileName: formData.get('updateFileName') as string,
+        reorganizeFiles: formData.get('reorganizeFiles') as string,
+        updateRelatedFiles: formData.get('updateRelatedFiles') as string
       }
     } else {
       data = await request.json()
@@ -253,7 +263,10 @@ export async function PUT(
       height,
       sortOrder,
       isActive,
-      generateThumbnails = false
+      generateThumbnails = false,
+      updateFileName = 'false',
+      reorganizeFiles = 'false',
+      updateRelatedFiles = 'false'
     } = data
 
     // Check existing image
@@ -308,9 +321,9 @@ export async function PUT(
 
     // Validations
     const validationErrors = []
-
+    
     if (file) {
-      if (file.size > 104857600) { // 100MB limit
+      if (file.size > 104857600) {
         validationErrors.push('File size cannot exceed 100MB')
       }
 
@@ -360,7 +373,27 @@ export async function PUT(
       }, { status: 400 })
     }
 
-    // Transaction to update
+    // Determine if we need physical file operations
+    let needsPhysicalUpdate = false
+    let needsFileReorganization = false
+    let physicalUpdateResults: any = null
+
+    // Check what triggers physical updates
+    if (file || 
+        updateFileName === 'true' || 
+        reorganizeFiles === 'true' ||
+        (categoryName && categoryName !== existingImage.description) ||
+        (itemName && itemName !== existingImage.description) ||
+        (imageType && imageType !== existingImage.description) ||
+        (sortOrder && parseInt(sortOrder) !== existingImage.sortOrder)) {
+      needsPhysicalUpdate = true
+    }
+
+    if (reorganizeFiles === 'true' || updateRelatedFiles === 'true') {
+      needsFileReorganization = true
+    }
+
+    // Transaction to update image
     const result = await prisma.$transaction(async (tx) => {
       let updateData: any = {}
       let oldFilePath = existingImage.filePath
@@ -368,14 +401,16 @@ export async function PUT(
       // Parse existing metadata
       const existingMetadata = parseImageMetadata(existingImage.description) || {}
       
-      // Update metadata if category information is provided
+      // Build new metadata with physical file considerations
       let newMetadata = existingMetadata
+      let finalCategoryName = categoryName || existingMetadata.categoryName || 'uncategorized'
+      let finalItemName = itemName || existingMetadata.itemName || 'unknown'
+      let finalImageType = imageType || existingMetadata.imageType || 'gallery'
+      let finalSortOrder = sortOrder ? parseInt(String(sortOrder)) : existingImage.sortOrder
+
+      // Update metadata if category information is provided
       if (categoryName !== undefined || itemName !== undefined || imageType !== undefined) {
-        // Ensure we have valid existing metadata to work with
         if (isValidImageMetadata(existingMetadata)) {
-          const finalCategoryName = categoryName || existingMetadata.categoryName
-          const finalItemName = itemName || existingMetadata.itemName
-          const finalImageType = imageType || existingMetadata.imageType
           const finalItemType = existingMetadata.itemType
           const finalItemId = existingMetadata.itemId
           
@@ -386,11 +421,9 @@ export async function PUT(
             finalItemName,
             finalImageType,
             existingImage.originalFileName || existingImage.fileName,
-            sortOrder ? parseInt(String(sortOrder)) : existingImage.sortOrder
+            finalSortOrder
           )
-        } else {
-          // If no valid existing metadata, we can't update category metadata
-          console.warn('Cannot update category metadata: existing metadata is invalid or missing')
+          newMetadata = parseImageMetadata(updateData.description) || existingMetadata
         }
       }
 
@@ -401,15 +434,15 @@ export async function PUT(
       if (altText !== undefined) updateData.altText = altText?.trim() || null
       if (width !== undefined) updateData.width = width ? parseInt(String(width)) : null
       if (height !== undefined) updateData.height = height ? parseInt(String(height)) : null
-      if (sortOrder !== undefined) updateData.sortOrder = sortOrder ? parseInt(String(sortOrder)) : 1
+      if (sortOrder !== undefined) updateData.sortOrder = finalSortOrder
       if (isActive !== undefined) updateData.isActive = Boolean(isActive === 'true' || isActive === true)
 
-      // Handle file replacement
+      // Handle file replacement with new physical path logic
       if (file) {
         const currentMetadata = parseImageMetadata(updateData.description || existingImage.description)
         
         if (currentMetadata && currentMetadata.itemType && currentMetadata.itemId && currentMetadata.categoryName && currentMetadata.itemName) {
-          // Use new category-based path
+          // Generate new category-based path
           const pathResult = generateCategoryBasedPath(
             currentMetadata.itemType,
             currentMetadata.itemId,
@@ -417,16 +450,43 @@ export async function PUT(
             currentMetadata.categoryName,
             currentMetadata.imageType as 'main' | 'gallery' | 'thumbnail',
             file.name,
-            sortOrder ? parseInt(String(sortOrder)) : 1
+            finalSortOrder
           )
+
+          // Smart filename generation
+          let newFileName = pathResult.fileName
+          
+          if (updateFileName === 'true') {
+            // Generate optimized filename based on type and order
+            const fileExtension = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+            
+            switch (currentMetadata.imageType) {
+              case 'main':
+                newFileName = `main.${fileExtension}`
+                break
+              case 'gallery':
+                newFileName = `${finalSortOrder}.${fileExtension}`
+                break
+              case 'thumbnail':
+                newFileName = finalSortOrder === 0 
+                  ? `main_thumb.${fileExtension}`
+                  : `${finalSortOrder}_thumb.${fileExtension}`
+                break
+              default:
+                newFileName = `${finalSortOrder}.${fileExtension}`
+            }
+          }
+
+          // Update path with new filename
+          const optimizedPath = pathResult.filePath.replace(pathResult.fileName, newFileName)
 
           // Save physical file
           const fileBuffer = Buffer.from(await file.arrayBuffer())
-          await savePhysicalFile(pathResult.filePath, fileBuffer)
+          await savePhysicalFile(optimizedPath, fileBuffer)
 
           // Update database
-          updateData.fileName = pathResult.fileName
-          updateData.filePath = pathResult.filePath
+          updateData.fileName = newFileName
+          updateData.filePath = optimizedPath
           updateData.fileSize = file.size
           updateData.fileType = file.type.split('/')[1]
           updateData.originalFileName = file.name
@@ -438,6 +498,48 @@ export async function PUT(
             updateData.height = imageInfo.height || null
           } catch (error) {
             console.warn('Could not get image dimensions:', error)
+          }
+        }
+      }
+
+      // Handle filename update without file replacement
+      else if (needsPhysicalUpdate && !file) {
+        const currentMetadata = parseImageMetadata(updateData.description || existingImage.description)
+        
+        if (currentMetadata && isValidImageMetadata(currentMetadata)) {
+          // Generate new path with updated metadata
+          const pathResult = generateCategoryBasedPath(
+            currentMetadata.itemType,
+            currentMetadata.itemId,
+            finalItemName,
+            finalCategoryName,
+            finalImageType as 'main' | 'gallery' | 'thumbnail',
+            existingImage.originalFileName || existingImage.fileName,
+            finalSortOrder
+          )
+
+          // Check if path actually changed
+          if (pathResult.filePath !== existingImage.filePath) {
+            try {
+              // Move existing file to new location
+              const fs = await import('fs/promises')
+              
+              // FIXED: Use path.dirname correctly
+              await fs.mkdir(path.dirname(pathResult.filePath), { recursive: true })
+              
+              // Move file
+              await fs.rename(existingImage.filePath, pathResult.filePath)
+              
+              // Update database with new path
+              updateData.fileName = pathResult.fileName
+              updateData.filePath = pathResult.filePath
+              
+              console.log(`📁 Moved file: ${existingImage.filePath} → ${pathResult.filePath}`)
+              
+            } catch (error) {
+              console.error('File move error:', error)
+              // Don't fail the update for file move errors
+            }
           }
         }
       }
@@ -489,13 +591,63 @@ export async function PUT(
         }
       })
 
-      // Delete old file if new file was uploaded
+      // Delete old file if new file was uploaded and path changed
       if (file && oldFilePath && oldFilePath !== updatedImage.filePath) {
         await deletePhysicalFile(oldFilePath)
       }
 
       return updatedImage
     })
+
+    // Post-transaction physical file reorganization
+    if (needsFileReorganization && result.furnitureImages.length > 0) {
+      try {
+        const furniture = result.furnitureImages[0].furniture
+        
+        console.log('🔄 Starting related file reorganization...')
+        
+        // Get all images for this furniture
+        const allFurnitureImages = await prisma.furnitureImage.findMany({
+          where: { furnitureId: furniture.furnitureId },
+          include: {
+            image: {
+              select: {
+                imageId: true,
+                filePath: true,
+                sortOrder: true
+              }
+            }
+          },
+          orderBy: { sortOrder: 'asc' }
+        })
+
+        // Prepare reorganization plan
+const imageUpdates = allFurnitureImages.map(fi => ({
+  imageId: fi.image.imageId,
+  currentPath: fi.image.filePath,
+  newSortOrder: fi.sortOrder,
+  newImageType: convertImageType(fi.imageType || 'gallery')
+}))
+
+        // Execute reorganization
+        physicalUpdateResults = await reorganizeFurnitureImages(
+          furniture.furnitureId,
+          furniture.furnitureName,
+          furniture.category?.categoryName || 'uncategorized',
+          imageUpdates
+        )
+        
+        console.log('📁 Related file reorganization result:', physicalUpdateResults)
+        
+      } catch (error) {
+        console.error('❌ Related file reorganization failed:', error)
+        physicalUpdateResults = {
+          success: false,
+          message: 'Related file reorganization failed',
+          errors: [error instanceof Error ? error.message : 'Unknown error']
+        }
+      }
+    }
 
     // Generate thumbnails if requested and file was uploaded
     let thumbnailResults: any[] = []
@@ -522,7 +674,7 @@ export async function PUT(
       }
     }
 
-    return NextResponse.json({
+    const response: any = {
       success: true,
       message: 'Image successfully updated',
       data: {
@@ -533,7 +685,20 @@ export async function PUT(
       fileReplaced: !!file,
       thumbnailsGenerated: thumbnailResults.length > 0,
       thumbnails: thumbnailResults
-    })
+    }
+
+    // Add physical update results
+    if (physicalUpdateResults) {
+      response.physicalUpdates = {
+        enabled: needsFileReorganization,
+        success: physicalUpdateResults.success,
+        message: physicalUpdateResults.message,
+        updatedFiles: physicalUpdateResults.updatedFiles?.length || 0,
+        errors: physicalUpdateResults.errors || []
+      }
+    }
+
+    return NextResponse.json(response)
 
   } catch (error) {
     console.error('Image update error:', error)
@@ -906,7 +1071,7 @@ export async function PATCH(
   }
 }
 
-// Helper function to generate thumbnails
+// FIXED: Single helper function to generate thumbnails (removed duplications)
 async function generateImageThumbnails(
   originalBuffer: Buffer,
   originalFilePath: string,
@@ -938,7 +1103,7 @@ async function generateImageThumbnails(
         .jpeg({ quality: config.quality })
         .toBuffer()
       
-      // Generate thumbnail path
+      // Generate optimized thumbnail path
       const thumbnailPath = generateCategoryBasedPath(
         itemType,
         itemId,
@@ -959,7 +1124,7 @@ async function generateImageThumbnails(
         categoryName,
         itemName,
         'thumbnail',
-        originalFilePath,
+        originalFilePath || 'unknown.jpg',
         imageType === 'main' ? 0 : sortOrder
       )
       

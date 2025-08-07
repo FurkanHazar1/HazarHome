@@ -74,6 +74,21 @@ const ColorIcon = () => <span className="text-lg">🎨</span>
 const PropertyIcon = () => <span className="text-lg">🏷️</span>
 const MoneyIcon = () => <span className="text-lg">💰</span>
 
+
+const generateImageUrl = (filePath: string): string => {
+  if (!filePath) return ''
+  const cleanPath = filePath.replace('uploads/', '')
+  return `/api/images/serve/${cleanPath}`
+}
+
+// API'den gelen image data'yı process etmek için
+const processApiImages = (apiImages: any[]): any[] => {
+  return apiImages.map(img => ({
+    ...img,
+    url: img.filePath ? generateImageUrl(img.filePath) : null
+  }))
+}
+
 export default function FurnitureSetAdd() {
   const router = useRouter()
   
@@ -112,11 +127,12 @@ export default function FurnitureSetAdd() {
         setDataLoading(true)
         
         // Fetch parent categories (level = 1)
-        const categoriesRes = await fetch('/api/categories?parentOnly=true&active=true')
-        const categoriesData = await categoriesRes.json()
-        if (categoriesData.success) {
-          setCategories(categoriesData.data)
-        }
+         const categoriesRes = await fetch('/api/categories?level=1&active=true') // UPDATED
+      
+          const categoriesData = await categoriesRes.json()
+          if (categoriesData.success) {
+            setCategories(categoriesData.data)
+          }
 
         // Fetch furniture
         const furnitureRes = await fetch('/api/furniture?active=true&limit=100')
@@ -359,79 +375,117 @@ export default function FurnitureSetAdd() {
   }
 
   // Submit form
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!validateForm()) {
-      return
-    }
+  // 🔧 Mevcut handleSubmit fonksiyonunu şu şekilde güncelle:
 
-    setLoading(true)
-    setErrors({})
-
-    try {
-      const submitData = new FormData()
-      
-      // Basic info
-      submitData.append('setName', formData.setName.trim())
-      submitData.append('categoryId', formData.categoryId)
-      submitData.append('description', formData.description.trim())
-      submitData.append('price', formData.price)
-      submitData.append('isActive', formData.isActive.toString())
-      
-      // Furniture items (opsiyonel)
-      const furnitureItems = selectedFurniture.map(item => ({
-        furnitureId: item.furnitureId,
-        quantity: item.quantity,
-        sortOrder: item.sortOrder
-      }))
-      submitData.append('furnitureItems', JSON.stringify(furnitureItems))
-      
-      // Colors (optional)
-      if (selectedColors.length > 0) {
-        submitData.append('colorIds', JSON.stringify(selectedColors))
-      }
-      
-      // Properties (optional)
-      if (selectedProperties.length > 0) {
-        submitData.append('properties', JSON.stringify(selectedProperties))
-      }
-      
-      // Image type mappings
-      const imageTypeMappings: {[key: string]: 'main' | 'gallery'} = {}
-      images.forEach(img => {
-        imageTypeMappings[img.file.name] = img.imageType
-      })
-      if (Object.keys(imageTypeMappings).length > 0) {
-        submitData.append('imageTypeMappings', JSON.stringify(imageTypeMappings))
-      }
-      
-      // Images
-      images.forEach(img => {
-        submitData.append('images', img.file)
-      })
-
-      const response = await fetch('/api/furniture-sets', {
-        method: 'POST',
-        body: submitData
-      })
-
-      const result = await response.json()
-
-      if (result.success) {
-        setSuccess(true)
-        setTimeout(() => {
-          router.push(`/furniture-sets/${result.data.setId}`)
-        }, 2000)
-      } else {
-        setErrors({ submit: result.error || 'Bir hata oluştu' })
-      }
-    } catch (error) {
-      setErrors({ submit: 'Bir hata oluştu' })
-    } finally {
-      setLoading(false)
-    }
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault()
+  
+  if (!validateForm()) {
+    return
   }
+
+  setLoading(true)
+  setErrors({})
+
+  try {
+    const submitData = new FormData()
+    
+    // Basic info
+    submitData.append('setName', formData.setName.trim())
+    submitData.append('categoryId', formData.categoryId)
+    submitData.append('description', formData.description.trim())
+    submitData.append('price', formData.price)
+    submitData.append('isActive', formData.isActive.toString())
+    
+    // Furniture items (opsiyonel)
+    const furnitureItems = selectedFurniture.map(item => ({
+      furnitureId: item.furnitureId,
+      quantity: item.quantity,
+      sortOrder: item.sortOrder
+    }))
+    submitData.append('furnitureItems', JSON.stringify(furnitureItems))
+    
+    // Colors (optional)
+    if (selectedColors.length > 0) {
+      submitData.append('colorIds', JSON.stringify(selectedColors))
+    }
+    
+    // Properties (optional)
+    if (selectedProperties.length > 0) {
+      submitData.append('properties', JSON.stringify(selectedProperties))
+    }
+    
+    // Image type mappings
+    const imageTypeMappings: {[key: string]: 'main' | 'gallery'} = {}
+    images.forEach(img => {
+      imageTypeMappings[img.file.name] = img.imageType
+    })
+    if (Object.keys(imageTypeMappings).length > 0) {
+      submitData.append('imageTypeMappings', JSON.stringify(imageTypeMappings))
+    }
+    
+    // Images
+    images.forEach(img => {
+      submitData.append('images', img.file)
+    })
+
+    const response = await fetch('/api/furniture-sets', {
+      method: 'POST',
+      body: submitData
+    })
+
+    const result = await response.json()
+
+    if (result.success) {
+      setSuccess(true)
+      
+      // 🆕 ENHANCED: Image upload sonuçlarını göster
+      if (result.imageResults) {
+        console.log(`✅ ${result.imageResults.uploaded}/${result.imageResults.total} resim yüklendi`)
+        if (result.imageResults.categoryBasedPaths) {
+          console.log('📁 Category-based paths:', result.imageResults.categoryBasedPaths)
+        }
+      }
+      
+      setTimeout(() => {
+        router.push(`/admin/furniture-sets/${result.data.setId}`)
+      }, 2000)
+    } else {
+      // 🆕 ENHANCED: API'den gelen validation errors'ı daha iyi handle et
+      if (result.validationErrors && Array.isArray(result.validationErrors)) {
+        const newErrors: {[key: string]: string} = {}
+        
+        result.validationErrors.forEach((error: string) => {
+          const errorLower = error.toLowerCase()
+          if (errorLower.includes('name') || errorLower.includes('takım')) {
+            newErrors.setName = error
+          } else if (errorLower.includes('category') || errorLower.includes('kategori')) {
+            newErrors.categoryId = error
+          } else if (errorLower.includes('price') || errorLower.includes('fiyat')) {
+            newErrors.price = error
+          } else {
+            newErrors.submit = error
+          }
+        })
+        
+        setErrors(newErrors)
+      } else {
+        setErrors({ submit: result.error || 'Mobilya takımı oluşturulamadı' })
+      }
+    }
+  } catch (error) {
+    console.error('Submit error:', error)
+    
+    // 🆕 ENHANCED: Network hatalarını daha spesifik handle et
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      setErrors({ submit: 'Bağlantı hatası. İnternet bağlantınızı kontrol edin ve tekrar deneyin.' })
+    } else {
+      setErrors({ submit: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.' })
+    }
+  } finally {
+    setLoading(false)
+  }
+}
 
   // Calculate total price
   const calculateTotalPrice = () => {

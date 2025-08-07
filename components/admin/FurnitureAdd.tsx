@@ -44,13 +44,14 @@ interface FurnitureProperty {
 interface FurnitureImage {
   file?: File
   preview?: string
-  imageType: 'main_image' | 'gallery' // FIXED: Changed from 'main' to 'main_image'
+  imageType: 'main_image' | 'gallery' // FIXED: API expects 'main_image', not 'main'
   name: string
   sortOrder: number
   fileName?: string
   filePath?: string
   altText?: string
   isActive?: boolean
+  tempId: string // FIXED: Added unique identifier for tracking
 }
 
 interface FurnitureFormData {
@@ -73,7 +74,7 @@ interface ApiResponse {
   validationErrors?: string[]
 }
 
-// Icon components (keeping existing ones)
+// Icon components (updated to match FurnitureSetAdd style)
 const FurnitureIcon = () => <span className="text-2xl">🪑</span>
 const PlusIcon = () => <span className="text-lg">➕</span>
 const LoaderIcon = () => <span className="text-lg animate-spin">⏳</span>
@@ -86,6 +87,10 @@ const DragIcon = () => <span className="text-lg">☰</span>
 const DeleteIcon = () => <span className="text-lg">🗑️</span>
 const MainIcon = () => <span className="text-lg">⭐</span>
 const GalleryIcon = () => <span className="text-lg">📸</span>
+const SuccessIcon = () => <span className="text-lg">✅</span>
+const ColorIcon = () => <span className="text-lg">🎨</span>
+const PropertyIcon = () => <span className="text-lg">🏷️</span>
+const MoneyIcon = () => <span className="text-lg">💰</span>
 
 export default function FurnitureAdd() {
   const router = useRouter()
@@ -109,8 +114,8 @@ export default function FurnitureAdd() {
   
   const [loading, setLoading] = useState<boolean>(false)
   const [dataLoading, setDataLoading] = useState<boolean>(true)
-  const [error, setError] = useState<string>('')
-  const [success, setSuccess] = useState<string>('')
+  const [errors, setErrors] = useState<{[key: string]: string}>({})
+  const [success, setSuccess] = useState<boolean>(false)
 
   // FIXED: Enhanced data loading with better error handling
   const loadInitialData = async () => {
@@ -185,7 +190,7 @@ export default function FurnitureAdd() {
       
     } catch (err) {
       console.error('Data loading error:', err)
-      setError('Veriler yüklenemedi. Lütfen sayfayı yenileyin.')
+      setErrors({ submit: 'Veriler yüklenemedi. Lütfen sayfayı yenileyin.' })
     } finally {
       setDataLoading(false)
     }
@@ -217,6 +222,11 @@ export default function FurnitureAdd() {
         [name]: value
       }))
     }
+
+    // Clear error for this field
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }))
+    }
   }
 
   // Handle color selection
@@ -236,7 +246,7 @@ export default function FurnitureAdd() {
     
     // Check if already added
     if (formData.properties.some(p => p.propertyId === propertyId)) {
-      setError(`"${property.propertyName}" özelliği zaten eklenmiş`)
+      setErrors(prev => ({ ...prev, submit: `"${property.propertyName}" özelliği zaten eklenmiş` }))
       return
     }
     
@@ -269,62 +279,92 @@ export default function FurnitureAdd() {
     }))
   }
 
-  // FIXED: Enhanced image upload handling
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || [])
-    
-    files.forEach(file => {
-      if (file.size > 100 * 1024 * 1024) { // 100MB
-        setError(`File ${file.name} is too large (max 100MB)`)
-        return
-      }
+ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const files = Array.from(e.target.files || [])
+  
+  if (files.length === 0) return
 
-      if (!file.type.startsWith('image/')) {
-        setError(`File ${file.name} is not an image`)
-        return
-      }
-
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const newImage: FurnitureImage = {
-          file,
-          preview: e.target?.result as string,
-          imageType: images.length === 0 ? 'main_image' : 'gallery', // FIXED: Use 'main_image'
-          name: file.name,
-          sortOrder: images.length + 1,
-          fileName: file.name,
-          altText: formData.furnitureName || file.name,
-          isActive: true
-        }
-        
-        setImages(prev => [...prev, newImage])
-      }
-      reader.readAsDataURL(file)
-    })
-    
-    // Clear input
-    e.target.value = ''
+  // Validation
+  for (const file of files) {
+    if (file.size > 100 * 1024 * 1024) {
+      setErrors(prev => ({ ...prev, submit: `File ${file.name} is too large (max 100MB)` }))
+      return
+    }
+    if (!file.type.startsWith('image/')) {
+      setErrors(prev => ({ ...prev, submit: `File ${file.name} is not an image` }))
+      return
+    }
   }
 
-  // Remove image
-  const removeImage = (index: number) => {
-    setImages(prev => {
-      const newImages = prev.filter((_, i) => i !== index)
-      // Reorder sortOrder after removal
-      return newImages.map((img, i) => ({
+  try {
+    // Process all files in parallel but update state in batch
+    const processedImages = await Promise.all(
+      files.map((file, fileIndex) => {
+        return new Promise<FurnitureImage>((resolve, reject) => {
+          const reader = new FileReader()
+          
+          reader.onload = (e) => {
+            const tempId = `temp_${Date.now()}_${Math.random()}_${fileIndex}`
+            
+            resolve({
+              file,
+              preview: e.target?.result as string,
+              imageType: 'gallery', // Will be corrected in batch update
+              name: file.name,
+              sortOrder: fileIndex + 1, // Temporary, will be corrected
+              fileName: file.name,
+              altText: formData.furnitureName || file.name,
+              isActive: true,
+              tempId
+            })
+          }
+          
+          reader.onerror = () => reject(new Error(`Failed to read ${file.name}`))
+          reader.readAsDataURL(file)
+        })
+      })
+    )
+
+    // Single state update with correct sort orders
+    setImages(prevImages => {
+      const currentCount = prevImages.length
+      
+      const correctedImages = processedImages.map((img, index) => ({
         ...img,
-        sortOrder: i + 1
+        sortOrder: currentCount + index + 1,
+        imageType: (currentCount === 0 && index === 0) ? 'main_image' as const : 'gallery' as const
+      }))
+      
+      return [...prevImages, ...correctedImages]
+    })
+
+  } catch (error) {
+    setErrors(prev => ({ ...prev, submit: `Error processing images: ${error instanceof Error ? error.message : 'Unknown error'}` }))
+  }
+
+  // Clear input
+  e.target.value = ''
+}
+
+  // Remove image
+  const removeImage = (tempId: string) => {
+    setImages(prev => {
+      const filteredImages = prev.filter(img => img.tempId !== tempId)
+      // FIXED: Recalculate sort orders after removal
+      return filteredImages.map((img, index) => ({
+        ...img,
+        sortOrder: index + 1
       }))
     })
   }
 
   // FIXED: Updated image type handling
-  const changeImageType = (index: number, type: 'main_image' | 'gallery') => {
-    setImages(prev => prev.map((img, i) => {
-      if (i === index) {
+  const changeImageType = (tempId: string, type: 'main_image' | 'gallery') => {
+    setImages(prev => prev.map(img => {
+      if (img.tempId === tempId) {
         return { ...img, imageType: type }
       }
-      // If setting this as main, make other main images gallery
+      // FIXED: If setting this as main_image, make other main_image images gallery
       if (type === 'main_image' && img.imageType === 'main_image') {
         return { ...img, imageType: 'gallery' }
       }
@@ -333,57 +373,64 @@ export default function FurnitureAdd() {
   }
 
   // Move image up in order
-  const moveImageUp = (index: number) => {
-    if (index === 0) return
-    
+ const moveImageUp = (tempId: string) => {
     setImages(prev => {
-      const newImages = [...prev]
-      const temp = newImages[index]
-      newImages[index] = newImages[index - 1]
-      newImages[index - 1] = temp
+      const currentIndex = prev.findIndex(img => img.tempId === tempId)
+      if (currentIndex <= 0) return prev
       
-      // Update sortOrder
-      return newImages.map((img, i) => ({
+      const newImages = [...prev]
+      const temp = newImages[currentIndex]
+      newImages[currentIndex] = newImages[currentIndex - 1]
+      newImages[currentIndex - 1] = temp
+      
+      // FIXED: Update sort orders
+      return newImages.map((img, index) => ({
         ...img,
-        sortOrder: i + 1
+        sortOrder: index + 1
       }))
     })
   }
 
   // Move image down in order
-  const moveImageDown = (index: number) => {
-    if (index === images.length - 1) return
-    
+  const moveImageDown = (tempId: string) => {
     setImages(prev => {
-      const newImages = [...prev]
-      const temp = newImages[index]
-      newImages[index] = newImages[index + 1]
-      newImages[index + 1] = temp
+      const currentIndex = prev.findIndex(img => img.tempId === tempId)
+      if (currentIndex >= prev.length - 1) return prev
       
-      // Update sortOrder
-      return newImages.map((img, i) => ({
+      const newImages = [...prev]
+      const temp = newImages[currentIndex]
+      newImages[currentIndex] = newImages[currentIndex + 1]
+      newImages[currentIndex + 1] = temp
+      
+      // FIXED: Update sort orders
+      return newImages.map((img, index) => ({
         ...img,
-        sortOrder: i + 1
+        sortOrder: index + 1
       }))
     })
   }
 
   // Handle drag and drop
-  const handleDragStart = (e: React.DragEvent, index: number) => {
-    e.dataTransfer.setData('text/plain', index.toString())
+const handleDragStart = (e: React.DragEvent, tempId: string) => {
+    e.dataTransfer.setData('text/plain', tempId)
   }
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
   }
 
-  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+  const handleDrop = (e: React.DragEvent, dropTempId: string) => {
     e.preventDefault()
-    const dragIndex = parseInt(e.dataTransfer.getData('text/plain'))
+    const dragTempId = e.dataTransfer.getData('text/plain')
     
-    if (dragIndex === dropIndex) return
+    if (dragTempId === dropTempId) return
     
     setImages(prev => {
+      const dragIndex = prev.findIndex(img => img.tempId === dragTempId)
+      const dropIndex = prev.findIndex(img => img.tempId === dropTempId)
+      
+      if (dragIndex === -1 || dropIndex === -1) return prev
+      
       const newImages = [...prev]
       const draggedImage = newImages[dragIndex]
       
@@ -393,72 +440,84 @@ export default function FurnitureAdd() {
       // Insert at new position
       newImages.splice(dropIndex, 0, draggedImage)
       
-      // Update sortOrder
-      return newImages.map((img, i) => ({
+      // FIXED: Update sort orders
+      return newImages.map((img, index) => ({
         ...img,
-        sortOrder: i + 1
+        sortOrder: index + 1
       }))
     })
   }
 
   // Set custom sort order
-  const setCustomSortOrder = (index: number, newOrder: number) => {
+  const setCustomSortOrder = (tempId: string, newOrder: number) => {
     if (newOrder < 1 || newOrder > images.length) return
     
     setImages(prev => {
+      const currentIndex = prev.findIndex(img => img.tempId === tempId)
+      if (currentIndex === -1) return prev
+      
       const newImages = [...prev]
-      const targetImage = newImages[index]
+      const targetImage = newImages[currentIndex]
       
       // Remove from current position
-      newImages.splice(index, 1)
+      newImages.splice(currentIndex, 1)
       
       // Insert at new position (newOrder - 1 because array is 0-indexed)
       newImages.splice(newOrder - 1, 0, targetImage)
       
-      // Update sortOrder
-      return newImages.map((img, i) => ({
+      // FIXED: Update all sort orders
+      return newImages.map((img, index) => ({
         ...img,
-        sortOrder: i + 1
+        sortOrder: index + 1
       }))
     })
   }
 
-  // FIXED: Enhanced validation
+  // FIXED: Enhanced validation with image type checking
   const validateForm = (): boolean => {
-    const errors: string[] = []
+    const newErrors: {[key: string]: string} = {}
 
     if (!formData.furnitureName.trim()) {
-      errors.push('Mobilya adı zorunludur')
+      newErrors.furnitureName = 'Mobilya adı zorunludur'
     }
 
     if (!formData.furnitureType.trim()) {
-      errors.push('Mobilya tipi zorunludur')
+      newErrors.furnitureType = 'Mobilya tipi zorunludur'
     }
 
     if (!formData.price || isNaN(parseFloat(formData.price)) || parseFloat(formData.price) <= 0) {
-      errors.push('Geçerli bir fiyat giriniz')
+      newErrors.price = 'Geçerli bir fiyat giriniz'
     }
 
     if (!formData.categoryId) {
-      errors.push('Kategori seçimi zorunludur')
+      newErrors.categoryId = 'Kategori seçimi zorunludur'
     }
 
-    // FIXED: Check if at least one main image exists
-    const hasMainImage = images.some(img => img.imageType === 'main_image')
-    if (images.length > 0 && !hasMainImage) {
-      // Auto-assign first image as main if none selected
-      setImages(prev => prev.map((img, index) => ({
-        ...img,
-        imageType: index === 0 ? 'main_image' : 'gallery'
-      })))
+    // FIXED: Check main image requirement
+    if (images.length > 0) {
+      const hasMainImage = images.some(img => img.imageType === 'main_image')
+      if (!hasMainImage) {
+        // Auto-assign first image as main if none selected
+        setImages(prev => prev.map((img, index) => ({
+          ...img,
+          imageType: index === 0 ? 'main_image' : 'gallery'
+        })))
+      }
+
+      // Check for duplicate sort orders (shouldn't happen with fixed logic, but safety check)
+      const sortOrders = images.map(img => img.sortOrder)
+      const uniqueSortOrders = new Set(sortOrders)
+      if (sortOrders.length !== uniqueSortOrders.size) {
+        // Fix duplicate sort orders
+        setImages(prev => prev.map((img, index) => ({
+          ...img,
+          sortOrder: index + 1
+        })))
+      }
     }
 
-    if (errors.length > 0) {
-      setError(errors.join(', '))
-      return false
-    }
-
-    return true
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
   }
 
   // FIXED: Enhanced form submission
@@ -468,8 +527,7 @@ export default function FurnitureAdd() {
     if (!validateForm()) return
 
     setLoading(true)
-    setError('')
-    setSuccess('')
+    setErrors({})
 
     try {
       const formDataToSend = new FormData()
@@ -497,49 +555,76 @@ export default function FurnitureAdd() {
         formDataToSend.append('properties', JSON.stringify(propertiesData))
       }
       
-      // FIXED: Image handling with proper mapping
-      const imageTypeMappings: { [key: string]: string } = {}
-      const imageSortOrders: { [key: string]: number } = {}
-      
-      images.forEach(img => {
-        imageTypeMappings[img.name] = img.imageType
-        imageSortOrders[img.name] = img.sortOrder
-      })
-      
-      formDataToSend.append('imageTypeMappings', JSON.stringify(imageTypeMappings))
-      formDataToSend.append('imageSortOrders', JSON.stringify(imageSortOrders))
-      
-      // Add image files in sort order
-      const sortedImages = [...images].sort((a, b) => a.sortOrder - b.sortOrder)
-      sortedImages.forEach(img => {
-        if (img.file) {
-          formDataToSend.append('images', img.file)
-        }
-      })
+      // FIXED: Image handling with correct API format
+      if (images.length > 0) {
+        // Sort images by sortOrder before sending
+        const sortedImages = [...images].sort((a, b) => a.sortOrder - b.sortOrder)
+        
+        // Create image type mappings using file names as keys
+        const imageTypeMappings: { [key: string]: string } = {}
+        sortedImages.forEach(img => {
+          // API expects 'main' and 'gallery', not 'main_image'
+          imageTypeMappings[img.name] = img.imageType === 'main_image' ? 'main' : 'gallery'
+        })
+        
+        formDataToSend.append('imageTypeMappings', JSON.stringify(imageTypeMappings))
+        
+        // Add image files in correct order
+        sortedImages.forEach(img => {
+          if (img.file) {
+            formDataToSend.append('images', img.file)
+          }
+        })
+      }
 
       const response = await fetch('/api/furniture', {
         method: 'POST',
         body: formDataToSend
       })
 
-      const result: ApiResponse = await response.json()
+      const result = await response.json()
 
       if (result.success) {
-        setSuccess('✅ Mobilya başarıyla eklendi!')
+        setSuccess(true)
+        
         setTimeout(() => {
-          // FIXED: Enhanced navigation with success indicator
           router.push(`/admin/furniture?newItem=${result.data?.furnitureId || 'new'}&success=true`)
-        }, 1500)
+        }, 2000)
       } else {
-        setError(result.error || result.message || 'Mobilya eklenemedi')
-        if (result.validationErrors && result.validationErrors.length > 0) {
-          setError(result.validationErrors.join(', '))
+        // ENHANCED: API'den gelen validation errors'ı daha iyi handle et
+        if (result.validationErrors && Array.isArray(result.validationErrors)) {
+          const newErrors: {[key: string]: string} = {}
+          
+          result.validationErrors.forEach((error: string) => {
+            const errorLower = error.toLowerCase()
+            if (errorLower.includes('name') || errorLower.includes('ad')) {
+              newErrors.furnitureName = error
+            } else if (errorLower.includes('type') || errorLower.includes('tip')) {
+              newErrors.furnitureType = error
+            } else if (errorLower.includes('category') || errorLower.includes('kategori')) {
+              newErrors.categoryId = error
+            } else if (errorLower.includes('price') || errorLower.includes('fiyat')) {
+              newErrors.price = error
+            } else {
+              newErrors.submit = error
+            }
+          })
+          
+          setErrors(newErrors)
+        } else {
+          setErrors({ submit: result.error || result.message || 'Mobilya eklenemedi' })
         }
       }
 
     } catch (err) {
       console.error('Submit error:', err)
-      setError('Bir hata oluştu. Lütfen tekrar deneyin.')
+      
+      // ENHANCED: Network hatalarını daha spesifik handle et
+      if (err instanceof TypeError && (err as TypeError).message.includes('fetch')) {
+        setErrors({ submit: 'Bağlantı hatası. İnternet bağlantınızı kontrol edin ve tekrar deneyin.' })
+      } else {
+        setErrors({ submit: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.' })
+      }
     } finally {
       setLoading(false)
     }
@@ -571,23 +656,31 @@ export default function FurnitureAdd() {
   // Get selected category
   const selectedCategory = categories.find(cat => cat.categoryId === formData.categoryId)
 
-  // FIXED: Clear error and success messages after timeout
-  useEffect(() => {
-    if (error) {
-      const timer = setTimeout(() => setError(''), 5000)
-      return () => clearTimeout(timer)
-    }
-  }, [error])
-
-  useEffect(() => {
-    if (success) {
-      const timer = setTimeout(() => setSuccess(''), 5000)
-      return () => clearTimeout(timer)
-    }
-  }, [success])
+  // Success screen
+  if (success) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-slate-900 flex items-center justify-center">
+        <div className="max-w-md w-full bg-gray-800 rounded-2xl shadow-2xl border border-green-600/30 overflow-hidden">
+          <div className="bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-8 text-center">
+            <div className="w-20 h-20 mx-auto mb-4 bg-gray-800 rounded-full flex items-center justify-center">
+              <SuccessIcon />
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2">Başarılı!</h2>
+            <p className="text-green-100">Mobilya başarıyla eklendi.</p>
+          </div>
+          <div className="p-6 text-center">
+            <div className="flex items-center justify-center space-x-2 text-gray-300">
+              <LoaderIcon />
+              <span>Yönlendiriliyorsunuz...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
-<div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100">
+<div className="min-h-screen bg-gradient-to-br from-gray-900 to-slate-900">
       <div className="max-w-5xl mx-auto p-6">
         {/* Header */}
         <div className="mb-8">
@@ -597,10 +690,10 @@ export default function FurnitureAdd() {
                 <FurnitureIcon />
               </div>
               <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
                   Yeni Mobilya Ekle
                 </h1>
-                <p className="text-gray-600 mt-1">
+                <p className="text-gray-400 mt-1">
                   Mobilya kataloğuna yeni ürün ekleyin
                 </p>
               </div>
@@ -608,7 +701,7 @@ export default function FurnitureAdd() {
             
             <button
               onClick={() => router.back()}
-              className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-white rounded-lg transition-all duration-200"
+              className="flex items-center space-x-2 px-4 py-2 text-gray-400 hover:text-gray-200 hover:bg-gray-800 rounded-lg transition-all duration-200"
             >
               <BackIcon />
               <span>Geri</span>
@@ -619,31 +712,21 @@ export default function FurnitureAdd() {
         {/* Loading State */}
         {dataLoading && (
           <div className="flex items-center justify-center py-20">
-            <div className="bg-white rounded-2xl p-8 shadow-xl border border-gray-200">
+            <div className="bg-gray-800 rounded-2xl p-8 shadow-2xl border border-gray-700">
               <div className="flex items-center space-x-4">
                 <LoaderIcon />
-                <span className="text-gray-600 font-medium">Veriler yükleniyor...</span>
+                <span className="text-gray-300 font-medium">Veriler yükleniyor...</span>
               </div>
             </div>
           </div>
         )}
 
         {/* Error State */}
-        {error && (
-          <div className="bg-gradient-to-r from-red-50 to-red-100 border border-red-200 text-red-700 px-6 py-4 rounded-xl mb-6 shadow-sm">
+        {errors.submit && (
+          <div className="bg-gradient-to-r from-red-900/50 to-red-800/50 border border-red-600/50 text-red-300 px-6 py-4 rounded-xl mb-6 shadow-sm">
             <div className="flex items-center space-x-2">
               <span className="text-xl">⚠️</span>
-              <span className="font-medium">{error}</span>
-            </div>
-          </div>
-        )}
-
-        {/* Success State */}
-        {success && (
-          <div className="bg-gradient-to-r from-green-50 to-emerald-100 border border-green-200 text-green-700 px-6 py-4 rounded-xl mb-6 shadow-sm">
-            <div className="flex items-center space-x-2">
-              <span className="text-xl">✅</span>
-              <span className="font-medium">{success}</span>
+              <span className="font-medium">{errors.submit}</span>
             </div>
           </div>
         )}
@@ -652,7 +735,7 @@ export default function FurnitureAdd() {
         {!dataLoading && (
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Basic Information */}
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+            <div className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden">
               <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4">
                 <h2 className="text-xl font-bold text-white flex items-center space-x-2">
                   <span className="text-2xl">📋</span>
@@ -663,7 +746,7 @@ export default function FurnitureAdd() {
               <div className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">
+                    <label className="block text-sm font-semibold text-gray-300">
                       Mobilya Adı *
                     </label>
                     <input
@@ -671,14 +754,20 @@ export default function FurnitureAdd() {
                       name="furnitureName"
                       value={formData.furnitureName}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      className={`w-full px-4 py-3 bg-gray-700 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-white placeholder-gray-400 ${
+                        errors.furnitureName ? 'border-red-500 bg-red-900/20' : 'border-gray-600'
+                      }`}
                       placeholder="Örn: Modern Koltuk"
                       required
                     />
+                    {errors.furnitureName && <p className="text-sm text-red-400 flex items-center space-x-1">
+                      <span>⚠️</span>
+                      <span>{errors.furnitureName}</span>
+                    </p>}
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">
+                    <label className="block text-sm font-semibold text-gray-300">
                       Mobilya Tipi *
                     </label>
                     <input
@@ -686,26 +775,34 @@ export default function FurnitureAdd() {
                       name="furnitureType"
                       value={formData.furnitureType}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      className={`w-full px-4 py-3 bg-gray-700 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-white placeholder-gray-400 ${
+                        errors.furnitureType ? 'border-red-500 bg-red-900/20' : 'border-gray-600'
+                      }`}
                       placeholder="Örn: Koltuk, Masa, Sandalye"
                       required
                     />
+                    {errors.furnitureType && <p className="text-sm text-red-400 flex items-center space-x-1">
+                      <span>⚠️</span>
+                      <span>{errors.furnitureType}</span>
+                    </p>}
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">
+                    <label className="block text-sm font-semibold text-gray-300">
                       Kategori *
                     </label>
                     <select
                       name="categoryId"
                       value={formData.categoryId || ''}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      className={`w-full px-4 py-3 bg-gray-700 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-white ${
+                        errors.categoryId ? 'border-red-500 bg-red-900/20' : 'border-gray-600'
+                      }`}
                       required
                     >
-                      <option value="">Kategori Seçiniz</option>
+                      <option value="" className="bg-gray-700">Kategori Seçiniz</option>
                       {categories.map(category => (
-                        <option key={category.categoryId} value={category.categoryId}>
+                        <option key={category.categoryId} value={category.categoryId} className="bg-gray-700">
                           {category.categoryLevel === 1 
                             ? `📁 ${category.categoryName}` 
                             : `   └── ${category.categoryName}`
@@ -713,21 +810,25 @@ export default function FurnitureAdd() {
                         </option>
                       ))}
                     </select>
+                    {errors.categoryId && <p className="text-sm text-red-400 flex items-center space-x-1">
+                      <span>⚠️</span>
+                      <span>{errors.categoryId}</span>
+                    </p>}
                     {selectedCategory && (
-                      <div className="mt-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+                      <div className="mt-3 p-4 bg-gradient-to-r from-blue-900/30 to-indigo-900/30 rounded-xl border border-blue-600/30">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
                           <div>
-                            <span className="font-semibold text-blue-700">Kategori:</span>
-                            <p className="text-gray-700">{selectedCategory.categoryName}</p>
+                            <span className="font-semibold text-blue-300">Kategori:</span>
+                            <p className="text-gray-300">{selectedCategory.categoryName}</p>
                           </div>
                           <div>
-                            <span className="font-semibold text-blue-700">Seviye:</span>
-                            <p className="text-gray-700">{selectedCategory.categoryLevel}</p>
+                            <span className="font-semibold text-blue-300">Seviye:</span>
+                            <p className="text-gray-300">{selectedCategory.categoryLevel}</p>
                           </div>
                           {selectedCategory.categoryPath && (
                             <div>
-                              <span className="font-semibold text-blue-700">Path:</span>
-                              <p className="text-gray-700 truncate">{selectedCategory.categoryPath}</p>
+                              <span className="font-semibold text-blue-300">Path:</span>
+                              <p className="text-gray-300 truncate">{selectedCategory.categoryPath}</p>
                             </div>
                           )}
                         </div>
@@ -736,7 +837,7 @@ export default function FurnitureAdd() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">
+                    <label className="block text-sm font-semibold text-gray-300">
                       Fiyat (TL) *
                     </label>
                     <div className="relative">
@@ -745,21 +846,40 @@ export default function FurnitureAdd() {
                         name="price"
                         value={formData.price}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 pl-12 bg-gray-50 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                        className={`w-full px-4 py-3 pl-12 bg-gray-700 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-white placeholder-gray-400 ${
+                          errors.price ? 'border-red-500 bg-red-900/20' : 'border-gray-600'
+                        }`}
                         placeholder="0.00"
                         step="0.01"
                         min="0"
                         required
                       />
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <span className="text-gray-500 text-lg">₺</span>
+                        <span className="text-gray-400 text-lg">₺</span>
                       </div>
                     </div>
+                    {errors.price && <p className="text-sm text-red-400 flex items-center space-x-1">
+                      <span>⚠️</span>
+                      <span>{errors.price}</span>
+                    </p>}
+                  </div>
+
+                  <div className="flex items-center">
+                    <label className="flex items-center space-x-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        name="isActive"
+                        checked={formData.isActive}
+                        onChange={handleInputChange}
+                        className="w-5 h-5 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
+                      />
+                      <span className="text-sm font-medium text-gray-300">Aktif olarak yayınla</span>
+                    </label>
                   </div>
                 </div>
 
                 <div className="mt-6 space-y-2">
-                  <label className="block text-sm font-semibold text-gray-700">
+                  <label className="block text-sm font-semibold text-gray-300">
                     Açıklama
                   </label>
                   <textarea
@@ -767,32 +887,19 @@ export default function FurnitureAdd() {
                     value={formData.description}
                     onChange={handleInputChange}
                     rows={4}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none"
+                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none text-white placeholder-gray-400"
                     placeholder="Mobilya hakkında detaylı bilgi..."
                   />
-                </div>
-
-                <div className="mt-6">
-                  <label className="flex items-center space-x-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      name="isActive"
-                      checked={formData.isActive}
-                      onChange={handleInputChange}
-                      className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                    />
-                    <span className="text-sm font-medium text-gray-700">Aktif olarak yayınla</span>
-                  </label>
                 </div>
               </div>
             </div>
 
             {/* Colors */}
             {colors.length > 0 && (
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+              <div className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden">
                 <div className="bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-4">
                   <h2 className="text-xl font-bold text-white flex items-center space-x-2">
-                    <span className="text-2xl">🎨</span>
+                    <ColorIcon />
                     <span>Renkler (Opsiyonel)</span>
                   </h2>
                 </div>
@@ -800,25 +907,25 @@ export default function FurnitureAdd() {
                 <div className="p-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {colors.map(color => (
-                      <label key={color.colorId} className="group relative">
+                      <label key={color.colorId} className="group relative cursor-pointer">
                         <input
                           type="checkbox"
                           checked={formData.colorIds.includes(color.colorId)}
                           onChange={(e) => handleColorChange(color.colorId, e.target.checked)}
                           className="sr-only"
                         />
-                        <div className={`cursor-pointer p-4 rounded-xl border-2 transition-all duration-200 ${
+                        <div className={`p-4 rounded-xl border-2 transition-all duration-200 ${
                           formData.colorIds.includes(color.colorId)
-                            ? 'border-blue-500 bg-blue-50 shadow-md transform scale-105'
-                            : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
+                            ? 'border-purple-500 bg-purple-900/30 shadow-md transform scale-105'
+                            : 'border-gray-600 hover:border-gray-500 hover:shadow-sm bg-gray-700/50'
                         }`}>
                           <div className="flex items-center space-x-3">
                             <div
-                              className="w-8 h-8 rounded-full border-2 border-white shadow-md"
+                              className="w-8 h-8 rounded-full border-2 border-gray-600 shadow-md"
                               style={{ backgroundColor: color.colorCode }}
                             />
                             <div className="flex-1">
-                              <span className="text-sm font-medium text-gray-700">
+                              <span className="text-sm font-medium text-gray-300">
                                 {color.colorName}
                               </span>
                               <p className="text-xs text-gray-500">
@@ -827,7 +934,7 @@ export default function FurnitureAdd() {
                             </div>
                           </div>
                           {formData.colorIds.includes(color.colorId) && (
-                            <div className="absolute top-2 right-2 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                            <div className="absolute top-2 right-2 w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center">
                               <span className="text-white text-xs">✓</span>
                             </div>
                           )}
@@ -836,9 +943,10 @@ export default function FurnitureAdd() {
                     ))}
                   </div>
                   {formData.colorIds.length > 0 && (
-                    <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
-                      <p className="text-sm font-medium text-blue-700">
-                        Seçilen renkler: {formData.colorIds.length} adet
+                    <div className="mt-6 p-4 bg-gradient-to-r from-purple-900/30 to-pink-900/30 rounded-xl border border-purple-600/30">
+                      <p className="text-sm font-medium text-purple-300 flex items-center space-x-2">
+                        <ColorIcon />
+                        <span>Seçilen renkler: {formData.colorIds.length} adet</span>
                       </p>
                     </div>
                   )}
@@ -848,30 +956,30 @@ export default function FurnitureAdd() {
 
             {/* Properties */}
             {properties.length > 0 && (
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+              <div className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden">
                 <div className="bg-gradient-to-r from-green-600 to-teal-600 px-6 py-4">
                   <h2 className="text-xl font-bold text-white flex items-center space-x-2">
-                    <span className="text-2xl">🏷️</span>
-                    <span>Özellikler</span>
+                    <PropertyIcon />
+                    <span>Özellikler (Opsiyonel)</span>
                   </h2>
                 </div>
                 
                 <div className="p-6">
                   {/* Add Property Section */}
                   <div className="mb-8">
-                    <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 border border-gray-200">
+                    <div className="bg-gradient-to-r from-gray-700 to-gray-800 rounded-xl p-6 border border-gray-600">
                       <div className="flex items-center space-x-4 mb-4">
                         <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-teal-500 rounded-lg flex items-center justify-center">
                           <PlusIcon />
                         </div>
                         <div>
-                          <h3 className="font-semibold text-gray-800">Özellik Ekle</h3>
-                          <p className="text-sm text-gray-600">Mobilyaya özel özellikler ekleyin</p>
+                          <h3 className="font-semibold text-gray-200">Özellik Ekle</h3>
+                          <p className="text-sm text-gray-400">Mobilyaya özel özellikler ekleyin</p>
                         </div>
                       </div>
                       
                       <select
-                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
+                        className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 text-white"
                         onChange={(e) => {
                           if (e.target.value) {
                             addProperty(parseInt(e.target.value))
@@ -879,11 +987,11 @@ export default function FurnitureAdd() {
                           }
                         }}
                       >
-                        <option value="">Özellik seçiniz</option>
+                        <option value="" className="bg-gray-700">Özellik seçiniz</option>
                         {Object.entries(propertiesByType).map(([type, props]) => (
                           <optgroup key={type} label={`📁 ${type.charAt(0).toUpperCase() + type.slice(1)}`}>
                             {props.filter(prop => availableProperties.includes(prop)).map(property => (
-                              <option key={property.propertyId} value={property.propertyId}>
+                              <option key={property.propertyId} value={property.propertyId} className="bg-gray-700">
                                 {property.propertyName}
                               </option>
                             ))}
@@ -892,8 +1000,8 @@ export default function FurnitureAdd() {
                       </select>
                       
                       {availableProperties.length === 0 && (
-                        <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
-                          <p className="text-sm text-green-700 font-medium flex items-center space-x-2">
+                        <div className="mt-4 p-4 bg-green-900/30 rounded-lg border border-green-600/30">
+                          <p className="text-sm text-green-300 font-medium flex items-center space-x-2">
                             <span>✅</span>
                             <span>Tüm özellikler eklenmiş</span>
                           </p>
@@ -905,30 +1013,30 @@ export default function FurnitureAdd() {
                     {selectedProperties.length > 0 && (
                       <div className="space-y-6 mt-8">
                         <div className="flex items-center justify-between">
-                          <h3 className="text-lg font-semibold text-gray-800 flex items-center space-x-2">
+                          <h3 className="text-lg font-semibold text-gray-200 flex items-center space-x-2">
                             <span>📋</span>
                             <span>Seçilen Özellikler</span>
                           </h3>
-                          <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                          <span className="px-3 py-1 bg-green-900/30 text-green-300 rounded-full text-sm font-medium border border-green-600/30">
                             {selectedProperties.length} özellik
                           </span>
                         </div>
                         
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                           {selectedProperties.map((selectedProp) => (
-                            <div key={selectedProp.propertyId} className="group relative bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-all duration-200">
+                            <div key={selectedProp.propertyId} className="group relative bg-gradient-to-r from-gray-700 to-gray-800 rounded-xl border border-gray-600 p-5 hover:shadow-md transition-all duration-200">
                               <div className="flex items-start justify-between mb-3">
                                 <div className="flex-1">
                                   <div className="flex items-center space-x-2 mb-2">
-                                    <h4 className="font-semibold text-gray-800">
+                                    <h4 className="font-semibold text-gray-200">
                                       {selectedProp.property.propertyName}
                                     </h4>
-                                    <span className="text-xs px-2 py-1 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 rounded-full border border-blue-200">
+                                    <span className="text-xs px-2 py-1 bg-gradient-to-r from-blue-900/50 to-indigo-900/50 text-blue-300 rounded-full border border-blue-600/30">
                                       {selectedProp.property.propertyType}
                                     </span>
                                   </div>
                                   {selectedProp.property.description && (
-                                    <p className="text-xs text-gray-500 mb-3">
+                                    <p className="text-xs text-gray-400 mb-3">
                                       {selectedProp.property.description}
                                     </p>
                                   )}
@@ -936,7 +1044,7 @@ export default function FurnitureAdd() {
                                 <button
                                   type="button"
                                   onClick={() => removeProperty(selectedProp.propertyId)}
-                                  className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded-lg transition-all duration-200"
+                                  className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 p-2 hover:bg-red-900/20 rounded-lg transition-all duration-200"
                                   title="Özelliği kaldır"
                                 >
                                   <DeleteIcon />
@@ -947,7 +1055,7 @@ export default function FurnitureAdd() {
                                 type="text"
                                 value={selectedProp.propertyValue}
                                 onChange={(e) => handlePropertyChange(selectedProp.propertyId, e.target.value)}
-                                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
+                                className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 text-white placeholder-gray-400"
                                 placeholder={selectedProp.property.description || `${selectedProp.property.propertyName} değeri`}
                               />
                             </div>
@@ -957,14 +1065,14 @@ export default function FurnitureAdd() {
                     )}
                     
                     {selectedProperties.length === 0 && (
-                      <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 mt-8">
+                      <div className="text-center py-12 border-2 border-dashed border-gray-600 rounded-xl bg-gray-700/30 mt-8">
                         <div className="flex flex-col items-center space-y-3">
-                          <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
-                            <span className="text-3xl">🏷️</span>
+                          <div className="w-16 h-16 bg-gray-600 rounded-full flex items-center justify-center">
+                            <PropertyIcon />
                           </div>
                           <div>
-                            <p className="text-gray-600 font-medium">Henüz özellik eklenmedi</p>
-                            <p className="text-sm text-gray-400 mt-1">
+                            <p className="text-gray-300 font-medium">Henüz özellik eklenmedi</p>
+                            <p className="text-sm text-gray-500 mt-1">
                               Yukarıdaki dropdown'dan özellik ekleyebilirsiniz
                             </p>
                           </div>
@@ -977,17 +1085,17 @@ export default function FurnitureAdd() {
             )}
 
             {/* Images */}
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+            <div className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden">
               <div className="bg-gradient-to-r from-indigo-600 to-blue-600 px-6 py-4">
                 <h2 className="text-xl font-bold text-white flex items-center space-x-2">
-                  <span className="text-2xl">🖼️</span>
-                  <span>Görseller</span>
+                  <ImageIcon />
+                  <span>Görseller ({images.length})</span>
                 </h2>
               </div>
               
               <div className="p-6">
                 <div className="mb-6">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-300 mb-2">
                     Görsel Yükle
                   </label>
                   <input
@@ -995,17 +1103,20 @@ export default function FurnitureAdd() {
                     multiple
                     accept="image/*"
                     onChange={handleImageUpload}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700"
                   />
                   <p className="text-xs text-gray-500 mt-2">
                     Maksimum 100MB, desteklenen formatlar: JPG, PNG, GIF, WebP
+                  </p>
+                  <p className="text-xs text-blue-400 mt-1">
+                    💡 İlk yüklenen görsel otomatik olarak ana görsel olur. Sonrakiler galeri görseli olur.
                   </p>
                 </div>
 
                 {images.length > 0 && (
                   <div className="space-y-4">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-gray-800 flex items-center space-x-2">
+                      <h3 className="text-lg font-semibold text-gray-200 flex items-center space-x-2">
                         <span>📸</span>
                         <span>Yüklenen Görseller ({images.length})</span>
                       </h3>
@@ -1015,23 +1126,29 @@ export default function FurnitureAdd() {
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {images.map((image, index) => (
+                      {images
+                        .sort((a, b) => a.sortOrder - b.sortOrder)
+                        .map((image) => (
                         <div 
-                          key={index} 
-                          className="relative border border-gray-200 rounded-xl overflow-hidden bg-white hover:shadow-md transition-shadow"
+                          key={image.tempId}
+                          className="relative border border-gray-600 rounded-xl overflow-hidden bg-gray-700 hover:shadow-lg transition-shadow"
                           draggable
-                          onDragStart={(e) => handleDragStart(e, index)}
+                          onDragStart={(e) => handleDragStart(e, image.tempId)}
                           onDragOver={handleDragOver}
-                          onDrop={(e) => handleDrop(e, index)}
+                          onDrop={(e) => handleDrop(e, image.tempId)}
                         >
-                          {/* Drag Handle */}
-                          <div className="absolute top-2 left-2 z-10 bg-white rounded p-1 shadow-sm cursor-move">
-                            <DragIcon />
+                          {/* Sort Order Badge */}
+                          <div className="absolute top-2 right-2 z-10 bg-indigo-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg">
+                            {image.sortOrder}
                           </div>
                           
-                          {/* Sort Order Badge */}
-                          <div className="absolute top-2 right-2 z-10 bg-indigo-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
-                            {image.sortOrder}
+                          {/* Image Type Badge */}
+                          <div className={`absolute top-2 left-2 z-10 px-2 py-1 rounded text-xs font-bold shadow-lg ${
+                            image.imageType === 'main_image' 
+                              ? 'bg-yellow-500 text-white' 
+                              : 'bg-blue-500 text-white'
+                          }`}>
+                            {image.imageType === 'main_image' ? '⭐ ANA' : '📸 GALERİ'}
                           </div>
                           
                           <div className="aspect-square relative">
@@ -1045,13 +1162,14 @@ export default function FurnitureAdd() {
                           
                           <div className="p-4">
                             <div className="flex items-center justify-between mb-3">
-                              <span className="text-sm font-medium text-gray-700 truncate max-w-[60%]">
+                              <span className="text-sm font-medium text-gray-300 truncate max-w-[60%]">
                                 {image.name}
                               </span>
                               <button
                                 type="button"
-                                onClick={() => removeImage(index)}
-                                className="text-red-600 hover:text-red-800 transition-colors p-1"
+                                onClick={() => removeImage(image.tempId)}
+                                className="text-red-400 hover:text-red-300 transition-colors p-1 hover:bg-red-900/20 rounded"
+                                title="Görseli kaldır"
                               >
                                 <DeleteIcon />
                               </button>
@@ -1061,11 +1179,11 @@ export default function FurnitureAdd() {
                             <div className="flex space-x-2 mb-3">
                               <button
                                 type="button"
-                                onClick={() => changeImageType(index, 'main_image')}
+                                onClick={() => changeImageType(image.tempId, 'main_image')}
                                 className={`flex items-center space-x-1 px-3 py-1 rounded text-xs font-medium transition-colors ${
                                   image.imageType === 'main_image'
-                                    ? 'bg-yellow-100 text-yellow-800 border border-yellow-300'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    ? 'bg-yellow-600/30 text-yellow-300 border border-yellow-600/50'
+                                    : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
                                 }`}
                               >
                                 <MainIcon />
@@ -1073,11 +1191,11 @@ export default function FurnitureAdd() {
                               </button>
                               <button
                                 type="button"
-                                onClick={() => changeImageType(index, 'gallery')}
+                                onClick={() => changeImageType(image.tempId, 'gallery')}
                                 className={`flex items-center space-x-1 px-3 py-1 rounded text-xs font-medium transition-colors ${
                                   image.imageType === 'gallery'
-                                    ? 'bg-blue-100 text-blue-800 border border-blue-300'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    ? 'bg-blue-600/30 text-blue-300 border border-blue-600/50'
+                                    : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
                                 }`}
                               >
                                 <GalleryIcon />
@@ -1090,18 +1208,18 @@ export default function FurnitureAdd() {
                               <div className="flex items-center space-x-1">
                                 <button
                                   type="button"
-                                  onClick={() => moveImageUp(index)}
-                                  disabled={index === 0}
-                                  className="p-1 text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                  onClick={() => moveImageUp(image.tempId)}
+                                  disabled={image.sortOrder === 1}
+                                  className="p-1 text-gray-400 hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 rounded"
                                   title="Yukarı taşı"
                                 >
                                   <UpIcon />
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => moveImageDown(index)}
-                                  disabled={index === images.length - 1}
-                                  className="p-1 text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                  onClick={() => moveImageDown(image.tempId)}
+                                  disabled={image.sortOrder === images.length}
+                                  className="p-1 text-gray-400 hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 rounded"
                                   title="Aşağı taşı"
                                 >
                                   <DownIcon />
@@ -1115,8 +1233,8 @@ export default function FurnitureAdd() {
                                   min="1"
                                   max={images.length}
                                   value={image.sortOrder}
-                                  onChange={(e) => setCustomSortOrder(index, parseInt(e.target.value))}
-                                  className="w-12 px-1 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                  onChange={(e) => setCustomSortOrder(image.tempId, parseInt(e.target.value))}
+                                  className="w-12 px-1 py-1 text-xs border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-gray-700 text-white"
                                 />
                               </div>
                             </div>
@@ -1126,7 +1244,7 @@ export default function FurnitureAdd() {
                     </div>
                     
                     {/* Quick Sort Actions */}
-                    <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-200">
+                    <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-600">
                       <button
                         type="button"
                         onClick={() => {
@@ -1135,47 +1253,50 @@ export default function FurnitureAdd() {
                             sortOrder: i + 1
                           })))
                         }}
-                        className="px-3 py-1 text-xs bg-gray-100 text-gray-600 hover:bg-gray-200 rounded transition-colors"
+                        className="px-3 py-1 text-xs bg-gray-600 text-gray-300 hover:bg-gray-500 rounded transition-colors"
                       >
-                        Sıralamayı Sıfırla
+                        Sıralamayı Düzelt
                       </button>
                       <button
                         type="button"
                         onClick={() => {
-                          setImages(prev => [...prev].reverse().map((img, i) => ({
-                            ...img,
-                            sortOrder: i + 1
-                          })))
+                          setImages(prev => {
+                            const reversed = [...prev].reverse()
+                            return reversed.map((img, i) => ({
+                              ...img,
+                              sortOrder: i + 1
+                            }))
+                          })
                         }}
-                        className="px-3 py-1 text-xs bg-gray-100 text-gray-600 hover:bg-gray-200 rounded transition-colors"
+                        className="px-3 py-1 text-xs bg-gray-600 text-gray-300 hover:bg-gray-500 rounded transition-colors"
                       >
                         Sıralamayı Ters Çevir
                       </button>
                       <button
                         type="button"
                         onClick={() => {
-                          setImages(prev => prev.map(img => ({
+                          setImages(prev => prev.map((img, index) => ({
                             ...img,
-                            imageType: 'gallery'
+                            imageType: index === 0 ? 'main_image' : 'gallery'
                           })))
                         }}
-                        className="px-3 py-1 text-xs bg-gray-100 text-gray-600 hover:bg-gray-200 rounded transition-colors"
+                        className="px-3 py-1 text-xs bg-blue-600/30 text-blue-300 hover:bg-blue-600/50 rounded transition-colors border border-blue-600/50"
                       >
-                        Hepsini Galeri Yap
+                        İlkini Ana Görsel Yap
                       </button>
                     </div>
                   </div>
                 )}
 
                 {images.length === 0 && (
-                  <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50">
+                  <div className="text-center py-12 border-2 border-dashed border-gray-600 rounded-xl bg-gray-700/30">
                     <div className="flex flex-col items-center space-y-3">
-                      <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
-                        <span className="text-3xl">🖼️</span>
+                      <div className="w-16 h-16 bg-gray-600 rounded-full flex items-center justify-center">
+                        <ImageIcon />
                       </div>
                       <div>
-                        <p className="text-gray-600 font-medium">Henüz görsel yüklenmedi</p>
-                        <p className="text-sm text-gray-400 mt-1">
+                        <p className="text-gray-300 font-medium">Henüz görsel yüklenmedi</p>
+                        <p className="text-sm text-gray-500 mt-1">
                           Yukarıdaki dosya seçici ile görsel ekleyebilirsiniz
                         </p>
                       </div>
@@ -1190,7 +1311,7 @@ export default function FurnitureAdd() {
               <button
                 type="button"
                 onClick={() => router.back()}
-                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium"
+                className="px-6 py-3 border border-gray-600 text-gray-300 rounded-xl hover:bg-gray-700 transition-all duration-200 font-medium"
               >
                 İptal
               </button>
@@ -1203,6 +1324,7 @@ export default function FurnitureAdd() {
                 <span>{loading ? 'Kaydediliyor...' : 'Mobilya Ekle'}</span>
               </button>
             </div>
+
           </form>
         )}
       </div>

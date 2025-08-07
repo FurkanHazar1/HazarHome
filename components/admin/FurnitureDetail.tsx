@@ -5,12 +5,14 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 
+// FIXED: Updated image URL function to prioritize original images over thumbnails
 const getImageUrl = (filePath: string): string[] => {
   if (!filePath) return []
   
   const normalizedPath = filePath.replace(/\\/g, '/')
   const cleanPath = normalizedPath.replace(/^uploads\//, '')
   
+  // FIXED: Prioritize original images, avoid thumbnail paths
   const urlOptions = [
     `/api/images/serve/${cleanPath}`,
     `/uploads/${cleanPath}`,
@@ -18,9 +20,12 @@ const getImageUrl = (filePath: string): string[] => {
     `/${cleanPath}`
   ]
   
-  return urlOptions
+  // FIXED: Filter out thumbnail URLs to ensure we get original images
+  return urlOptions.filter(url => 
+    !url.includes('/thumbnails/') && 
+    !url.includes('_thumb.')
+  )
 }
-
 // Types - matching API response
 interface Category {
   categoryId: number
@@ -230,7 +235,27 @@ const FurnitureImageDisplay = ({
   const [imageLoaded, setImageLoaded] = useState(false)
 
   const urls = useMemo(() => {
-    return image ? getImageUrl(image.filePath) : []
+    if (!image) return []
+    
+    // FIXED: Get original image URLs and explicitly filter out thumbnails
+    const originalUrls = getImageUrl(image.filePath)
+    
+    // Additional safety: if image has thumbnail indicators in filename/path, try to get original
+    const cleanUrls = originalUrls.map(url => {
+      // If URL contains thumbnail indicators, try to construct original URL
+      if (url.includes('_thumb.') || url.includes('/thumbnails/')) {
+        // Try to construct original image path
+        let originalUrl = url
+          .replace('/thumbnails/', '/') // Remove thumbnails folder
+          .replace('_thumb.', '.') // Remove _thumb suffix
+          .replace('/main_thumb.', '/main.') // Handle main thumbnail case
+        
+        return originalUrl
+      }
+      return url
+    })
+    
+    return [...new Set(cleanUrls)] // Remove duplicates
   }, [image])
 
   const handleImageError = useCallback(() => {
@@ -275,7 +300,8 @@ const FurnitureImageDisplay = ({
         } ${showZoom ? 'group-hover:scale-110 cursor-zoom-in' : ''}`}
         onLoad={handleImageLoad}
         onError={handleImageError}
-        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 80vw"
+        quality={95} // FIXED: Higher quality for original images
       />
       
       {showZoom && onZoom && imageLoaded && (
@@ -294,7 +320,7 @@ const FurnitureImageDisplay = ({
   )
 }
 
-// Image Zoom Modal with Dark Theme
+// FIXED: Enhanced Image Zoom Modal with original image prioritization
 const ImageZoomModal = ({ 
   image, 
   isOpen, 
@@ -318,7 +344,9 @@ const ImageZoomModal = ({
 
   if (!isOpen || !image) return null
 
-  const imageUrl = image.url || `/api/images/serve/${image.filePath.replace(/^uploads\//, '')}`
+  // FIXED: Get original image URL, not thumbnail
+  const originalUrls = getImageUrl(image.filePath)
+  const imageUrl = originalUrls[0] || `/api/images/serve/${image.filePath.replace(/^uploads\//, '')}`
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-95 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
@@ -336,14 +364,23 @@ const ImageZoomModal = ({
           <Image
             src={imageUrl}
             alt={image.altText || 'Furniture image'}
-            width={image.width || 800}
-            height={image.height || 600}
-            className="max-w-full max-h-[90vh] object-contain rounded-xl"
+            width={image.width || 1200} // FIXED: Larger default size for original images
+            height={image.height || 900}
+            className="max-w-full max-h-[90vh] object-contain rounded-xl" 
+            quality={100} // FIXED: Maximum quality for zoom view
           />
           
           {image.fileName && (
             <div className="absolute bottom-4 left-4 bg-black bg-opacity-70 backdrop-blur-sm text-white px-4 py-2 rounded-lg border border-white border-opacity-20">
-              {image.fileName}
+              <div className="text-sm font-medium">{image.fileName}</div>
+              {image.width && image.height && (
+                <div className="text-xs text-white/80 mt-1">
+                  {image.width} × {image.height} px
+                  {image.fileSize && (
+                    <span className="ml-2">• {(image.fileSize / 1024 / 1024).toFixed(1)} MB</span>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -356,7 +393,7 @@ interface FurnitureDetailProps {
   furnitureId: number
 }
 
-export default function ModernFurnitureDetail({ furnitureId }: FurnitureDetailProps) {
+export default function ModernFurnitureDetail({ furnitureId }: { furnitureId: number }) {
   const router = useRouter()
   
   // State management
@@ -377,10 +414,12 @@ export default function ModernFurnitureDetail({ furnitureId }: FurnitureDetailPr
       
       const params = new URLSearchParams({
         groupImagesByType: 'true',
-        includeInactive: 'false'
+        includeInactive: 'false',
+        includeDetails: 'true', // FIXED: Request detailed image info
+        originalImagesOnly: 'true' // FIXED: Request original images only
       })
 
-      console.log('🔄 Loading furniture detail:', furnitureId)
+      console.log('🔄 Loading furniture detail (original images):', furnitureId)
 
       const response = await fetch(`/api/furniture/${furnitureId}?${params}`)
       
@@ -391,8 +430,26 @@ export default function ModernFurnitureDetail({ furnitureId }: FurnitureDetailPr
       const data: ApiResponse = await response.json()
       
       if (data.success && data.data) {
-        setFurniture(data.data)
-        console.log('✅ Furniture detail loaded:', data.data)
+        // FIXED: Filter out thumbnail images from the response
+        const filteredData = {
+          ...data.data,
+          imageGallery: {
+            ...data.data.imageGallery,
+            main: data.data.imageGallery?.main?.filter(img => 
+              !img.image.filePath.includes('/thumbnails/') && 
+              !img.image.fileName.includes('_thumb.')
+            ) || [],
+            gallery: data.data.imageGallery?.gallery?.filter(img => 
+              !img.image.filePath.includes('/thumbnails/') && 
+              !img.image.fileName.includes('_thumb.')
+            ) || [],
+            // Remove thumbnails completely from the gallery
+            thumbnails: []
+          }
+        }
+        
+        setFurniture(filteredData)
+        console.log('✅ Furniture detail loaded (original images only):', filteredData)
       } else {
         setError(data.error || 'Mobilya detayları yüklenemedi')
       }
@@ -403,7 +460,6 @@ export default function ModernFurnitureDetail({ furnitureId }: FurnitureDetailPr
       setLoading(false)
     }
   }, [furnitureId])
-
   // Delete furniture
   const handleDelete = async () => {
     if (!furniture) return
@@ -438,6 +494,7 @@ export default function ModernFurnitureDetail({ furnitureId }: FurnitureDetailPr
     
     const allImages: FurnitureImage[] = []
     
+    // Only include main and gallery images (no thumbnails)
     if (furniture.imageGallery.main) {
       allImages.push(...furniture.imageGallery.main)
     }
@@ -446,7 +503,14 @@ export default function ModernFurnitureDetail({ furnitureId }: FurnitureDetailPr
       allImages.push(...furniture.imageGallery.gallery)
     }
     
-    return allImages.sort((a, b) => a.sortOrder - b.sortOrder)
+    // FIXED: Additional filtering to ensure no thumbnails slip through
+    const originalImages = allImages.filter(img => 
+      !img.image.filePath.includes('/thumbnails/') && 
+      !img.image.fileName.includes('_thumb.') &&
+      img.imageType !== 'thumbnail'
+    )
+    
+    return originalImages.sort((a, b) => a.sortOrder - b.sortOrder)
   }, [furniture?.imageGallery])
 
   const selectedImage = useMemo(() => {
@@ -585,8 +649,8 @@ export default function ModernFurnitureDetail({ furnitureId }: FurnitureDetailPr
 
             {/* Main Content Grid */}
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 mb-12">
-              
-              {/* Image Gallery - 7 columns */}
+                
+                {/* Image Gallery - 7 columns */}
               <div className="xl:col-span-7 space-y-6">
                 <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-6 border border-white/10 shadow-2xl">
                   <div className="aspect-square relative rounded-2xl overflow-hidden mb-6">
@@ -630,25 +694,34 @@ export default function ModernFurnitureDetail({ furnitureId }: FurnitureDetailPr
                     </div>
                   )}
 
+
                   {/* Image Stats */}
                   <div className="mt-6 grid grid-cols-3 gap-4">
-                    {[
-                      { label: "Toplam Görsel", value: furniture?.stats?.totalImages || 0, color: "from-blue-500 to-blue-600" },
-                      { label: "Ana Görsel", value: furniture?.imageGallery?.main?.length || 0, color: "from-purple-500 to-purple-600" },
-                      { label: "Galeri", value: furniture?.imageGallery?.gallery?.length || 0, color: "from-green-500 to-green-600" }
-                    ].map((stat, index) => (
-                      <div key={index} className="text-center p-4 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10">
-                        <div className={`text-2xl font-bold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent`}>
-                          {stat.value}
-                        </div>
-                        <div className="text-sm text-white/70 mt-1">{stat.label}</div>
+                   {[
+                    { 
+                      label: "Ana Görsel", 
+                      value: furniture?.imageGallery?.main?.length || 0, 
+                      color: "from-purple-500 to-purple-600" 
+                    },
+                    { 
+                      label: "Galeri Görseli", 
+                      value: furniture?.imageGallery?.gallery?.length || 0, 
+                      color: "from-green-500 to-green-600" 
+                    }
+                  ].map((stat, index) => (
+                    <div key={index} className="text-center p-4 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10">
+                      <div className={`text-2xl font-bold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent`}>
+                        {stat.value}
                       </div>
-                    ))}
+                      <div className="text-sm text-white/70 mt-1">{stat.label}</div>
+                    </div>
+                  ))}
                   </div>
                 </div>
               </div>
+              
 
-              {/* Info Panel - 5 columns */}
+              {/* Info Panel - 5 columns*/}
               <div className="xl:col-span-5 space-y-6">
                 
                 {/* Quick Info Cards */}

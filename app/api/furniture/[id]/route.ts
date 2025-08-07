@@ -1,7 +1,7 @@
 // app/api/furniture/[id]/route.ts - Updated Single Furniture API with Category-Based Image System
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-
+import { convertImageType } from '@/lib/image-utils'
 // Type definitions
 interface PropertyInput {
   propertyId: number;

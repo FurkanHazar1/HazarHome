@@ -12,7 +12,7 @@ import {
   THUMBNAIL_CONFIGS
 } from '@/lib/image-utils'
 import sharp from 'sharp'
-
+import path from 'path'
 // Type definitions
 interface ImageCreateData {
   fileName: string;
