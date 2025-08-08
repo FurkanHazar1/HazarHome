@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 
@@ -53,9 +53,10 @@ interface ImageFile {
   preview: string
   imageType: 'main' | 'gallery'
   sortOrder: number
+  tempId: string
 }
 
-// Icon components
+// Icon components - Styled to match FurnitureAdd
 const FurnitureSetIcon = () => <span className="text-2xl">🏠</span>
 const FurnitureIcon = () => <span className="text-2xl">🪑</span>
 const PlusIcon = () => <span className="text-lg">➕</span>
@@ -74,19 +75,10 @@ const ColorIcon = () => <span className="text-lg">🎨</span>
 const PropertyIcon = () => <span className="text-lg">🏷️</span>
 const MoneyIcon = () => <span className="text-lg">💰</span>
 
-
 const generateImageUrl = (filePath: string): string => {
   if (!filePath) return ''
   const cleanPath = filePath.replace('uploads/', '')
   return `/api/images/serve/${cleanPath}`
-}
-
-// API'den gelen image data'yı process etmek için
-const processApiImages = (apiImages: any[]): any[] => {
-  return apiImages.map(img => ({
-    ...img,
-    url: img.filePath ? generateImageUrl(img.filePath) : null
-  }))
 }
 
 export default function FurnitureSetAdd() {
@@ -127,12 +119,11 @@ export default function FurnitureSetAdd() {
         setDataLoading(true)
         
         // Fetch parent categories (level = 1)
-         const categoriesRes = await fetch('/api/categories?level=1&active=true') // UPDATED
-      
-          const categoriesData = await categoriesRes.json()
-          if (categoriesData.success) {
-            setCategories(categoriesData.data)
-          }
+        const categoriesRes = await fetch('/api/categories?level=1&active=true')
+        const categoriesData = await categoriesRes.json()
+        if (categoriesData.success) {
+          setCategories(categoriesData.data)
+        }
 
         // Fetch furniture
         const furnitureRes = await fetch('/api/furniture?active=true&limit=100')
@@ -253,11 +244,13 @@ export default function FurnitureSetAdd() {
 
       const reader = new FileReader()
       reader.onload = (event) => {
+        const tempId = `temp_${Date.now()}_${Math.random()}_${index}`
         const newImage: ImageFile = {
           file,
           preview: event.target?.result as string,
           imageType: index === 0 ? 'main' : 'gallery',
-          sortOrder: images.length + index + 1
+          sortOrder: images.length + index + 1,
+          tempId
         }
         setImages(prev => [...prev, newImage])
       }
@@ -269,9 +262,9 @@ export default function FurnitureSetAdd() {
   }
 
   // Remove image
-  const removeImage = (index: number) => {
+  const removeImage = (tempId: string) => {
     setImages(prev => {
-      const newImages = prev.filter((_, i) => i !== index)
+      const newImages = prev.filter(img => img.tempId !== tempId)
       // Reorder sort orders after removal
       return newImages.map((img, i) => ({
         ...img,
@@ -281,9 +274,9 @@ export default function FurnitureSetAdd() {
   }
 
   // Change image type
-  const changeImageType = (index: number, imageType: 'main' | 'gallery') => {
-    setImages(prev => prev.map((img, i) => {
-      if (i === index) {
+  const changeImageType = (tempId: string, imageType: 'main' | 'gallery') => {
+    setImages(prev => prev.map(img => {
+      if (img.tempId === tempId) {
         return { ...img, imageType }
       }
       // If setting this as main, make other main images gallery
@@ -295,53 +288,54 @@ export default function FurnitureSetAdd() {
   }
 
   // Move image up in sort order
-  const moveImageUp = (index: number) => {
-    if (index === 0) return
-    
+  const moveImageUp = (tempId: string) => {
     setImages(prev => {
-      const newImages = [...prev]
-      // Swap positions
-      const temp = newImages[index]
-      newImages[index] = newImages[index - 1]
-      newImages[index - 1] = temp
+      const currentIndex = prev.findIndex(img => img.tempId === tempId)
+      if (currentIndex <= 0) return prev
       
-      // Update sort orders
-      return newImages.map((img, i) => ({
+      const newImages = [...prev]
+      const temp = newImages[currentIndex]
+      newImages[currentIndex] = newImages[currentIndex - 1]
+      newImages[currentIndex - 1] = temp
+      
+      return newImages.map((img, index) => ({
         ...img,
-        sortOrder: i + 1
+        sortOrder: index + 1
       }))
     })
   }
 
   // Move image down in sort order
-  const moveImageDown = (index: number) => {
-    if (index === images.length - 1) return
-    
+  const moveImageDown = (tempId: string) => {
     setImages(prev => {
-      const newImages = [...prev]
-      // Swap positions
-      const temp = newImages[index]
-      newImages[index] = newImages[index + 1]
-      newImages[index + 1] = temp
+      const currentIndex = prev.findIndex(img => img.tempId === tempId)
+      if (currentIndex >= prev.length - 1) return prev
       
-      // Update sort orders
-      return newImages.map((img, i) => ({
+      const newImages = [...prev]
+      const temp = newImages[currentIndex]
+      newImages[currentIndex] = newImages[currentIndex + 1]
+      newImages[currentIndex + 1] = temp
+      
+      return newImages.map((img, index) => ({
         ...img,
-        sortOrder: i + 1
+        sortOrder: index + 1
       }))
     })
   }
 
   // Update sort order manually
-  const updateSortOrder = (index: number, newSortOrder: number) => {
+  const updateSortOrder = (tempId: string, newSortOrder: number) => {
     if (newSortOrder < 1 || newSortOrder > images.length) return
     
     setImages(prev => {
+      const currentIndex = prev.findIndex(img => img.tempId === tempId)
+      if (currentIndex === -1) return prev
+      
       const newImages = [...prev]
-      const imageToMove = newImages[index]
+      const imageToMove = newImages[currentIndex]
       
       // Remove from current position
-      newImages.splice(index, 1)
+      newImages.splice(currentIndex, 1)
       
       // Insert at new position (adjust for 0-based indexing)
       newImages.splice(newSortOrder - 1, 0, imageToMove)
@@ -375,117 +369,112 @@ export default function FurnitureSetAdd() {
   }
 
   // Submit form
-  // 🔧 Mevcut handleSubmit fonksiyonunu şu şekilde güncelle:
-
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault()
-  
-  if (!validateForm()) {
-    return
-  }
-
-  setLoading(true)
-  setErrors({})
-
-  try {
-    const submitData = new FormData()
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     
-    // Basic info
-    submitData.append('setName', formData.setName.trim())
-    submitData.append('categoryId', formData.categoryId)
-    submitData.append('description', formData.description.trim())
-    submitData.append('price', formData.price)
-    submitData.append('isActive', formData.isActive.toString())
-    
-    // Furniture items (opsiyonel)
-    const furnitureItems = selectedFurniture.map(item => ({
-      furnitureId: item.furnitureId,
-      quantity: item.quantity,
-      sortOrder: item.sortOrder
-    }))
-    submitData.append('furnitureItems', JSON.stringify(furnitureItems))
-    
-    // Colors (optional)
-    if (selectedColors.length > 0) {
-      submitData.append('colorIds', JSON.stringify(selectedColors))
+    if (!validateForm()) {
+      return
     }
-    
-    // Properties (optional)
-    if (selectedProperties.length > 0) {
-      submitData.append('properties', JSON.stringify(selectedProperties))
-    }
-    
-    // Image type mappings
-    const imageTypeMappings: {[key: string]: 'main' | 'gallery'} = {}
-    images.forEach(img => {
-      imageTypeMappings[img.file.name] = img.imageType
-    })
-    if (Object.keys(imageTypeMappings).length > 0) {
-      submitData.append('imageTypeMappings', JSON.stringify(imageTypeMappings))
-    }
-    
-    // Images
-    images.forEach(img => {
-      submitData.append('images', img.file)
-    })
 
-    const response = await fetch('/api/furniture-sets', {
-      method: 'POST',
-      body: submitData
-    })
+    setLoading(true)
+    setErrors({})
 
-    const result = await response.json()
-
-    if (result.success) {
-      setSuccess(true)
+    try {
+      const submitData = new FormData()
       
-      // 🆕 ENHANCED: Image upload sonuçlarını göster
-      if (result.imageResults) {
-        console.log(`✅ ${result.imageResults.uploaded}/${result.imageResults.total} resim yüklendi`)
-        if (result.imageResults.categoryBasedPaths) {
-          console.log('📁 Category-based paths:', result.imageResults.categoryBasedPaths)
+      // Basic info
+      submitData.append('setName', formData.setName.trim())
+      submitData.append('categoryId', formData.categoryId)
+      submitData.append('description', formData.description.trim())
+      submitData.append('price', formData.price)
+      submitData.append('isActive', formData.isActive.toString())
+      
+      // Furniture items (optional)
+      const furnitureItems = selectedFurniture.map(item => ({
+        furnitureId: item.furnitureId,
+        quantity: item.quantity,
+        sortOrder: item.sortOrder
+      }))
+      submitData.append('furnitureItems', JSON.stringify(furnitureItems))
+      
+      // Colors (optional)
+      if (selectedColors.length > 0) {
+        submitData.append('colorIds', JSON.stringify(selectedColors))
+      }
+      
+      // Properties (optional)
+      if (selectedProperties.length > 0) {
+        submitData.append('properties', JSON.stringify(selectedProperties))
+      }
+      
+      // Image type mappings
+      const imageTypeMappings: {[key: string]: 'main' | 'gallery'} = {}
+      images.forEach(img => {
+        imageTypeMappings[img.file.name] = img.imageType
+      })
+      if (Object.keys(imageTypeMappings).length > 0) {
+        submitData.append('imageTypeMappings', JSON.stringify(imageTypeMappings))
+      }
+      
+      // Images
+      images.forEach(img => {
+        submitData.append('images', img.file)
+      })
+
+      const response = await fetch('/api/furniture-sets', {
+        method: 'POST',
+        body: submitData
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        setSuccess(true)
+        
+        if (result.imageResults) {
+          console.log(`✅ ${result.imageResults.uploaded}/${result.imageResults.total} resim yüklendi`)
+          if (result.imageResults.categoryBasedPaths) {
+            console.log('📁 Category-based paths:', result.imageResults.categoryBasedPaths)
+          }
+        }
+        
+        setTimeout(() => {
+          router.push(`/admin/furniture-sets/${result.data.setId}`)
+        }, 2000)
+      } else {
+        if (result.validationErrors && Array.isArray(result.validationErrors)) {
+          const newErrors: {[key: string]: string} = {}
+          
+          result.validationErrors.forEach((error: string) => {
+            const errorLower = error.toLowerCase()
+            if (errorLower.includes('name') || errorLower.includes('takım')) {
+              newErrors.setName = error
+            } else if (errorLower.includes('category') || errorLower.includes('kategori')) {
+              newErrors.categoryId = error
+            } else if (errorLower.includes('price') || errorLower.includes('fiyat')) {
+              newErrors.price = error
+            } else {
+              newErrors.submit = error
+            }
+          })
+          
+          setErrors(newErrors)
+        } else {
+          setErrors({ submit: result.error || 'Mobilya takımı oluşturulamadı' })
         }
       }
+    } catch (error) {
+      console.error('Submit error:', error)
       
-      setTimeout(() => {
-        router.push(`/admin/furniture-sets/${result.data.setId}`)
-      }, 2000)
-    } else {
-      // 🆕 ENHANCED: API'den gelen validation errors'ı daha iyi handle et
-      if (result.validationErrors && Array.isArray(result.validationErrors)) {
-        const newErrors: {[key: string]: string} = {}
-        
-        result.validationErrors.forEach((error: string) => {
-          const errorLower = error.toLowerCase()
-          if (errorLower.includes('name') || errorLower.includes('takım')) {
-            newErrors.setName = error
-          } else if (errorLower.includes('category') || errorLower.includes('kategori')) {
-            newErrors.categoryId = error
-          } else if (errorLower.includes('price') || errorLower.includes('fiyat')) {
-            newErrors.price = error
-          } else {
-            newErrors.submit = error
-          }
-        })
-        
-        setErrors(newErrors)
+      if (error instanceof TypeError && (error as TypeError).message.includes('fetch')) {
+        setErrors({ submit: 'Bağlantı hatası. İnternet bağlantınızı kontrol edin ve tekrar deneyin.' })
       } else {
-        setErrors({ submit: result.error || 'Mobilya takımı oluşturulamadı' })
+        setErrors({ submit: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.' })
       }
+    } finally {
+      setLoading(false)
     }
-  } catch (error) {
-    console.error('Submit error:', error)
-    
-    // 🆕 ENHANCED: Network hatalarını daha spesifik handle et
-    if (error instanceof TypeError && error.message.includes('fetch')) {
-      setErrors({ submit: 'Bağlantı hatası. İnternet bağlantınızı kontrol edin ve tekrar deneyin.' })
-    } else {
-      setErrors({ submit: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.' })
-    }
-  } finally {
-    setLoading(false)
   }
-}
 
   // Calculate total price
   const calculateTotalPrice = () => {
@@ -508,17 +497,17 @@ const handleSubmit = async (e: React.FormEvent) => {
   // Success screen
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl border border-green-200 overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-slate-900 flex items-center justify-center">
+        <div className="max-w-md w-full bg-gray-800 rounded-2xl shadow-2xl border border-green-600/30 overflow-hidden">
           <div className="bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-8 text-center">
-            <div className="w-20 h-20 mx-auto mb-4 bg-white rounded-full flex items-center justify-center">
+            <div className="w-20 h-20 mx-auto mb-4 bg-gray-800 rounded-full flex items-center justify-center">
               <SuccessIcon />
             </div>
             <h2 className="text-2xl font-bold text-white mb-2">Başarılı!</h2>
             <p className="text-green-100">Mobilya takımı başarıyla oluşturuldu.</p>
           </div>
           <div className="p-6 text-center">
-            <div className="flex items-center justify-center space-x-2 text-gray-600">
+            <div className="flex items-center justify-center space-x-2 text-gray-300">
               <LoaderIcon />
               <span>Yönlendiriliyorsunuz...</span>
             </div>
@@ -529,7 +518,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-slate-900">
       <div className="max-w-5xl mx-auto p-6">
         {/* Header */}
         <div className="mb-8">
@@ -539,10 +528,10 @@ const handleSubmit = async (e: React.FormEvent) => {
                 <FurnitureSetIcon />
               </div>
               <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
                   Yeni Mobilya Takımı Oluştur
                 </h1>
-                <p className="text-gray-600 mt-1">
+                <p className="text-gray-400 mt-1">
                   Mobilya takımı oluşturun. İsterseniz mobilyalarınızı gruplandırabilirsiniz.
                 </p>
               </div>
@@ -550,7 +539,7 @@ const handleSubmit = async (e: React.FormEvent) => {
             
             <button
               onClick={() => router.back()}
-              className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-white rounded-lg transition-all duration-200"
+              className="flex items-center space-x-2 px-4 py-2 text-gray-400 hover:text-gray-200 hover:bg-gray-800 rounded-lg transition-all duration-200"
             >
               <BackIcon />
               <span>Geri</span>
@@ -561,10 +550,10 @@ const handleSubmit = async (e: React.FormEvent) => {
         {/* Loading State */}
         {dataLoading && (
           <div className="flex items-center justify-center py-20">
-            <div className="bg-white rounded-2xl p-8 shadow-xl border border-gray-200">
+            <div className="bg-gray-800 rounded-2xl p-8 shadow-2xl border border-gray-700">
               <div className="flex items-center space-x-4">
                 <LoaderIcon />
-                <span className="text-gray-600 font-medium">Veriler yükleniyor...</span>
+                <span className="text-gray-300 font-medium">Veriler yükleniyor...</span>
               </div>
             </div>
           </div>
@@ -572,7 +561,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
         {/* Error State */}
         {errors.submit && (
-          <div className="bg-gradient-to-r from-red-50 to-red-100 border border-red-200 text-red-700 px-6 py-4 rounded-xl mb-6 shadow-sm">
+          <div className="bg-gradient-to-r from-red-900/50 to-red-800/50 border border-red-600/50 text-red-300 px-6 py-4 rounded-xl mb-6 shadow-sm">
             <div className="flex items-center space-x-2">
               <span className="text-xl">⚠️</span>
               <span className="font-medium">{errors.submit}</span>
@@ -584,7 +573,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         {!dataLoading && (
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Basic Information */}
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+            <div className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden">
               <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4">
                 <h2 className="text-xl font-bold text-white flex items-center space-x-2">
                   <span className="text-2xl">📋</span>
@@ -595,7 +584,7 @@ const handleSubmit = async (e: React.FormEvent) => {
               <div className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">
+                    <label className="block text-sm font-semibold text-gray-300">
                       Takım Adı *
                     </label>
                     <input
@@ -603,52 +592,52 @@ const handleSubmit = async (e: React.FormEvent) => {
                       name="setName"
                       value={formData.setName}
                       onChange={handleInputChange}
-                      className={`w-full px-4 py-3 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
-                        errors.setName ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                      className={`w-full px-4 py-3 bg-gray-700 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-white placeholder-gray-400 ${
+                        errors.setName ? 'border-red-500 bg-red-900/20' : 'border-gray-600'
                       }`}
                       placeholder="Örn: Modern Salon Takımı"
                       required
                     />
-                    {errors.setName && <p className="text-sm text-red-600 flex items-center space-x-1">
+                    {errors.setName && <p className="text-sm text-red-400 flex items-center space-x-1">
                       <span>⚠️</span>
                       <span>{errors.setName}</span>
                     </p>}
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">
+                    <label className="block text-sm font-semibold text-gray-300">
                       Kategori *
                     </label>
                     <select
                       name="categoryId"
                       value={formData.categoryId}
                       onChange={handleInputChange}
-                      className={`w-full px-4 py-3 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
-                        errors.categoryId ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                      className={`w-full px-4 py-3 bg-gray-700 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-white ${
+                        errors.categoryId ? 'border-red-500 bg-red-900/20' : 'border-gray-600'
                       }`}
                       required
                     >
-                      <option value="">Kategori seçin</option>
+                      <option value="" className="bg-gray-700">Kategori seçin</option>
                       {categories.map(category => (
-                        <option key={category.categoryId} value={category.categoryId}>
+                        <option key={category.categoryId} value={category.categoryId} className="bg-gray-700">
                           📁 {category.categoryName}
                         </option>
                       ))}
                     </select>
-                    {errors.categoryId && <p className="text-sm text-red-600 flex items-center space-x-1">
+                    {errors.categoryId && <p className="text-sm text-red-400 flex items-center space-x-1">
                       <span>⚠️</span>
                       <span>{errors.categoryId}</span>
                     </p>}
                     {selectedCategory && (
-                      <div className="mt-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+                      <div className="mt-3 p-4 bg-gradient-to-r from-blue-900/30 to-indigo-900/30 rounded-xl border border-blue-600/30">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                           <div>
-                            <span className="font-semibold text-blue-700">Kategori:</span>
-                            <p className="text-gray-700">{selectedCategory.categoryName}</p>
+                            <span className="font-semibold text-blue-300">Kategori:</span>
+                            <p className="text-gray-300">{selectedCategory.categoryName}</p>
                           </div>
                           <div>
-                            <span className="font-semibold text-blue-700">Seviye:</span>
-                            <p className="text-gray-700">{selectedCategory.categoryLevel}</p>
+                            <span className="font-semibold text-blue-300">Seviye:</span>
+                            <p className="text-gray-300">{selectedCategory.categoryLevel}</p>
                           </div>
                         </div>
                       </div>
@@ -656,7 +645,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-700">
+                    <label className="block text-sm font-semibold text-gray-300">
                       Fiyat (₺) *
                     </label>
                     <div className="relative">
@@ -667,17 +656,17 @@ const handleSubmit = async (e: React.FormEvent) => {
                         onChange={handleInputChange}
                         min="0"
                         step="0.01"
-                        className={`w-full px-4 py-3 pl-12 bg-gray-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
-                          errors.price ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                        className={`w-full px-4 py-3 pl-12 bg-gray-700 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-white placeholder-gray-400 ${
+                          errors.price ? 'border-red-500 bg-red-900/20' : 'border-gray-600'
                         }`}
                         placeholder="0.00"
                         required
                       />
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <span className="text-gray-500 text-lg">₺</span>
+                        <span className="text-gray-400 text-lg">₺</span>
                       </div>
                     </div>
-                    {errors.price && <p className="text-sm text-red-600 flex items-center space-x-1">
+                    {errors.price && <p className="text-sm text-red-400 flex items-center space-x-1">
                       <span>⚠️</span>
                       <span>{errors.price}</span>
                     </p>}
@@ -690,15 +679,15 @@ const handleSubmit = async (e: React.FormEvent) => {
                         name="isActive"
                         checked={formData.isActive}
                         onChange={handleInputChange}
-                        className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                        className="w-5 h-5 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
                       />
-                      <span className="text-sm font-medium text-gray-700">Aktif olarak yayınla</span>
+                      <span className="text-sm font-medium text-gray-300">Aktif olarak yayınla</span>
                     </label>
                   </div>
                 </div>
 
                 <div className="mt-6 space-y-2">
-                  <label className="block text-sm font-semibold text-gray-700">
+                  <label className="block text-sm font-semibold text-gray-300">
                     Açıklama
                   </label>
                   <textarea
@@ -706,7 +695,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                     value={formData.description}
                     onChange={handleInputChange}
                     rows={4}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none"
+                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none text-white placeholder-gray-400"
                     placeholder="Takım hakkında detaylar..."
                   />
                 </div>
@@ -714,7 +703,7 @@ const handleSubmit = async (e: React.FormEvent) => {
             </div>
 
             {/* Furniture Selection */}
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+            <div className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden">
               <div className="bg-gradient-to-r from-orange-600 to-red-600 px-6 py-4">
                 <div className="flex items-center justify-between">
                   <h2 className="text-xl font-bold text-white flex items-center space-x-2">
@@ -734,17 +723,17 @@ const handleSubmit = async (e: React.FormEvent) => {
 
               <div className="p-6">
                 {selectedFurniture.length === 0 ? (
-                  <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50">
+                  <div className="text-center py-12 border-2 border-dashed border-gray-600 rounded-xl bg-gray-700/30">
                     <div className="flex flex-col items-center space-y-3">
-                      <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
+                      <div className="w-16 h-16 bg-gray-600 rounded-full flex items-center justify-center">
                         <FurnitureIcon />
                       </div>
                       <div>
-                        <p className="text-gray-600 font-medium">Henüz mobilya eklenmedi</p>
+                        <p className="text-gray-300 font-medium">Henüz mobilya eklenmedi</p>
                         <button
                           type="button"
                           onClick={() => setShowFurnitureModal(true)}
-                          className="mt-2 text-orange-600 hover:text-orange-800 font-medium"
+                          className="mt-2 text-orange-400 hover:text-orange-300 font-medium transition-colors"
                         >
                           İlk mobilyayı ekleyin
                         </button>
@@ -754,35 +743,35 @@ const handleSubmit = async (e: React.FormEvent) => {
                 ) : (
                   <div className="space-y-4">
                     {selectedFurniture.map((item, index) => (
-                      <div key={item.furnitureId} className="group relative bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-all duration-200">
+                      <div key={item.furnitureId} className="group relative bg-gradient-to-r from-gray-700 to-gray-800 rounded-xl border border-gray-600 p-5 hover:shadow-lg transition-all duration-200">
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
-                            <h3 className="font-semibold text-gray-900 mb-1">{item.furniture?.furnitureName}</h3>
-                            <p className="text-sm text-gray-500 mb-2">{item.furniture?.furnitureType}</p>
+                            <h3 className="font-semibold text-gray-200 mb-1">{item.furniture?.furnitureName}</h3>
+                            <p className="text-sm text-gray-400 mb-2">{item.furniture?.furnitureType}</p>
                             <div className="flex items-center space-x-2">
                               <MoneyIcon />
-                              <span className="text-sm text-gray-700">
+                              <span className="text-sm text-gray-300">
                                 ₺{Number(item.furniture?.price)?.toLocaleString('tr-TR')} × {item.quantity} = 
-                                <span className="font-semibold text-green-600 ml-1">
+                                <span className="font-semibold text-green-400 ml-1">
                                   ₺{((Number(item.furniture?.price) || 0) * item.quantity).toLocaleString('tr-TR')}
                                 </span>
                               </span>
                             </div>
                           </div>
                           <div className="flex items-center space-x-3">
-                            <div className="flex items-center space-x-2 bg-white rounded-lg border border-gray-300 p-1">
+                            <div className="flex items-center space-x-2 bg-gray-700 rounded-lg border border-gray-600 p-1">
                               <button
                                 type="button"
                                 onClick={() => updateFurnitureQuantity(item.furnitureId, item.quantity - 1)}
-                                className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded"
+                                className="w-8 h-8 flex items-center justify-center text-gray-300 hover:text-white hover:bg-gray-600 rounded transition-colors"
                               >
                                 -
                               </button>
-                              <span className="w-8 text-center font-medium">{item.quantity}</span>
+                              <span className="w-8 text-center font-medium text-gray-200">{item.quantity}</span>
                               <button
                                 type="button"
                                 onClick={() => updateFurnitureQuantity(item.furnitureId, item.quantity + 1)}
-                                className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded"
+                                className="w-8 h-8 flex items-center justify-center text-gray-300 hover:text-white hover:bg-gray-600 rounded transition-colors"
                               >
                                 +
                               </button>
@@ -790,7 +779,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                             <button
                               type="button"
                               onClick={() => updateFurnitureQuantity(item.furnitureId, 0)}
-                              className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded-lg transition-all duration-200"
+                              className="text-red-400 hover:text-red-300 p-2 hover:bg-red-500/20 rounded-lg transition-all duration-200 border border-red-500/30"
                               title="Mobilyayı kaldır"
                             >
                               <DeleteIcon />
@@ -804,25 +793,25 @@ const handleSubmit = async (e: React.FormEvent) => {
 
                 {/* Price Summary - sadece mobilya varsa göster */}
                 {selectedFurniture.length > 0 && (
-                  <div className="mt-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200">
-                    <h3 className="font-semibold text-green-800 mb-4 flex items-center space-x-2">
+                  <div className="mt-6 bg-gradient-to-r from-green-900/30 to-emerald-900/30 rounded-xl p-6 border border-green-600/30">
+                    <h3 className="font-semibold text-green-300 mb-4 flex items-center space-x-2">
                       <MoneyIcon />
                       <span>Fiyat Özeti</span>
                     </h3>
                     <div className="space-y-3">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-700">Toplam Mobilya Fiyatı:</span>
-                        <span className="font-medium">₺{totalIndividualPrice.toLocaleString('tr-TR')}</span>
+                        <span className="text-gray-300">Toplam Mobilya Fiyatı:</span>
+                        <span className="font-medium text-gray-200">₺{totalIndividualPrice.toLocaleString('tr-TR')}</span>
                       </div>
                       {setPrice > 0 && (
                         <>
                           <div className="flex justify-between text-sm">
-                            <span className="text-gray-700">Takım Fiyatı:</span>
-                            <span className="font-medium">₺{setPrice.toLocaleString('tr-TR')}</span>
+                            <span className="text-gray-300">Takım Fiyatı:</span>
+                            <span className="font-medium text-gray-200">₺{setPrice.toLocaleString('tr-TR')}</span>
                           </div>
-                          <div className="flex justify-between text-lg font-bold border-t border-green-300 pt-3">
-                            <span className="text-gray-800">{savings > 0 ? 'Tasarruf:' : 'Fark:'}</span>
-                            <span className={savings > 0 ? 'text-green-600' : 'text-red-600'}>
+                          <div className="flex justify-between text-lg font-bold border-t border-green-600/30 pt-3">
+                            <span className="text-gray-200">{savings > 0 ? 'Tasarruf:' : 'Fark:'}</span>
+                            <span className={savings > 0 ? 'text-green-400' : 'text-red-400'}>
                               {savings > 0 ? '-' : '+'}₺{Math.abs(savings).toLocaleString('tr-TR')}
                             </span>
                           </div>
@@ -836,7 +825,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
             {/* Colors */}
             {colors.length > 0 && (
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+              <div className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden">
                 <div className="bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-4">
                   <h2 className="text-xl font-bold text-white flex items-center space-x-2">
                     <ColorIcon />
@@ -856,16 +845,16 @@ const handleSubmit = async (e: React.FormEvent) => {
                         />
                         <div className={`p-4 rounded-xl border-2 transition-all duration-200 ${
                           selectedColors.includes(color.colorId)
-                            ? 'border-purple-500 bg-purple-50 shadow-md transform scale-105'
-                            : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
+                            ? 'border-purple-500 bg-purple-900/30 shadow-md transform scale-105'
+                            : 'border-gray-600 hover:border-gray-500 hover:shadow-sm bg-gray-700/50'
                         }`}>
                           <div className="flex items-center space-x-3">
                             <div
-                              className="w-8 h-8 rounded-full border-2 border-white shadow-md"
-                              style={{ backgroundColor: color.colorCode || '#ccc' }}
+                              className="w-8 h-8 rounded-full border-2 border-gray-600 shadow-md"
+                              style={{ backgroundColor: color.colorCode || '#6B7280' }}
                             />
                             <div className="flex-1">
-                              <span className="text-sm font-medium text-gray-700">
+                              <span className="text-sm font-medium text-gray-300">
                                 {color.colorName}
                               </span>
                               {color.colorCode && (
@@ -885,8 +874,8 @@ const handleSubmit = async (e: React.FormEvent) => {
                     ))}
                   </div>
                   {selectedColors.length > 0 && (
-                    <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200">
-                      <p className="text-sm font-medium text-purple-700 flex items-center space-x-2">
+                    <div className="mt-6 p-4 bg-gradient-to-r from-purple-900/30 to-pink-900/30 rounded-xl border border-purple-600/30">
+                      <p className="text-sm font-medium text-purple-300 flex items-center space-x-2">
                         <span>🎨</span>
                         <span>Seçilen renkler: {selectedColors.length} adet</span>
                       </p>
@@ -898,7 +887,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
             {/* Properties */}
             {properties.length > 0 && (
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+              <div className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden">
                 <div className="bg-gradient-to-r from-green-600 to-teal-600 px-6 py-4">
                   <h2 className="text-xl font-bold text-white flex items-center space-x-2">
                     <PropertyIcon />
@@ -912,7 +901,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                       const existingProperty = selectedProperties.find(sp => sp.propertyId === property.propertyId)
                       return (
                         <div key={property.propertyId} className="space-y-2">
-                          <label className="block text-sm font-semibold text-gray-700">
+                          <label className="block text-sm font-semibold text-gray-300">
                             {property.propertyName}
                           </label>
                           <input
@@ -920,15 +909,15 @@ const handleSubmit = async (e: React.FormEvent) => {
                             value={existingProperty?.propertyValue || ''}
                             onChange={(e) => updateProperty(property.propertyId, e.target.value)}
                             placeholder={`${property.propertyName} değeri`}
-                            className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
+                            className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 text-white placeholder-gray-400"
                           />
                         </div>
                       )
                     })}
                   </div>
                   {selectedPropertiesWithDetails.length > 0 && (
-                    <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-teal-50 rounded-xl border border-green-200">
-                      <p className="text-sm font-medium text-green-700 flex items-center space-x-2">
+                    <div className="mt-6 p-4 bg-gradient-to-r from-green-900/30 to-teal-900/30 rounded-xl border border-green-600/30">
+                      <p className="text-sm font-medium text-green-300 flex items-center space-x-2">
                         <PropertyIcon />
                         <span>Tanımlanan özellikler: {selectedPropertiesWithDetails.length} adet</span>
                       </p>
@@ -939,7 +928,7 @@ const handleSubmit = async (e: React.FormEvent) => {
             )}
 
             {/* Images */}
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+            <div className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden">
               <div className="bg-gradient-to-r from-indigo-600 to-blue-600 px-6 py-4">
                 <h2 className="text-xl font-bold text-white flex items-center space-x-2">
                   <ImageIcon />
@@ -949,7 +938,7 @@ const handleSubmit = async (e: React.FormEvent) => {
               
               <div className="p-6">
                 <div className="mb-6">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  <label className="block text-sm font-semibold text-gray-300 mb-2">
                     Görsel Yükle
                   </label>
                   <input
@@ -957,7 +946,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                     multiple
                     accept="image/*"
                     onChange={handleImageUpload}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-700"
                   />
                   <p className="text-xs text-gray-500 mt-2">
                     Maksimum 100MB, desteklenen formatlar: JPG, PNG, GIF, WebP
@@ -967,7 +956,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                 {images.length > 0 && (
                   <div className="space-y-4">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-gray-800 flex items-center space-x-2">
+                      <h3 className="text-lg font-semibold text-gray-200 flex items-center space-x-2">
                         <span>📸</span>
                         <span>Yüklenen Görseller ({images.length})</span>
                       </h3>
@@ -977,17 +966,26 @@ const handleSubmit = async (e: React.FormEvent) => {
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {images.map((image, index) => (
-                        <div key={index} className="relative border border-gray-200 rounded-xl overflow-hidden bg-white hover:shadow-md transition-shadow">
+                      {images.map((image) => (
+                        <div key={image.tempId} className="relative border border-gray-600 rounded-xl overflow-hidden bg-gray-700 hover:shadow-lg transition-shadow">
                           {/* Sort Order Badge */}
-                          <div className="absolute top-2 right-2 z-10 bg-indigo-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+                          <div className="absolute top-2 right-2 z-10 bg-indigo-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg">
                             {image.sortOrder}
+                          </div>
+                          
+                          {/* Image Type Badge */}
+                          <div className={`absolute top-2 left-2 z-10 px-2 py-1 rounded text-xs font-bold shadow-lg ${
+                            image.imageType === 'main' 
+                              ? 'bg-yellow-500 text-white' 
+                              : 'bg-blue-500 text-white'
+                          }`}>
+                            {image.imageType === 'main' ? '⭐ ANA' : '📸 GALERİ'}
                           </div>
                           
                           <div className="aspect-square relative">
                             <Image
                               src={image.preview}
-                              alt={`Preview ${index + 1}`}
+                              alt={`Preview ${image.sortOrder}`}
                               fill
                               className="object-cover"
                             />
@@ -995,13 +993,14 @@ const handleSubmit = async (e: React.FormEvent) => {
                           
                           <div className="p-4">
                             <div className="flex items-center justify-between mb-3">
-                              <span className="text-sm font-medium text-gray-700 truncate max-w-[60%]">
+                              <span className="text-sm font-medium text-gray-300 truncate max-w-[60%]">
                                 {image.file.name}
                               </span>
                               <button
                                 type="button"
-                                onClick={() => removeImage(index)}
-                                className="text-red-600 hover:text-red-800 transition-colors p-1"
+                                onClick={() => removeImage(image.tempId)}
+                                className="text-red-400 hover:text-red-300 transition-colors p-1 hover:bg-red-900/20 rounded"
+                                title="Görseli kaldır"
                               >
                                 <DeleteIcon />
                               </button>
@@ -1011,11 +1010,11 @@ const handleSubmit = async (e: React.FormEvent) => {
                             <div className="flex space-x-2 mb-3">
                               <button
                                 type="button"
-                                onClick={() => changeImageType(index, 'main')}
+                                onClick={() => changeImageType(image.tempId, 'main')}
                                 className={`flex items-center space-x-1 px-3 py-1 rounded text-xs font-medium transition-colors ${
                                   image.imageType === 'main'
-                                    ? 'bg-yellow-100 text-yellow-800 border border-yellow-300'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    ? 'bg-yellow-600/30 text-yellow-300 border border-yellow-600/50'
+                                    : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
                                 }`}
                               >
                                 <MainIcon />
@@ -1023,11 +1022,11 @@ const handleSubmit = async (e: React.FormEvent) => {
                               </button>
                               <button
                                 type="button"
-                                onClick={() => changeImageType(index, 'gallery')}
+                                onClick={() => changeImageType(image.tempId, 'gallery')}
                                 className={`flex items-center space-x-1 px-3 py-1 rounded text-xs font-medium transition-colors ${
                                   image.imageType === 'gallery'
-                                    ? 'bg-blue-100 text-blue-800 border border-blue-300'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    ? 'bg-blue-600/30 text-blue-300 border border-blue-600/50'
+                                    : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
                                 }`}
                               >
                                 <GalleryIcon />
@@ -1040,18 +1039,18 @@ const handleSubmit = async (e: React.FormEvent) => {
                               <div className="flex items-center space-x-1">
                                 <button
                                   type="button"
-                                  onClick={() => moveImageUp(index)}
-                                  disabled={index === 0}
-                                  className="p-1 text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                  onClick={() => moveImageUp(image.tempId)}
+                                  disabled={image.sortOrder === 1}
+                                  className="p-1 text-gray-400 hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 rounded"
                                   title="Yukarı taşı"
                                 >
                                   <UpIcon />
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => moveImageDown(index)}
-                                  disabled={index === images.length - 1}
-                                  className="p-1 text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                  onClick={() => moveImageDown(image.tempId)}
+                                  disabled={image.sortOrder === images.length}
+                                  className="p-1 text-gray-400 hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600 rounded"
                                   title="Aşağı taşı"
                                 >
                                   <DownIcon />
@@ -1065,8 +1064,8 @@ const handleSubmit = async (e: React.FormEvent) => {
                                   min="1"
                                   max={images.length}
                                   value={image.sortOrder}
-                                  onChange={(e) => updateSortOrder(index, parseInt(e.target.value))}
-                                  className="w-12 px-1 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                  onChange={(e) => updateSortOrder(image.tempId, parseInt(e.target.value))}
+                                  className="w-12 px-1 py-1 text-xs border border-gray-600 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-gray-700 text-white"
                                 />
                               </div>
                             </div>
@@ -1078,14 +1077,14 @@ const handleSubmit = async (e: React.FormEvent) => {
                 )}
 
                 {images.length === 0 && (
-                  <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50">
+                  <div className="text-center py-12 border-2 border-dashed border-gray-600 rounded-xl bg-gray-700/30">
                     <div className="flex flex-col items-center space-y-3">
-                      <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
+                      <div className="w-16 h-16 bg-gray-600 rounded-full flex items-center justify-center">
                         <ImageIcon />
                       </div>
                       <div>
-                        <p className="text-gray-600 font-medium">Henüz görsel yüklenmedi</p>
-                        <p className="text-sm text-gray-400 mt-1">
+                        <p className="text-gray-300 font-medium">Henüz görsel yüklenmedi</p>
+                        <p className="text-sm text-gray-500 mt-1">
                           Yukarıdaki dosya seçici ile görsel ekleyebilirsiniz
                         </p>
                       </div>
@@ -1100,7 +1099,7 @@ const handleSubmit = async (e: React.FormEvent) => {
               <button
                 type="button"
                 onClick={() => router.back()}
-                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium"
+                className="px-6 py-3 border border-gray-600 text-gray-300 rounded-xl hover:bg-gray-700 transition-all duration-200 font-medium"
               >
                 İptal
               </button>
@@ -1119,8 +1118,8 @@ const handleSubmit = async (e: React.FormEvent) => {
 
       {/* Furniture Selection Modal */}
       {showFurnitureModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-96 overflow-hidden shadow-2xl">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-gray-800 rounded-2xl max-w-4xl w-full max-h-96 overflow-hidden shadow-2xl border border-gray-700">
             <div className="bg-gradient-to-r from-orange-600 to-red-600 px-6 py-4 flex items-center justify-between">
               <h3 className="text-xl font-bold text-white flex items-center space-x-2">
                 <FurnitureIcon />
@@ -1140,16 +1139,16 @@ const handleSubmit = async (e: React.FormEvent) => {
                   .map(furniture => (
                   <div
                     key={furniture.furnitureId}
-                    className="group border border-gray-200 rounded-xl p-4 hover:border-orange-500 hover:shadow-md cursor-pointer transition-all duration-200 bg-gradient-to-r from-white to-gray-50"
+                    className="group border border-gray-600 rounded-xl p-4 hover:border-orange-500 hover:shadow-md cursor-pointer transition-all duration-200 bg-gradient-to-r from-gray-700 to-gray-800"
                     onClick={() => addFurniture(furniture)}
                   >
-                    <h4 className="font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">
+                    <h4 className="font-semibold text-gray-200 group-hover:text-orange-400 transition-colors">
                       {furniture.furnitureName}
                     </h4>
-                    <p className="text-sm text-gray-500 mt-1">{furniture.furnitureType}</p>
+                    <p className="text-sm text-gray-400 mt-1">{furniture.furnitureType}</p>
                     <div className="flex items-center space-x-2 mt-2">
                       <MoneyIcon />
-                      <span className="text-sm font-medium text-green-600">
+                      <span className="text-sm font-medium text-green-400">
                         ₺{Number(furniture.price).toLocaleString('tr-TR')}
                       </span>
                     </div>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 
-// Next.js için TypeScript interface'leri
+// TypeScript interfaces
 interface Category {
   categoryId: number
   categoryName: string
@@ -26,7 +26,7 @@ interface FormData {
   isActive: boolean
 }
 
-// Next.js için basit icon component'leri
+// Icon components - Styled to match FurnitureAdd
 const TrashIcon = () => <span className="text-lg">🗑️</span>
 const EditIcon = () => <span className="text-lg">✏️</span>
 const PlusIcon = () => <span className="text-lg">➕</span>
@@ -35,6 +35,11 @@ const EyeOffIcon = () => <span className="text-lg">👁️‍🗨️</span>
 const SaveIcon = () => <span className="text-lg">💾</span>
 const CloseIcon = () => <span className="text-lg">❌</span>
 const LoaderIcon = () => <span className="text-lg animate-spin">⏳</span>
+const CategoryIcon = () => <span className="text-2xl">📁</span>
+const SuccessIcon = () => <span className="text-lg">✅</span>
+const FolderIcon = () => <span className="text-lg">📂</span>
+const SubFolderIcon = () => <span className="text-lg">📄</span>
+const StatsIcon = () => <span className="text-lg">📊</span>
 
 export default function CategoryManagement() {
   // State management
@@ -53,7 +58,7 @@ export default function CategoryManagement() {
     isActive: true
   })
 
-  // Next.js API route'larından kategorileri yükle
+  // Load categories from API
   const loadCategories = async (): Promise<void> => {
     try {
       setLoading(true)
@@ -84,12 +89,12 @@ export default function CategoryManagement() {
     }
   }
 
-  // Component mount'da kategorileri yükle
+  // Load categories on component mount
   useEffect(() => {
     loadCategories()
   }, [])
 
-  // Form gönderme (Next.js API routes kullanarak)
+  // Handle form submission
   const handleSubmit = async (): Promise<void> => {
     // Client-side validation
     if (!formData.categoryName.trim()) {
@@ -130,7 +135,7 @@ export default function CategoryManagement() {
         resetForm()
         await loadCategories()
         
-        // Success mesajını 3 saniye sonra temizle
+        // Clear success message after 3 seconds
         setTimeout(() => setSuccess(''), 3000)
       } else {
         setError(data.error || 'İşlem başarısız')
@@ -141,7 +146,7 @@ export default function CategoryManagement() {
     }
   }
 
-  // Kategori silme (Next.js API route kullanarak)
+  // Delete category
   const handleDelete = async (categoryId: number, categoryName: string): Promise<void> => {
     if (!confirm(`"${categoryName}" kategorisini silmek istediğinizden emin misiniz?`)) {
       return
@@ -174,7 +179,7 @@ export default function CategoryManagement() {
     }
   }
 
-  // Aktif/Pasif değiştirme (Next.js API route kullanarak)
+  // Toggle active status
   const toggleActive = async (categoryId: number, currentStatus: boolean): Promise<void> => {
     try {
       const response = await fetch(`/api/categories/${categoryId}`, {
@@ -204,7 +209,7 @@ export default function CategoryManagement() {
     }
   }
 
-  // Form sıfırlama
+  // Reset form
   const resetForm = (): void => {
     setFormData({
       categoryName: '',
@@ -216,7 +221,7 @@ export default function CategoryManagement() {
     setEditingCategory(null)
   }
 
-  // Düzenleme için formu doldur
+  // Start editing category
   const startEdit = (category: Category): void => {
     setFormData({
       categoryName: category.categoryName,
@@ -228,47 +233,56 @@ export default function CategoryManagement() {
     setShowAddForm(true)
   }
 
-  // Ana kategorileri render et
+  // Render main categories with dark theme
   const renderMainCategories = () => {
     return categories.map((mainCategory) => (
-      <div key={mainCategory.categoryId} className="bg-white rounded-lg shadow-sm border border-gray-200 mb-4">
-        {/* Ana Kategori Header */}
-        <div className="p-4 border-b border-gray-100">
+      <div key={mainCategory.categoryId} className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 mb-6 overflow-hidden hover:shadow-3xl transition-shadow duration-300">
+        {/* Main Category Header */}
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-5">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-4 flex-1">
+              <div className="w-12 h-12 bg-gray-800/30 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                <FolderIcon />
+              </div>
               <div className="flex-1">
-                <h3 className="text-lg font-medium text-gray-900">
+                <h3 className="text-xl font-bold text-white mb-1">
                   {mainCategory.categoryName}
                 </h3>
                 {mainCategory.description && (
-                  <p className="text-sm text-gray-500 mt-1">{mainCategory.description}</p>
+                  <p className="text-blue-100 text-sm opacity-90">{mainCategory.description}</p>
                 )}
-                <div className="flex items-center space-x-4 mt-2">
-                  <span className="text-xs text-gray-400">
-                    {mainCategory._count.children} alt kategori
-                  </span>
-                  <span className="text-xs text-gray-400">
-                    {mainCategory._count.furnitures} mobilya
-                  </span>
-                  <span className={`px-2 py-1 text-xs rounded-full ${
+                <div className="flex items-center space-x-6 mt-3">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-blue-200 text-sm">📁</span>
+                    <span className="text-blue-100 text-sm font-medium">
+                      {mainCategory._count.children} alt kategori
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-blue-200 text-sm">🪑</span>
+                    <span className="text-blue-100 text-sm font-medium">
+                      {mainCategory._count.furnitures} mobilya
+                    </span>
+                  </div>
+                  <span className={`px-3 py-1 text-xs font-bold rounded-full border ${
                     mainCategory.isActive 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-red-100 text-red-800'
+                      ? 'bg-green-500/20 text-green-300 border-green-500/30' 
+                      : 'bg-red-500/20 text-red-300 border-red-500/30'
                   }`}>
-                    {mainCategory.isActive ? 'Aktif' : 'Pasif'}
+                    {mainCategory.isActive ? '✅ Aktif' : '❌ Pasif'}
                   </span>
                 </div>
               </div>
             </div>
             
-            {/* Ana Kategori İşlemleri */}
+            {/* Main Category Actions */}
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => toggleActive(mainCategory.categoryId, mainCategory.isActive)}
-                className={`p-2 rounded-lg transition-colors ${
+                className={`p-3 rounded-xl transition-all duration-200 backdrop-blur-sm ${
                   mainCategory.isActive 
-                    ? 'text-orange-600 hover:bg-orange-50' 
-                    : 'text-green-600 hover:bg-green-50'
+                    ? 'text-orange-300 hover:bg-orange-500/20 border border-orange-500/30' 
+                    : 'text-green-300 hover:bg-green-500/20 border border-green-500/30'
                 }`}
                 title={mainCategory.isActive ? 'Pasif Yap' : 'Aktif Yap'}
                 type="button"
@@ -277,7 +291,7 @@ export default function CategoryManagement() {
               </button>
               <button
                 onClick={() => startEdit(mainCategory)}
-                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                className="p-3 text-blue-200 hover:bg-blue-500/20 border border-blue-500/30 rounded-xl transition-all duration-200 backdrop-blur-sm"
                 title="Düzenle"
                 type="button"
               >
@@ -285,7 +299,7 @@ export default function CategoryManagement() {
               </button>
               <button
                 onClick={() => handleDelete(mainCategory.categoryId, mainCategory.categoryName)}
-                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                className="p-3 text-red-300 hover:bg-red-500/20 border border-red-500/30 rounded-xl transition-all duration-200 backdrop-blur-sm"
                 title="Sil"
                 type="button"
               >
@@ -295,44 +309,57 @@ export default function CategoryManagement() {
           </div>
         </div>
 
-        {/* Alt Kategoriler */}
+        {/* Sub Categories */}
         {mainCategory.children && mainCategory.children.length > 0 && (
-          <div className="p-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {mainCategory.children.map((subCategory) => (
                 <div
                   key={subCategory.categoryId}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  className="group bg-gradient-to-br from-gray-700 to-gray-800 border border-gray-600 rounded-xl p-4 hover:shadow-lg hover:border-gray-500 transition-all duration-200"
                 >
-                  <div className="flex-1">
-                    <h4 className="text-sm font-medium text-gray-700">
-                      {subCategory.categoryName}
-                    </h4>
-                    {subCategory.description && (
-                      <p className="text-xs text-gray-500 mt-1">{subCategory.description}</p>
-                    )}
-                    <div className="flex items-center space-x-3 mt-1">
-                      <span className="text-xs text-gray-400">
-                        {subCategory._count.furnitures} mobilya
-                      </span>
-                      <span className={`px-1.5 py-0.5 text-xs rounded ${
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center space-x-3 flex-1">
+                      <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <SubFolderIcon />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-bold text-gray-200 truncate">
+                          {subCategory.categoryName}
+                        </h4>
+                        {subCategory.description && (
+                          <p className="text-xs text-gray-400 mt-1 line-clamp-2">{subCategory.description}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center space-x-1">
+                        <span className="text-gray-400 text-xs">🪑</span>
+                        <span className="text-xs text-gray-400 font-medium">
+                          {subCategory._count.furnitures}
+                        </span>
+                      </div>
+                      <span className={`px-2 py-1 text-xs font-bold rounded-full ${
                         subCategory.isActive 
-                          ? 'bg-green-100 text-green-700' 
-                          : 'bg-red-100 text-red-700'
+                          ? 'bg-green-900/30 text-green-400 border border-green-600/30' 
+                          : 'bg-red-900/30 text-red-400 border border-red-600/30'
                       }`}>
                         {subCategory.isActive ? 'Aktif' : 'Pasif'}
                       </span>
                     </div>
                   </div>
                   
-                  {/* Alt Kategori İşlemleri */}
-                  <div className="flex items-center space-x-1">
+                  {/* Sub Category Actions */}
+                  <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                     <button
                       onClick={() => toggleActive(subCategory.categoryId, subCategory.isActive)}
-                      className={`p-1.5 rounded transition-colors ${
+                      className={`flex-1 p-2 rounded-lg text-xs font-medium transition-all duration-200 ${
                         subCategory.isActive 
-                          ? 'text-orange-600 hover:bg-orange-100' 
-                          : 'text-green-600 hover:bg-green-100'
+                          ? 'text-orange-400 hover:bg-orange-500/20 border border-orange-500/30' 
+                          : 'text-green-400 hover:bg-green-500/20 border border-green-500/30'
                       }`}
                       title={subCategory.isActive ? 'Pasif Yap' : 'Aktif Yap'}
                       type="button"
@@ -341,7 +368,7 @@ export default function CategoryManagement() {
                     </button>
                     <button
                       onClick={() => startEdit(subCategory)}
-                      className="p-1.5 text-blue-600 hover:bg-blue-100 rounded transition-colors"
+                      className="flex-1 p-2 text-blue-400 hover:bg-blue-500/20 border border-blue-500/30 rounded-lg text-xs font-medium transition-all duration-200"
                       title="Düzenle"
                       type="button"
                     >
@@ -349,7 +376,7 @@ export default function CategoryManagement() {
                     </button>
                     <button
                       onClick={() => handleDelete(subCategory.categoryId, subCategory.categoryName)}
-                      className="p-1.5 text-red-600 hover:bg-red-100 rounded transition-colors"
+                      className="flex-1 p-2 text-red-400 hover:bg-red-500/20 border border-red-500/30 rounded-lg text-xs font-medium transition-all duration-200"
                       title="Sil"
                       type="button"
                     >
@@ -361,175 +388,253 @@ export default function CategoryManagement() {
             </div>
           </div>
         )}
+
+        {/* Empty Sub Categories State */}
+        {(!mainCategory.children || mainCategory.children.length === 0) && (
+          <div className="p-6 text-center border-t border-gray-700">
+            <div className="text-gray-500 text-sm flex items-center justify-center space-x-2">
+              <span>📂</span>
+              <span>Bu kategoride alt kategori bulunmuyor</span>
+            </div>
+          </div>
+        )}
       </div>
     ))
   }
 
-  // Next.js component return
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Kategori Yönetimi</h1>
-          <p className="text-gray-600">Mobilya kategorilerini yönetin</p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-slate-900">
+      <div className="max-w-6xl mx-auto p-6">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <CategoryIcon />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
+                  Kategori Yönetimi
+                </h1>
+                <p className="text-gray-400 mt-1">
+                  Mobilya kategorilerini yönetin ve düzenleyin
+                </p>
+              </div>
+            </div>
+            
+            <button
+              onClick={() => setShowAddForm(true)}
+              className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-medium shadow-lg"
+              type="button"
+            >
+              <PlusIcon />
+              <span>Yeni Kategori</span>
+            </button>
+          </div>
         </div>
-        <button
-          onClick={() => setShowAddForm(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-          type="button"
-        >
-          <PlusIcon />
-          <span>Yeni Kategori</span>
-        </button>
-      </div>
 
-      {/* Alert Messages */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4" role="alert">
-          {error}
-        </div>
-      )}
-      
-      {success && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4" role="alert">
-          {success}
-        </div>
-      )}
+        {/* Alert Messages */}
+        {error && (
+          <div className="bg-gradient-to-r from-red-900/50 to-red-800/50 border border-red-600/50 text-red-300 px-6 py-4 rounded-xl mb-6 shadow-sm" role="alert">
+            <div className="flex items-center space-x-2">
+              <span className="text-xl">⚠️</span>
+              <span className="font-medium">{error}</span>
+            </div>
+          </div>
+        )}
+        
+        {success && (
+          <div className="bg-gradient-to-r from-green-900/50 to-emerald-800/50 border border-green-600/50 text-green-300 px-6 py-4 rounded-xl mb-6 shadow-sm" role="alert">
+            <div className="flex items-center space-x-2">
+              <SuccessIcon />
+              <span className="font-medium">{success}</span>
+            </div>
+          </div>
+        )}
 
-      {/* Add/Edit Modal */}
-      {showAddForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">
-                {editingCategory ? 'Kategori Düzenle' : 'Yeni Kategori Ekle'}
-              </h2>
+        {/* Add/Edit Modal */}
+        {showAddForm && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 w-full max-w-md overflow-hidden">
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-bold text-white flex items-center space-x-2">
+                    <span className="text-2xl">{editingCategory ? '✏️' : '➕'}</span>
+                    <span>{editingCategory ? 'Kategori Düzenle' : 'Yeni Kategori Ekle'}</span>
+                  </h2>
+                  <button
+                    onClick={resetForm}
+                    className="text-blue-200 hover:text-white hover:bg-blue-500/20 p-2 rounded-lg transition-all duration-200"
+                    type="button"
+                    aria-label="Kapat"
+                  >
+                    <CloseIcon />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-6 space-y-6">
+                <div className="space-y-2">
+                  <label htmlFor="categoryName" className="block text-sm font-semibold text-gray-300">
+                    Kategori Adı *
+                  </label>
+                  <input
+                    id="categoryName"
+                    type="text"
+                    required
+                    value={formData.categoryName}
+                    onChange={(e) => setFormData({...formData, categoryName: e.target.value})}
+                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-white placeholder-gray-400"
+                    placeholder="Kategori adını girin"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="description" className="block text-sm font-semibold text-gray-300">
+                    Açıklama
+                  </label>
+                  <textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none text-white placeholder-gray-400"
+                    placeholder="Kategori açıklaması (isteğe bağlı)"
+                    rows={3}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="parentId" className="block text-sm font-semibold text-gray-300">
+                    Ana Kategori
+                  </label>
+                  <select
+                    id="parentId"
+                    value={formData.parentId || ''}
+                    onChange={(e) => setFormData({...formData, parentId: e.target.value ? parseInt(e.target.value) : null})}
+                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-white"
+                  >
+                    <option value="" className="bg-gray-700">Ana Kategori (Seviye 1)</option>
+                    {categories.map((category) => (
+                      <option key={category.categoryId} value={category.categoryId} className="bg-gray-700">
+                        📁 {category.categoryName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="checkbox"
+                    id="isActive"
+                    checked={formData.isActive}
+                    onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
+                    className="w-5 h-5 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
+                  />
+                  <label htmlFor="isActive" className="text-sm font-medium text-gray-300 cursor-pointer">
+                    Aktif kategori olarak yayınla
+                  </label>
+                </div>
+
+                <div className="flex space-x-3 pt-4">
+                  <button
+                    onClick={handleSubmit}
+                    className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center justify-center space-x-2 font-medium shadow-lg"
+                    type="button"
+                  >
+                    <SaveIcon />
+                    <span>{editingCategory ? 'Güncelle' : 'Kaydet'}</span>
+                  </button>
+                  <button
+                    onClick={resetForm}
+                    className="flex-1 bg-gray-700 text-gray-300 py-3 px-4 rounded-xl hover:bg-gray-600 transition-all duration-200 font-medium border border-gray-600"
+                    type="button"
+                  >
+                    İptal
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-20">
+            <div className="bg-gray-800 rounded-2xl p-8 shadow-2xl border border-gray-700">
+              <div className="flex items-center space-x-4">
+                <LoaderIcon />
+                <span className="text-gray-300 font-medium">Kategoriler yükleniyor...</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && categories.length === 0 && (
+          <div className="text-center py-20">
+            <div className="bg-gray-800 rounded-2xl p-12 shadow-2xl border border-gray-700">
+              <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                <CategoryIcon />
+              </div>
+              <h3 className="text-xl font-bold text-gray-200 mb-4">Henüz kategori bulunmuyor</h3>
+              <p className="text-gray-400 mb-8 max-w-md mx-auto">
+                Mobilya kataloğunuzu organize etmek için ilk kategoriyi oluşturun.
+              </p>
               <button
-                onClick={resetForm}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                onClick={() => setShowAddForm(true)}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-medium shadow-lg inline-flex items-center space-x-2"
                 type="button"
-                aria-label="Kapat"
               >
-                <CloseIcon />
+                <PlusIcon />
+                <span>İlk kategoriyi ekleyin</span>
               </button>
             </div>
+          </div>
+        )}
 
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="categoryName" className="block text-sm font-medium text-gray-700 mb-1">
-                  Kategori Adı *
-                </label>
-                <input
-                  id="categoryName"
-                  type="text"
-                  required
-                  value={formData.categoryName}
-                  onChange={(e) => setFormData({...formData, categoryName: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="Kategori adını girin"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                  Açıklama
-                </label>
-                <textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="Kategori açıklaması (isteğe bağlı)"
-                  rows={3}
-                />
-              </div>
-
-              <div>
-                <label htmlFor="parentId" className="block text-sm font-medium text-gray-700 mb-1">
-                  Ana Kategori
-                </label>
-                <select
-                  id="parentId"
-                  value={formData.parentId || ''}
-                  onChange={(e) => setFormData({...formData, parentId: e.target.value ? parseInt(e.target.value) : null})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                >
-                  <option value="">Ana Kategori (Seviye 1)</option>
-                  {categories.map((category) => (
-                    <option key={category.categoryId} value={category.categoryId}>
-                      {category.categoryName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="isActive"
-                  checked={formData.isActive}
-                  onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="isActive" className="ml-2 block text-sm text-gray-700">
-                  Aktif kategori
-                </label>
-              </div>
-
-              <div className="flex space-x-3 pt-4">
-                <button
-                  onClick={handleSubmit}
-                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
-                  type="button"
-                >
-                  <SaveIcon />
-                  <span>{editingCategory ? 'Güncelle' : 'Kaydet'}</span>
-                </button>
-                <button
-                  onClick={resetForm}
-                  className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors"
-                  type="button"
-                >
-                  İptal
-                </button>
+        {/* Categories List */}
+        {!loading && categories.length > 0 && (
+          <div>
+            {/* Stats Header */}
+            <div className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 p-6 mb-8">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-teal-500 rounded-xl flex items-center justify-center">
+                    <StatsIcon />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-200">Kategori İstatistikleri</h2>
+                    <p className="text-gray-400 text-sm">Toplam kategori bilgileri</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
+                  <div className="bg-gradient-to-r from-blue-900/30 to-indigo-900/30 rounded-xl p-4 border border-blue-600/30">
+                    <div className="text-2xl font-bold text-blue-300">{categories.length}</div>
+                    <div className="text-xs text-blue-400 font-medium">Ana Kategori</div>
+                  </div>
+                  <div className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 rounded-xl p-4 border border-purple-600/30">
+                    <div className="text-2xl font-bold text-purple-300">
+                      {categories.reduce((sum, cat) => sum + cat._count.children, 0)}
+                    </div>
+                    <div className="text-xs text-purple-400 font-medium">Alt Kategori</div>
+                  </div>
+                  <div className="bg-gradient-to-r from-green-900/30 to-emerald-900/30 rounded-xl p-4 border border-green-600/30">
+                    <div className="text-2xl font-bold text-green-300">
+                      {categories.reduce((sum, cat) => sum + cat._count.furnitures, 0)}
+                    </div>
+                    <div className="text-xs text-green-400 font-medium">Toplam Mobilya</div>
+                  </div>
+                </div>
               </div>
             </div>
+
+            {/* Categories Grid */}
+            <div className="space-y-6">
+              {renderMainCategories()}
+            </div>
           </div>
-        </div>
-      )}
-
-      {/* Loading State */}
-      {loading && (
-        <div className="flex items-center justify-center py-12">
-          <LoaderIcon />
-          <span className="ml-2 text-gray-600">Yükleniyor...</span>
-        </div>
-      )}
-
-      {/* Empty State */}
-      {!loading && categories.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-gray-500 mb-4">Henüz kategori bulunmuyor.</p>
-          <button
-            onClick={() => setShowAddForm(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-            type="button"
-          >
-            İlk kategoriyi ekleyin
-          </button>
-        </div>
-      )}
-
-      {/* Categories List */}
-      {!loading && categories.length > 0 && (
-        <div>
-          <div className="mb-4 text-sm text-gray-600">
-            Toplam {categories.length} ana kategori, {categories.reduce((sum, cat) => sum + cat._count.children, 0)} alt kategori
-          </div>
-          {renderMainCategories()}
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }

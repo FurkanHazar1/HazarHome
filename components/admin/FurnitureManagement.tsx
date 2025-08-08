@@ -174,7 +174,7 @@ const FurnitureIcon = () => (
 )
 
 const SearchIcon = () => (
-  <svg className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <svg className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m21 21-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
   </svg>
 )
@@ -726,7 +726,7 @@ export default function FurnitureManagement() {
     const availableColors = furniture.colors.filter(fc => fc.isAvailable)
     
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-300 group">
+      <div className="bg-white/5 backdrop-blur-xl rounded-2xl shadow-lg border border-white/10 overflow-hidden hover:shadow-xl hover:bg-white/10 transition-all duration-300 group">
         {/* Image Section */}
         <div className="aspect-square relative overflow-hidden">
           <FurnitureImageDisplay
@@ -737,10 +737,10 @@ export default function FurnitureManagement() {
           
           {/* Status Badge */}
           <div className="absolute top-3 left-3">
-            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium backdrop-blur-sm ${
               furniture.isActive 
-                ? 'bg-green-100 text-green-800' 
-                : 'bg-red-100 text-red-800'
+                ? 'bg-green-500/20 text-green-300 border border-green-400/30' 
+                : 'bg-red-500/20 text-red-300 border border-red-400/30'
             }`}>
               {furniture.isActive ? '✓ Aktif' : '✕ Pasif'}
             </span>
@@ -752,7 +752,7 @@ export default function FurnitureManagement() {
               type="checkbox"
               checked={selectedItems.includes(furniture.furnitureId)}
               onChange={(e) => handleSelectItem(furniture.furnitureId, e.target.checked)}
-              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 shadow-sm bg-white bg-opacity-90"
+              className="w-4 h-4 rounded border-white/30 text-blue-600 focus:ring-blue-500 shadow-sm bg-white/20 backdrop-blur-sm"
             />
           </div>
 
@@ -761,14 +761,14 @@ export default function FurnitureManagement() {
             <div className="flex items-center justify-center space-x-2">
               <Link
                 href={`/admin/furniture/${furniture.furnitureId}`}
-                className="p-2 bg-white bg-opacity-90 hover:bg-white text-blue-600 rounded-lg transition-colors shadow-sm"
+                className="p-2 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white rounded-lg transition-colors shadow-lg border border-white/20"
                 title="Detay Görüntüle"
               >
                 <EyeIcon />
               </Link>
               <Link
                 href={`/admin/furniture/${furniture.furnitureId}/edit`}
-                className="p-2 bg-white bg-opacity-90 hover:bg-white text-yellow-600 rounded-lg transition-colors shadow-sm"
+                className="p-2 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white rounded-lg transition-colors shadow-lg border border-white/20"
                 title="Düzenle"
               >
                 <EditIcon />
@@ -778,7 +778,7 @@ export default function FurnitureManagement() {
                   setSelectedItems([furniture.furnitureId])
                   setShowDeleteConfirm(true)
                 }}
-                className="p-2 bg-white bg-opacity-90 hover:bg-white text-red-600 rounded-lg transition-colors shadow-sm"
+                className="p-2 bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white rounded-lg transition-colors shadow-lg border border-white/20"
                 title="Sil"
               >
                 <DeleteIcon />
@@ -791,19 +791,19 @@ export default function FurnitureManagement() {
         <div className="p-4">
           {/* Title and Category */}
           <div className="mb-3">
-            <h3 className="font-semibold text-gray-900 text-sm mb-1 line-clamp-2">
+            <h3 className="font-semibold text-white text-lg mb-2 line-clamp-2">
               {furniture.furnitureName}
             </h3>
-            <div className="flex items-center text-xs text-gray-500">
+            <div className="flex items-center text-sm text-white/60">
               <span>{furniture.category?.categoryName || 'Kategorisiz'}</span>
-              <span className="mx-1">•</span>
+              <span className="mx-2">•</span>
               <span>{furniture.furnitureType}</span>
             </div>
           </div>
 
           {/* Price */}
           <div className="mb-3">
-            <div className="text-lg font-bold text-blue-600">
+            <div className="text-xl font-bold text-blue-400">
               {formatPrice(furniture.price)}
             </div>
           </div>
@@ -814,14 +814,14 @@ export default function FurnitureManagement() {
               {availableColors.slice(0, 4).map((fc) => (
                 <div
                   key={fc.color.colorId}
-                  className="w-4 h-4 rounded-full border border-gray-300 shadow-sm"
+                  className="w-6 h-6 rounded-full border-2 border-white/30 shadow-sm"
                   style={{ backgroundColor: fc.color.colorCode }}
                   title={fc.color.colorName}
                 />
               ))}
               {availableColors.length > 4 && (
-                <div className="w-4 h-4 rounded-full bg-gray-100 border border-gray-300 flex items-center justify-center">
-                  <span className="text-xs font-medium text-gray-600">
+                <div className="w-6 h-6 rounded-full bg-white/20 border-2 border-white/30 shadow-sm flex items-center justify-center">
+                  <span className="text-xs font-medium text-white">
                     +{availableColors.length - 4}
                   </span>
                 </div>
@@ -830,7 +830,7 @@ export default function FurnitureManagement() {
           </div>
 
           {/* Stats */}
-          <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t border-gray-100">
+          <div className="flex items-center justify-between text-xs text-white/60 pt-4 border-t border-white/20">
             <div className="flex items-center space-x-3">
               <div className="flex items-center space-x-1">
                 <ImageIcon />
@@ -855,20 +855,26 @@ export default function FurnitureManagement() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      {/* Animated Background Elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-to-r from-indigo-600/20 to-pink-600/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
+      </div>
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="p-3 bg-blue-100 rounded-xl">
+              <div className="p-3 bg-blue-500/20 backdrop-blur-sm rounded-xl border border-blue-500/30">
                 <FurnitureIcon />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-white via-blue-100 to-indigo-200 bg-clip-text text-transparent">
                   Mobilya Yönetimi
                 </h1>
-                <p className="text-gray-600 mt-1">
+                <p className="text-white/70 mt-2 text-lg">
                   Mobilyaları görüntüleyin, düzenleyin ve yönetin
                 </p>
               </div>
@@ -876,13 +882,13 @@ export default function FurnitureManagement() {
             
             <div className="flex items-center space-x-3">
               {/* View Mode Toggle */}
-              <div className="flex items-center bg-white border border-gray-300 rounded-lg p-1">
+              <div className="flex items-center bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-1">
                 <button
                   onClick={() => setViewMode('table')}
-                  className={`p-2 rounded-md transition-colors ${
+                  className={`p-2 rounded-lg transition-colors ${
                     viewMode === 'table' 
-                      ? 'bg-blue-100 text-blue-600' 
-                      : 'text-gray-400 hover:text-gray-600'
+                      ? 'bg-blue-500/30 text-blue-200 border border-blue-400/50' 
+                      : 'text-white/60 hover:text-white/80 hover:bg-white/10'
                   }`}
                   title="Tablo Görünümü"
                 >
@@ -890,10 +896,10 @@ export default function FurnitureManagement() {
                 </button>
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded-md transition-colors ${
+                  className={`p-2 rounded-lg transition-colors ${
                     viewMode === 'grid' 
-                      ? 'bg-blue-100 text-blue-600' 
-                      : 'text-gray-400 hover:text-gray-600'
+                      ? 'bg-blue-500/30 text-blue-200 border border-blue-400/50' 
+                      : 'text-white/60 hover:text-white/80 hover:bg-white/10'
                   }`}
                   title="Kart Görünümü"
                 >
@@ -903,7 +909,7 @@ export default function FurnitureManagement() {
 
               <button
                 onClick={handleExport}
-                className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors shadow-sm"
+                className="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 rounded-xl shadow-lg"
                 title="Dışa Aktar"
               >
                 <ExportIcon />
@@ -913,7 +919,7 @@ export default function FurnitureManagement() {
               <button
                 onClick={loadFurniture}
                 disabled={loading}
-                className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors disabled:opacity-50 shadow-sm"
+                className="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 disabled:opacity-50 rounded-xl shadow-lg"
               >
                 <RefreshIcon />
                 <span className="ml-2 hidden sm:block">Yenile</span>
@@ -921,7 +927,7 @@ export default function FurnitureManagement() {
 
               <Link
                 href="/admin/furniture/add"
-                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors shadow-sm"
+                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
               >
                 <PlusIcon />
                 <span className="ml-2">Yeni Mobilya</span>
@@ -936,14 +942,14 @@ export default function FurnitureManagement() {
                 { 
                   label: 'Toplam Mobilya', 
                   value: stats.total.toLocaleString(), 
-                  color: 'blue',
+                  color: 'from-blue-500 to-blue-600',
                   icon: FurnitureIcon,
                   change: `${stats.active} aktif, ${stats.inactive} pasif`
                 },
                 { 
                   label: 'Ortalama Fiyat', 
                   value: formatPrice(stats.averagePrice || 0), 
-                  color: 'green',
+                  color: 'from-green-500 to-emerald-600',
                   icon: () => (
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
@@ -954,26 +960,26 @@ export default function FurnitureManagement() {
                 { 
                   label: 'Toplam Görsel', 
                   value: stats.totalImages?.toLocaleString() || '0', 
-                  color: 'purple',
+                  color: 'from-purple-500 to-violet-600',
                   icon: ImageIcon,
                   change: 'Tüm mobilyalar'
                 },
                 { 
                   label: 'Toplam Renk', 
                   value: stats.totalColors?.toLocaleString() || '0', 
-                  color: 'yellow',
+                  color: 'from-yellow-500 to-orange-500',
                   icon: ColorIcon,
                   change: 'Benzersiz renkler'
                 }
               ].map((stat, index) => (
-                <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div key={index} className="bg-white/5 backdrop-blur-xl rounded-2xl shadow-lg border border-white/10 p-6 hover:shadow-xl hover:bg-white/10 transition-all duration-300 group">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-sm font-medium text-gray-600 mb-1">{stat.label}</h3>
-                      <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                      <p className="text-xs text-gray-500 mt-1">{stat.change}</p>
+                      <h3 className="text-sm font-medium text-white/70 mb-1">{stat.label}</h3>
+                      <p className="text-3xl font-bold text-white">{stat.value}</p>
+                      <p className="text-xs text-white/60 mt-1">{stat.change}</p>
                     </div>
-                    <div className={`w-12 h-12 rounded-lg bg-${stat.color}-100 flex items-center justify-center text-${stat.color}-600`}>
+                    <div className={`w-14 h-14 rounded-xl bg-gradient-to-r ${stat.color} flex items-center justify-center text-white shadow-lg`}>
                       <stat.icon />
                     </div>
                   </div>
@@ -985,17 +991,17 @@ export default function FurnitureManagement() {
 
         {/* Messages */}
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
+          <div className="mb-6 bg-red-500/20 backdrop-blur-sm border border-red-400/30 rounded-xl p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <XCircleIcon />
                 <div className="ml-3">
-                  <p className="text-sm text-red-700 font-medium">{error}</p>
+                  <p className="text-sm text-red-300 font-medium">{error}</p>
                 </div>
               </div>
               <button
                 onClick={() => setError('')}
-                className="text-red-400 hover:text-red-600 transition-colors"
+                className="text-red-400 hover:text-red-300 transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1006,17 +1012,17 @@ export default function FurnitureManagement() {
         )}
 
         {success && (
-          <div className="mb-6 bg-green-50 border border-green-200 rounded-xl p-4">
+          <div className="mb-6 bg-green-500/20 backdrop-blur-sm border border-green-400/30 rounded-xl p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <CheckCircleIcon />
                 <div className="ml-3">
-                  <p className="text-sm text-green-700 font-medium">{success}</p>
+                  <p className="text-sm text-green-300 font-medium">{success}</p>
                 </div>
               </div>
               <button
                 onClick={() => setSuccess('')}
-                className="text-green-400 hover:text-green-600 transition-colors"
+                className="text-green-400 hover:text-green-300 transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1027,17 +1033,17 @@ export default function FurnitureManagement() {
         )}
 
         {/* Enhanced Filters - Keeping existing implementation */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
+        <div className="bg-white/5 backdrop-blur-xl rounded-2xl shadow-lg border border-white/10 mb-6">
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center space-x-2 text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors"
+                className="flex items-center space-x-2 text-xl font-semibold text-white hover:text-blue-300 transition-colors"
               >
                 <FilterIcon />
                 <span>Filtreler</span>
                 {hasActiveFilters && (
-                  <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                  <span className="bg-blue-500/20 text-blue-300 text-xs font-medium px-2.5 py-0.5 rounded-full border border-blue-400/30">
                     {[search, categoryFilter, furnitureTypeFilter, statusFilter, minPrice, maxPrice, ...selectedColors].filter(Boolean).length} aktif
                   </span>
                 )}
@@ -1045,7 +1051,7 @@ export default function FurnitureManagement() {
               {hasActiveFilters && (
                 <button
                   onClick={resetFilters}
-                  className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
+                  className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
                 >
                   Filtreleri Temizle
                 </button>
@@ -1053,12 +1059,12 @@ export default function FurnitureManagement() {
             </div>
 
             {showFilters && (
-              <div className="space-y-6 pt-4 border-t border-gray-200">
+              <div className="space-y-6 pt-4 border-t border-white/20">
                 {/* Search and Quick Filters */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   {/* Search */}
                   <div className="lg:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-white/70 mb-2">
                       Arama
                     </label>
                     <div className="relative">
@@ -1068,20 +1074,20 @@ export default function FurnitureManagement() {
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         placeholder="Mobilya adı, açıklama..."
-                        className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        className="w-full pl-10 pr-4 py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder-white/40 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                       />
                     </div>
                   </div>
 
                   {/* Category Filter */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-white/70 mb-2">
                       Kategori
                     </label>
                     <select
                       value={categoryFilter}
                       onChange={(e) => setCategoryFilter(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full px-3 py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     >
                       <option value="">Tüm Kategoriler</option>
                       {categories.map(category => (
@@ -1094,13 +1100,13 @@ export default function FurnitureManagement() {
 
                   {/* Status Filter */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-white/70 mb-2">
                       Durum
                     </label>
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full px-3 py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     >
                       <option value="">Tüm Durumlar</option>
                       <option value="true">Aktif</option>
@@ -1113,13 +1119,13 @@ export default function FurnitureManagement() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   {/* Furniture Type */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-white/70 mb-2">
                       Mobilya Tipi
                     </label>
                     <select
                       value={furnitureTypeFilter}
                       onChange={(e) => setFurnitureTypeFilter(e.target.value)}
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full px-3 py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     >
                       <option value="">Tüm Tipler</option>
                       {furnitureTypes.map(type => (
@@ -1132,7 +1138,7 @@ export default function FurnitureManagement() {
 
                   {/* Price Range */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-white/70 mb-2">
                       Min Fiyat
                     </label>
                     <input
@@ -1140,12 +1146,12 @@ export default function FurnitureManagement() {
                       value={minPrice}
                       onChange={(e) => setMinPrice(e.target.value)}
                       placeholder="0"
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full px-3 py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder-white/40 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-white/70 mb-2">
                       Max Fiyat
                     </label>
                     <input
@@ -1153,13 +1159,13 @@ export default function FurnitureManagement() {
                       value={maxPrice}
                       onChange={(e) => setMaxPrice(e.target.value)}
                       placeholder="999999"
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full px-3 py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder-white/40 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     />
                   </div>
 
                   {/* Sort */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-white/70 mb-2">
                       Sıralama
                     </label>
                     <select
@@ -1169,7 +1175,7 @@ export default function FurnitureManagement() {
                         setSortBy(field)
                         setSortOrder(order)
                       }}
-                      className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full px-3 py-2.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     >
                       <option value="createdAt-desc">En Yeni</option>
                       <option value="createdAt-asc">En Eski</option>
@@ -1185,7 +1191,7 @@ export default function FurnitureManagement() {
                 {/* Color Filter */}
                 {colors.length > 0 && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                    <label className="block text-sm font-medium text-white/70 mb-3">
                       Renkler ({selectedColors.length} seçili)
                     </label>
                     <div className="flex flex-wrap gap-2">
@@ -1193,14 +1199,14 @@ export default function FurnitureManagement() {
                         <button
                           key={color.colorId}
                           onClick={() => handleColorToggle(color.colorId.toString())}
-                          className={`flex items-center space-x-2 px-3 py-2 rounded-lg border transition-all ${
+                          className={`flex items-center space-x-2 px-3 py-2 rounded-xl border transition-all ${
                             selectedColors.includes(color.colorId.toString())
-                              ? 'border-blue-500 bg-blue-50 text-blue-700'
-                              : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                              ? 'border-blue-400/50 bg-blue-500/20 text-blue-300'
+                              : 'border-white/20 bg-white/10 text-white/70 hover:border-white/40 hover:bg-white/20'
                           }`}
                         >
                           <div
-                            className="w-4 h-4 rounded-full border border-gray-300 shadow-sm"
+                            className="w-4 h-4 rounded-full border border-white/30 shadow-sm"
                             style={{ backgroundColor: color.colorCode }}
                           />
                           <span className="text-sm">{color.colorName}</span>
@@ -1211,9 +1217,9 @@ export default function FurnitureManagement() {
                 )}
 
                 {/* Results Per Page */}
-                <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                <div className="flex items-center justify-between pt-4 border-t border-white/20">
                   <div className="flex items-center space-x-4">
-                    <label className="text-sm font-medium text-gray-700">
+                    <label className="text-sm font-medium text-white/70">
                       Sayfa Başına:
                     </label>
                     <select
@@ -1222,7 +1228,7 @@ export default function FurnitureManagement() {
                         setPageLimit(parseInt(e.target.value))
                         setCurrentPage(1)
                       }}
-                      className="px-3 py-1.5 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="px-3 py-1.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     >
                       <option value={10}>10</option>
                       <option value={20}>20</option>
@@ -1232,7 +1238,7 @@ export default function FurnitureManagement() {
                   </div>
 
                   {totalItems > 0 && (
-                    <div className="text-sm text-gray-600">
+                    <div className="text-sm text-white/60">
                       <span className="font-medium">{totalItems}</span> sonuç bulundu
                     </div>
                   )}
@@ -1244,16 +1250,16 @@ export default function FurnitureManagement() {
 
         {/* Bulk Actions */}
         {selectedItems.length > 0 && (
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+          <div className="bg-blue-500/20 backdrop-blur-sm border border-blue-400/30 rounded-xl p-4 mb-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                <span className="text-blue-800 font-medium">
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                <span className="text-blue-300 font-medium">
                   {selectedItems.length} öğe seçildi
                 </span>
                 <button
                   onClick={() => setSelectedItems([])}
-                  className="text-blue-600 hover:text-blue-800 text-sm underline transition-colors"
+                  className="text-blue-400 hover:text-blue-300 text-sm underline transition-colors"
                 >
                   Seçimi Temizle
                 </button>
@@ -1262,7 +1268,7 @@ export default function FurnitureManagement() {
                 <button
                   onClick={() => handleStatusToggle(selectedItems, true)}
                   disabled={bulkActionLoading}
-                  className="inline-flex items-center px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors disabled:opacity-50"
+                  className="inline-flex items-center px-3 py-1.5 bg-green-600/80 backdrop-blur-sm text-white text-sm font-medium rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors disabled:opacity-50"
                 >
                   {bulkActionLoading ? <LoaderIcon /> : <CheckCircleIcon />}
                   <span className="ml-1">Aktifleştir</span>
@@ -1270,7 +1276,7 @@ export default function FurnitureManagement() {
                 <button
                   onClick={() => handleStatusToggle(selectedItems, false)}
                   disabled={bulkActionLoading}
-                  className="inline-flex items-center px-3 py-1.5 bg-yellow-600 text-white text-sm font-medium rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 transition-colors disabled:opacity-50"
+                  className="inline-flex items-center px-3 py-1.5 bg-yellow-600/80 backdrop-blur-sm text-white text-sm font-medium rounded-lg hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-500 transition-colors disabled:opacity-50"
                 >
                   {bulkActionLoading ? <LoaderIcon /> : <XCircleIcon />}
                   <span className="ml-1">Pasifleştir</span>
@@ -1278,7 +1284,7 @@ export default function FurnitureManagement() {
                 <button
                   onClick={() => setShowDeleteConfirm(true)}
                   disabled={bulkActionLoading}
-                  className="inline-flex items-center px-3 py-1.5 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors disabled:opacity-50"
+                  className="inline-flex items-center px-3 py-1.5 bg-red-600/80 backdrop-blur-sm text-white text-sm font-medium rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors disabled:opacity-50"
                 >
                   {bulkActionLoading ? <LoaderIcon /> : <DeleteIcon />}
                   <span className="ml-1">Sil</span>
@@ -1293,10 +1299,10 @@ export default function FurnitureManagement() {
         
         {/* Loading State */}
         {loading && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12">
+          <div className="bg-white/5 backdrop-blur-xl rounded-2xl shadow-lg border border-white/10 p-12">
             <div className="flex flex-col items-center justify-center space-y-4">
               <LoaderIcon />
-              <p className="text-gray-600 font-medium">Mobilyalar yükleniyor...</p>
+              <p className="text-white/70 font-medium">Mobilyalar yükleniyor...</p>
             </div>
           </div>
         )}
@@ -1306,10 +1312,10 @@ export default function FurnitureManagement() {
           <>
             {viewMode === 'table' ? (
               /* Table View - keeping existing implementation */
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="bg-white/5 backdrop-blur-xl rounded-2xl shadow-lg border border-white/10 overflow-hidden">
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                  <table className="min-w-full divide-y divide-white/10">
+                    <thead className="bg-white/5">
                       <tr>
                         <th className="px-6 py-4 text-left">
                           <input
@@ -1319,48 +1325,48 @@ export default function FurnitureManagement() {
                               if (el) el.indeterminate = isIndeterminate
                             }}
                             onChange={(e) => handleSelectAll(e.target.checked)}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 shadow-sm"
+                            className="rounded border-white/30 text-blue-600 focus:ring-blue-500 shadow-sm bg-white/20 backdrop-blur-sm"
                           />
                         </th>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-4 text-left text-xs font-medium text-white/70 uppercase tracking-wider">
                           Görsel
                         </th>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-4 text-left text-xs font-medium text-white/70 uppercase tracking-wider">
                           Mobilya Bilgileri
                         </th>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-4 text-left text-xs font-medium text-white/70 uppercase tracking-wider">
                           Kategori/Tip
                         </th>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-4 text-left text-xs font-medium text-white/70 uppercase tracking-wider">
                           Fiyat
                         </th>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-4 text-left text-xs font-medium text-white/70 uppercase tracking-wider">
                           Özellikler
                         </th>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-4 text-left text-xs font-medium text-white/70 uppercase tracking-wider">
                           Durum
                         </th>
-                        <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-4 text-left text-xs font-medium text-white/70 uppercase tracking-wider">
                           Tarih
                         </th>
-                        <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-6 py-4 text-right text-xs font-medium text-white/70 uppercase tracking-wider">
                           İşlemler
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-white/5 divide-y divide-white/10">
                       {furnitures.map((furniture) => {
                         const mainImage = getMainImage(furniture.images)
                         const availableColors = furniture.colors.filter(fc => fc.isAvailable)
                         
                         return (
-                          <tr key={furniture.furnitureId} className="hover:bg-gray-50 transition-colors">
+                          <tr key={furniture.furnitureId} className="hover:bg-white/10 transition-colors">
                             <td className="px-6 py-4">
                               <input
                                 type="checkbox"
                                 checked={selectedItems.includes(furniture.furnitureId)}
                                 onChange={(e) => handleSelectItem(furniture.furnitureId, e.target.checked)}
-                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 shadow-sm"
+                                className="rounded border-white/30 text-blue-600 focus:ring-blue-500 shadow-sm bg-white/20 backdrop-blur-sm"
                               />
                             </td>
                             <td className="px-6 py-4">
@@ -1372,24 +1378,24 @@ export default function FurnitureManagement() {
                             </td>
                             <td className="px-6 py-4">
                               <div className="space-y-1">
-                                <div className="text-sm font-semibold text-gray-900">
+                                <div className="text-sm font-semibold text-white">
                                   {furniture.furnitureName}
                                 </div>
                                 {furniture.description && (
-                                  <div className="text-sm text-gray-500 truncate max-w-xs">
+                                  <div className="text-sm text-white/60 truncate max-w-xs">
                                     {furniture.description}
                                   </div>
                                 )}
                                 <div className="flex items-center space-x-4 mt-2">
-                                  <div className="flex items-center space-x-1 text-xs text-gray-500">
+                                  <div className="flex items-center space-x-1 text-xs text-white/60">
                                     <ImageIcon />
                                     <span>{furniture._count.images}</span>
                                   </div>
-                                  <div className="flex items-center space-x-1 text-xs text-gray-500">
+                                  <div className="flex items-center space-x-1 text-xs text-white/60">
                                     <ColorIcon />
                                     <span>{furniture._count.colors}</span>
                                   </div>
-                                  <div className="flex items-center space-x-1 text-xs text-gray-500">
+                                  <div className="flex items-center space-x-1 text-xs text-white/60">
                                     <PropertyIcon />
                                     <span>{furniture._count.properties}</span>
                                   </div>
@@ -1398,16 +1404,16 @@ export default function FurnitureManagement() {
                             </td>
                             <td className="px-6 py-4">
                               <div className="space-y-1">
-                                <div className="text-sm font-medium text-gray-900">
+                                <div className="text-sm font-medium text-white">
                                   {furniture.category?.categoryName || 'Kategorisiz'}
                                 </div>
-                                <div className="text-sm text-gray-500">
+                                <div className="text-sm text-white/60">
                                   {furniture.furnitureType}
                                 </div>
                               </div>
                             </td>
                             <td className="px-6 py-4">
-                              <div className="text-sm font-bold text-blue-600">
+                              <div className="text-sm font-bold text-blue-400">
                                 {formatPrice(furniture.price)}
                               </div>
                             </td>
@@ -1416,14 +1422,14 @@ export default function FurnitureManagement() {
                                 {availableColors.slice(0, 3).map((fc) => (
                                   <div
                                     key={fc.color.colorId}
-                                    className="w-6 h-6 rounded-full border-2 border-white shadow-sm ring-1 ring-gray-200"
+                                    className="w-6 h-6 rounded-full border-2 border-white/30 shadow-sm"
                                     style={{ backgroundColor: fc.color.colorCode }}
                                     title={fc.color.colorName}
                                   />
                                 ))}
                                 {availableColors.length > 3 && (
-                                  <div className="w-6 h-6 rounded-full bg-gray-100 border-2 border-white shadow-sm ring-1 ring-gray-200 flex items-center justify-center">
-                                    <span className="text-xs font-medium text-gray-600">
+                                  <div className="w-6 h-6 rounded-full bg-white/20 border-2 border-white/30 shadow-sm flex items-center justify-center">
+                                    <span className="text-xs font-medium text-white">
                                       +{availableColors.length - 3}
                                     </span>
                                   </div>
@@ -1431,19 +1437,19 @@ export default function FurnitureManagement() {
                               </div>
                             </td>
                             <td className="px-6 py-4">
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium backdrop-blur-sm ${
                                 furniture.isActive 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : 'bg-red-100 text-red-800'
+                                  ? 'bg-green-500/20 text-green-300 border border-green-400/30' 
+                                  : 'bg-red-500/20 text-red-300 border border-red-400/30'
                               }`}>
                                 {furniture.isActive ? '✓ Aktif' : '✕ Pasif'}
                               </span>
                             </td>
-                            <td className="px-6 py-4 text-sm text-gray-500">
+                            <td className="px-6 py-4 text-sm text-white/60">
                               <div className="space-y-1">
                                 <div>{formatDate(furniture.createdAt)}</div>
                                 {furniture.updatedAt && furniture.updatedAt !== furniture.createdAt && (
-                                  <div className="text-xs text-gray-400">
+                                  <div className="text-xs text-white/40">
                                     Güncellendi: {formatDate(furniture.updatedAt)}
                                   </div>
                                 )}
@@ -1453,14 +1459,14 @@ export default function FurnitureManagement() {
                               <div className="flex items-center justify-end space-x-2">
                                 <Link
                                   href={`/admin/furniture/${furniture.furnitureId}`}
-                                  className="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded-lg transition-colors"
+                                  className="p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/20 rounded-lg transition-colors"
                                   title="Detay Görüntüle"
                                 >
                                   <EyeIcon />
                                 </Link>
                                 <Link
                                   href={`/admin/furniture/${furniture.furnitureId}/edit`}
-                                  className="p-2 text-yellow-600 hover:text-yellow-900 hover:bg-yellow-50 rounded-lg transition-colors"
+                                  className="p-2 text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/20 rounded-lg transition-colors"
                                   title="Düzenle"
                                 >
                                   <EditIcon />
@@ -1470,7 +1476,7 @@ export default function FurnitureManagement() {
                                     setSelectedItems([furniture.furnitureId])
                                     setShowDeleteConfirm(true)
                                   }}
-                                  className="p-2 text-red-600 hover:text-red-900 hover:bg-red-50 rounded-lg transition-colors"
+                                  className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded-lg transition-colors"
                                   title="Sil"
                                 >
                                   <DeleteIcon />
@@ -1495,14 +1501,14 @@ export default function FurnitureManagement() {
 
             {/* Empty State */}
             {furnitures.length === 0 && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 text-center py-16">
-                <div className="w-24 h-24 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <div className="bg-white/5 backdrop-blur-xl rounded-2xl shadow-lg border border-white/10 text-center py-16">
+                <div className="w-24 h-24 mx-auto bg-white/10 rounded-full flex items-center justify-center mb-4">
                   <FurnitureIcon />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                <h3 className="text-xl font-medium text-white mb-2">
                   Mobilya bulunamadı
                 </h3>
-                <p className="text-gray-500 mb-6 max-w-md mx-auto">
+                <p className="text-white/60 mb-6 max-w-md mx-auto">
                   {hasActiveFilters 
                     ? 'Arama kriterlerinize uygun mobilya bulunamadı. Filtreleri değiştirin veya temizleyin.'
                     : 'Henüz hiç mobilya eklenmemiş. İlk mobilyanızı eklemek için aşağıdaki butonu kullanın.'
@@ -1512,14 +1518,14 @@ export default function FurnitureManagement() {
                   {hasActiveFilters && (
                     <button
                       onClick={resetFilters}
-                      className="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 bg-white rounded-lg hover:bg-gray-50 transition-colors"
+                      className="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 rounded-xl transition-colors"
                     >
                       Filtreleri Temizle
                     </button>
                   )}
                   <Link
                     href="/admin/furniture/add"
-                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-colors"
                   >
                     <PlusIcon />
                     <span className="ml-2">Yeni Mobilya Ekle</span>
@@ -1532,25 +1538,25 @@ export default function FurnitureManagement() {
 
         {/* Enhanced Pagination */}
         {!loading && totalPages > 1 && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 px-6 py-4 mt-6">
+          <div className="bg-white/5 backdrop-blur-xl rounded-2xl shadow-lg border border-white/10 px-6 py-4 mt-6">
             <div className="flex items-center justify-between">
               <div className="flex-1 flex justify-between sm:hidden">
                 <button
                   onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
-                  className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="relative inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 text-sm font-medium rounded-xl text-white hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   Önceki
                 </button>
                 <div className="flex items-center px-4">
-                  <span className="text-sm text-gray-700">
+                  <span className="text-sm text-white/60">
                     Sayfa {currentPage} / {totalPages}
                   </span>
                 </div>
                 <button
                   onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                   disabled={currentPage === totalPages}
-                  className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="relative inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 text-sm font-medium rounded-xl text-white hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   Sonraki
                 </button>
@@ -1558,7 +1564,7 @@ export default function FurnitureManagement() {
               
               <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-sm text-gray-700">
+                  <p className="text-sm text-white/60">
                     <span className="font-medium">{((currentPage - 1) * pageLimit) + 1}</span>
                     {' - '}
                     <span className="font-medium">
@@ -1568,18 +1574,18 @@ export default function FurnitureManagement() {
                     <span className="font-medium">{totalItems}</span>
                     {' sonuç gösteriliyor'}
                     {hasActiveFilters && (
-                      <span className="text-gray-500 ml-1">(filtrelenmiş)</span>
+                      <span className="text-white/40 ml-1">(filtrelenmiş)</span>
                     )}
                   </p>
                 </div>
                 
                 <div>
-                  <nav className="relative z-0 inline-flex rounded-lg shadow-sm -space-x-px">
+                  <nav className="relative z-0 inline-flex rounded-xl shadow-sm -space-x-px">
                     {/* Previous button */}
                     <button
                       onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                       disabled={currentPage === 1}
-                      className="relative inline-flex items-center px-2 py-2 rounded-l-lg border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="relative inline-flex items-center px-2 py-2 rounded-l-xl bg-white/10 backdrop-blur-sm border border-white/20 text-sm font-medium text-white/70 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       <ChevronLeftIcon />
                     </button>
@@ -1603,8 +1609,8 @@ export default function FurnitureManagement() {
                           onClick={() => setCurrentPage(pageNumber)}
                           className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-colors ${
                             currentPage === pageNumber
-                              ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                              : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                              ? 'z-10 bg-blue-500/20 border-blue-400/50 text-blue-300'
+                              : 'bg-white/10 border-white/20 text-white/70 hover:bg-white/20'
                           }`}
                         >
                           {pageNumber}
@@ -1616,7 +1622,7 @@ export default function FurnitureManagement() {
                     <button
                       onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                       disabled={currentPage === totalPages}
-                      className="relative inline-flex items-center px-2 py-2 rounded-r-lg border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="relative inline-flex items-center px-2 py-2 rounded-r-xl bg-white/10 backdrop-blur-sm border border-white/20 text-sm font-medium text-white/70 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       <ChevronRightIcon />
                     </button>
@@ -1629,33 +1635,33 @@ export default function FurnitureManagement() {
 
         {/* Enhanced Delete Confirmation Modal */}
         {showDeleteConfirm && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
-            <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full mx-auto animate-scale-in">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
+            <div className="relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl max-w-md w-full mx-auto animate-scale-in">
               <div className="p-6">
-                <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
+                <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-500/20 rounded-full mb-4">
                   <DeleteIcon />
                 </div>
                 
                 <div className="text-center">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  <h3 className="text-lg font-semibold text-white mb-2">
                     Mobilya Silme Onayı
                   </h3>
-                  <div className="text-gray-600 mb-6">
+                  <div className="text-white/70 mb-6">
                     {selectedItems.length === 1 ? (
                       <div>
                         <p className="mb-2">Seçili mobilyayı silmek istediğinizden emin misiniz?</p>
-                        <div className="bg-gray-50 rounded-lg p-3">
-                          <p className="text-sm font-medium text-gray-900">
+                        <div className="bg-white/10 rounded-lg p-3">
+                          <p className="text-sm font-medium text-white">
                             {furnitures.find(f => f.furnitureId === selectedItems[0])?.furnitureName}
                           </p>
                         </div>
                       </div>
                     ) : (
                       <p>
-                        <span className="font-medium text-red-600">{selectedItems.length}</span> mobilyayı silmek istediğinizden emin misiniz?
+                        <span className="font-medium text-red-400">{selectedItems.length}</span> mobilyayı silmek istediğinizden emin misiniz?
                       </p>
                     )}
-                    <p className="text-sm text-red-600 mt-3 font-medium">
+                    <p className="text-sm text-red-400 mt-3 font-medium">
                       ⚠️ Bu işlem geri alınamaz ve tüm ilgili veriler silinecektir.
                     </p>
                   </div>
@@ -1664,14 +1670,14 @@ export default function FurnitureManagement() {
                     <button
                       onClick={() => setShowDeleteConfirm(false)}
                       disabled={bulkActionLoading}
-                      className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+                      className="px-4 py-2 bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 rounded-xl transition-colors disabled:opacity-50"
                     >
                       İptal
                     </button>
                     <button
                       onClick={() => handleDelete(selectedItems)}
                       disabled={bulkActionLoading}
-                      className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                      className="inline-flex items-center px-4 py-2 bg-red-600/80 backdrop-blur-sm text-white rounded-xl hover:bg-red-600 transition-colors disabled:opacity-50"
                     >
                       {bulkActionLoading && <LoaderIcon />}
                       <span className={bulkActionLoading ? 'ml-2' : ''}>

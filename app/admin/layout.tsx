@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
+import { useSession, signOut } from 'next-auth/react'
+import { AuthWrapper } from '@/components/auth/auth-wrapper'
 
 interface NavItem {
   name: string
@@ -25,6 +27,11 @@ export default function DarkAdminLayout({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const pathname = usePathname()
+  const { data: session } = useSession()
+
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: '/auth/login' })
+  }
 
   // Close mobile menu when route changes
   useEffect(() => {
@@ -216,8 +223,9 @@ export default function DarkAdminLayout({
                 {isUserMenuOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-xl border border-gray-700/50 py-1 z-50">
                     <div className="px-4 py-2 border-b border-gray-700/50">
-                      <p className="text-sm font-medium text-white">Admin</p>
-                      <p className="text-xs text-gray-400">admin@hazarhome.com</p>
+                      <p className="text-sm font-medium text-white">{session?.user?.name || 'Admin'}</p>
+                      <p className="text-xs text-gray-400">{session?.user?.email}</p>
+                      <p className="text-xs text-blue-400 font-medium">{session?.user?.role}</p>
                     </div>
                     <Link href="/admin/profile" className="flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-gray-700/60 hover:text-white transition-all duration-200">
                       👤 Profil
@@ -226,7 +234,10 @@ export default function DarkAdminLayout({
                       ⚙️ Ayarlar
                     </Link>
                     <hr className="my-1 border-gray-700/50" />
-                    <button className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-900/30 hover:text-red-300 transition-all duration-200">
+                    <button 
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-900/30 hover:text-red-300 transition-all duration-200"
+                    >
                       🚪 Çıkış Yap
                     </button>
                   </div>

@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 
-// Next.js için TypeScript interface'leri
+// TypeScript interfaces
 interface Property {
   propertyId: number
   propertyName: string
@@ -46,7 +46,7 @@ interface Filters {
   active: string
 }
 
-// Next.js için basit icon component'leri
+// Icon components - Styled to match FurnitureAdd
 const TrashIcon = () => <span className="text-lg">🗑️</span>
 const EditIcon = () => <span className="text-lg">✏️</span>
 const PlusIcon = () => <span className="text-lg">➕</span>
@@ -59,6 +59,14 @@ const SearchIcon = () => <span className="text-lg">🔍</span>
 const FilterIcon = () => <span className="text-lg">🔽</span>
 const StatsIcon = () => <span className="text-lg">📊</span>
 const CleanIcon = () => <span className="text-lg">🧹</span>
+const PropertyIcon = () => <span className="text-2xl">🏷️</span>
+const SuccessIcon = () => <span className="text-lg">✅</span>
+const TextIcon = () => <span className="text-lg">📝</span>
+const NumberIcon = () => <span className="text-lg">🔢</span>
+const DateIcon = () => <span className="text-lg">📅</span>
+const BooleanIcon = () => <span className="text-lg">☑️</span>
+const UsageIcon = () => <span className="text-lg">📈</span>
+const TrophyIcon = () => <span className="text-lg">🏆</span>
 
 export default function PropertyManagement() {
   // State management
@@ -89,7 +97,7 @@ export default function PropertyManagement() {
     active: ''
   })
 
-  // Özellik kategorileri
+  // Property categories
   const categoryOptions = [
     { value: '', label: 'Tüm Kategoriler' },
     { value: 'temel', label: 'Temel Özellikler' },
@@ -103,10 +111,10 @@ export default function PropertyManagement() {
 
   const typeOptions = [
     { value: '', label: 'Tüm Tipler' },
-    { value: 'text', label: 'Metin' },
-    { value: 'number', label: 'Sayı' },
-    { value: 'date', label: 'Tarih' },
-    { value: 'boolean', label: 'Evet/Hayır' }
+    { value: 'text', label: 'Metin', icon: <TextIcon /> },
+    { value: 'number', label: 'Sayı', icon: <NumberIcon /> },
+    { value: 'date', label: 'Tarih', icon: <DateIcon /> },
+    { value: 'boolean', label: 'Evet/Hayır', icon: <BooleanIcon /> }
   ]
 
   const usageOptions = [
@@ -115,12 +123,12 @@ export default function PropertyManagement() {
     { value: 'unused', label: 'Kullanılmayan' }
   ]
 
-  // Next.js API route'larından özellikleri yükle
+  // Load properties from API
   const loadProperties = async (): Promise<void> => {
     try {
       setLoading(true)
       
-      // Filtre parametrelerini oluştur
+      // Build filter parameters
       const params = new URLSearchParams()
       if (filters.search) params.append('search', filters.search)
       if (filters.type) params.append('type', filters.type)
@@ -159,12 +167,12 @@ export default function PropertyManagement() {
     }
   }
 
-  // Component mount'da özellikleri yükle
+  // Load properties on component mount
   useEffect(() => {
     loadProperties()
   }, [filters, showStats])
 
-  // Form gönderme
+  // Handle form submission
   const handleSubmit = async (): Promise<void> => {
     if (!formData.propertyName.trim()) {
       setError('Özellik adı zorunludur')
@@ -211,7 +219,7 @@ export default function PropertyManagement() {
     }
   }
 
-  // Özellik silme
+  // Delete property
   const handleDelete = async (propertyId: number, propertyName: string): Promise<void> => {
     if (!confirm(`"${propertyName}" özelliğini silmek istediğinizden emin misiniz?`)) {
       return
@@ -244,7 +252,7 @@ export default function PropertyManagement() {
     }
   }
 
-  // Aktif/Pasif değiştirme
+  // Toggle active status
   const toggleActive = async (propertyId: number, currentStatus: boolean): Promise<void> => {
     try {
       const response = await fetch(`/api/properties/${propertyId}`, {
@@ -274,7 +282,7 @@ export default function PropertyManagement() {
     }
   }
 
-  // Toplu işlemler
+  // Bulk actions
   const handleBulkAction = async (action: 'activate' | 'deactivate' | 'delete'): Promise<void> => {
     if (selectedIds.length === 0) {
       setError('Lütfen en az bir özellik seçin')
@@ -329,7 +337,7 @@ export default function PropertyManagement() {
     }
   }
 
-  // Kullanılmayan özellikleri temizle
+  // Clean unused properties
   const cleanupUnused = async (): Promise<void> => {
     if (!confirm('Kullanılmayan tüm özellikleri silmek istediğinizden emin misiniz?')) {
       return
@@ -370,7 +378,7 @@ export default function PropertyManagement() {
     }
   }
 
-  // Form sıfırlama
+  // Reset form
   const resetForm = (): void => {
     setFormData({
       propertyName: '',
@@ -382,7 +390,7 @@ export default function PropertyManagement() {
     setEditingProperty(null)
   }
 
-  // Düzenleme için formu doldur
+  // Start editing property
   const startEdit = (property: Property): void => {
     setFormData({
       propertyName: property.propertyName,
@@ -394,7 +402,7 @@ export default function PropertyManagement() {
     setShowAddForm(true)
   }
 
-  // Özellik tipi etiketi
+  // Get property type label
   const getTypeLabel = (type: string): string => {
     const labels: { [key: string]: string } = {
       text: 'Metin',
@@ -405,18 +413,29 @@ export default function PropertyManagement() {
     return labels[type] || type
   }
 
-  // Özellik tipine göre renk
-  const getTypeColor = (type: string): string => {
-    const colors: { [key: string]: string } = {
-      text: 'bg-blue-100 text-blue-800',
-      number: 'bg-green-100 text-green-800',
-      date: 'bg-purple-100 text-purple-800',
-      boolean: 'bg-orange-100 text-orange-800'
+  // Get type icon
+  const getTypeIcon = (type: string): React.ReactElement => {
+    const icons: { [key: string]: React.ReactElement } = {
+      text: <TextIcon />,
+      number: <NumberIcon />,
+      date: <DateIcon />,
+      boolean: <BooleanIcon />
     }
-    return colors[type] || 'bg-gray-100 text-gray-800'
+    return icons[type] || <TextIcon />
   }
 
-  // Checkbox seçimi
+  // Get property type color for dark theme
+  const getTypeColor = (type: string): string => {
+    const colors: { [key: string]: string } = {
+      text: 'bg-blue-900/30 text-blue-300 border-blue-600/30',
+      number: 'bg-green-900/30 text-green-300 border-green-600/30',
+      date: 'bg-purple-900/30 text-purple-300 border-purple-600/30',
+      boolean: 'bg-orange-900/30 text-orange-300 border-orange-600/30'
+    }
+    return colors[type] || 'bg-gray-900/30 text-gray-300 border-gray-600/30'
+  }
+
+  // Handle property selection
   const handleSelectProperty = (propertyId: number, checked: boolean): void => {
     if (checked) {
       setSelectedIds([...selectedIds, propertyId])
@@ -425,7 +444,7 @@ export default function PropertyManagement() {
     }
   }
 
-  // Tümünü seç/seçme
+  // Handle select all
   const handleSelectAll = (checked: boolean): void => {
     if (checked) {
       setSelectedIds(properties.map(p => p.propertyId))
@@ -434,519 +453,632 @@ export default function PropertyManagement() {
     }
   }
 
-  // Next.js component return
   return (
-    <div className="max-w-7xl mx-auto p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Özellik Yönetimi</h1>
-          <p className="text-gray-600">Mobilya özelliklerini yönetin</p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-slate-900">
+      <div className="max-w-7xl mx-auto p-6">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <PropertyIcon />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
+                  Özellik Yönetimi
+                </h1>
+                <p className="text-gray-400 mt-1">
+                  Mobilya özelliklerini yönetin ve düzenleyin
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-3">
+              <button
+                onClick={() => setShowStats(!showStats)}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all duration-200 font-medium border ${
+                  showStats 
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white border-blue-500' 
+                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700 border-gray-600'
+                }`}
+                type="button"
+              >
+                <StatsIcon />
+                <span>İstatistikler</span>
+              </button>
+              <button
+                onClick={cleanupUnused}
+                className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-xl hover:from-orange-700 hover:to-red-700 transition-all duration-200 font-medium shadow-lg border border-orange-500"
+                type="button"
+              >
+                <CleanIcon />
+                <span>Temizle</span>
+              </button>
+              <button
+                onClick={() => setShowAddForm(true)}
+                className="flex items-center space-x-2 px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-medium shadow-lg"
+                type="button"
+              >
+                <PlusIcon />
+                <span>Yeni Özellik</span>
+              </button>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center space-x-3">
-          <button
-            onClick={() => setShowStats(!showStats)}
-            className={`px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 ${
-              showStats 
-                ? 'bg-blue-600 text-white' 
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
-            type="button"
-          >
-            <StatsIcon />
-            <span>İstatistikler</span>
-          </button>
-          <button
-            onClick={cleanupUnused}
-            className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors flex items-center space-x-2"
-            type="button"
-          >
-            <CleanIcon />
-            <span>Temizle</span>
-          </button>
-          <button
-            onClick={() => setShowAddForm(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-            type="button"
-          >
-            <PlusIcon />
-            <span>Yeni Özellik</span>
-          </button>
-        </div>
-      </div>
 
-      {/* Alert Messages */}
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4" role="alert">
-          {error}
-        </div>
-      )}
-      
-      {success && (
-        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4" role="alert">
-          {success}
-        </div>
-      )}
+        {/* Alert Messages */}
+        {error && (
+          <div className="bg-gradient-to-r from-red-900/50 to-red-800/50 border border-red-600/50 text-red-300 px-6 py-4 rounded-xl mb-6 shadow-sm" role="alert">
+            <div className="flex items-center space-x-2">
+              <span className="text-xl">⚠️</span>
+              <span className="font-medium">{error}</span>
+            </div>
+          </div>
+        )}
+        
+        {success && (
+          <div className="bg-gradient-to-r from-green-900/50 to-emerald-800/50 border border-green-600/50 text-green-300 px-6 py-4 rounded-xl mb-6 shadow-sm" role="alert">
+            <div className="flex items-center space-x-2">
+              <SuccessIcon />
+              <span className="font-medium">{success}</span>
+            </div>
+          </div>
+        )}
 
-      {/* İstatistik Kartları */}
-      {showStats && stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white p-4 rounded-lg shadow-sm border">
-            <h3 className="text-sm font-medium text-gray-600">Toplam Özellik</h3>
-            <p className="text-2xl font-bold text-gray-900">{stats.usage.total}</p>
+        {/* Statistics Cards */}
+        {showStats && stats && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 p-6">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center">
+                  <PropertyIcon />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-400">Toplam Özellik</h3>
+                  <p className="text-2xl font-bold text-blue-300">{stats.usage.total}</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 p-6">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center">
+                  <UsageIcon />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-400">Kullanılan</h3>
+                  <p className="text-2xl font-bold text-green-300">{stats.usage.used}</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 p-6">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
+                  <CleanIcon />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-400">Kullanılmayan</h3>
+                  <p className="text-2xl font-bold text-orange-300">{stats.usage.unused}</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 p-6">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                  <TextIcon />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-400">Metin Tipi</h3>
+                  <p className="text-2xl font-bold text-purple-300">{stats.byType.text || 0}</p>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="bg-white p-4 rounded-lg shadow-sm border">
-            <h3 className="text-sm font-medium text-gray-600">Kullanılan</h3>
-            <p className="text-2xl font-bold text-green-600">{stats.usage.used}</p>
-          </div>
-          <div className="bg-white p-4 rounded-lg shadow-sm border">
-            <h3 className="text-sm font-medium text-gray-600">Kullanılmayan</h3>
-            <p className="text-2xl font-bold text-orange-600">{stats.usage.unused}</p>
-          </div>
-          <div className="bg-white p-4 rounded-lg shadow-sm border">
-            <h3 className="text-sm font-medium text-gray-600">Metin Tipi</h3>
-            <p className="text-2xl font-bold text-blue-600">{stats.byType.text || 0}</p>
-          </div>
-        </div>
-      )}
+        )}
 
-      {/* Filtreler */}
-      <div className="bg-white p-4 rounded-lg shadow-sm border mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              <SearchIcon /> Arama
-            </label>
-            <input
-              type="text"
-              value={filters.search}
-              onChange={(e) => setFilters({...filters, search: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Özellik ara..."
-            />
+        {/* Filters */}
+        <div className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden mb-8">
+          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4">
+            <h2 className="text-xl font-bold text-white flex items-center space-x-2">
+              <FilterIcon />
+              <span>Filtreler</span>
+            </h2>
           </div>
           
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Tip
-            </label>
-            <select
-              value={filters.type}
-              onChange={(e) => setFilters({...filters, type: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              {typeOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Kategori
-            </label>
-            <select
-              value={filters.category}
-              onChange={(e) => setFilters({...filters, category: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              {categoryOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Kullanım
-            </label>
-            <select
-              value={filters.usage}
-              onChange={(e) => setFilters({...filters, usage: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              {usageOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Durum
-            </label>
-            <select
-              value={filters.active}
-              onChange={(e) => setFilters({...filters, active: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="">Tüm Durumlar</option>
-              <option value="true">Sadece Aktif</option>
-              <option value="false">Sadece Pasif</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Toplu İşlemler */}
-      {selectedIds.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg mb-4">
-          <div className="flex items-center justify-between">
-            <span className="text-blue-800 font-medium">
-              {selectedIds.length} özellik seçildi
-            </span>
-            <div className="flex space-x-2">
-              <button
-                onClick={() => handleBulkAction('activate')}
-                className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
-                type="button"
-              >
-                Aktif Yap
-              </button>
-              <button
-                onClick={() => handleBulkAction('deactivate')}
-                className="bg-orange-600 text-white px-3 py-1 rounded text-sm hover:bg-orange-700"
-                type="button"
-              >
-                Pasif Yap
-              </button>
-              <button
-                onClick={() => handleBulkAction('delete')}
-                className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
-                type="button"
-              >
-                Sil
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Add/Edit Modal */}
-      {showAddForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">
-                {editingProperty ? 'Özellik Düzenle' : 'Yeni Özellik Ekle'}
-              </h2>
-              <button
-                onClick={resetForm}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-                type="button"
-                aria-label="Kapat"
-              >
-                <CloseIcon />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="propertyName" className="block text-sm font-medium text-gray-700 mb-1">
-                  Özellik Adı *
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-300 flex items-center space-x-2">
+                  <SearchIcon />
+                  <span>Arama</span>
                 </label>
                 <input
-                  id="propertyName"
                   type="text"
-                  required
-                  value={formData.propertyName}
-                  onChange={(e) => setFormData({...formData, propertyName: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="Özellik adını girin"
+                  value={filters.search}
+                  onChange={(e) => setFilters({...filters, search: e.target.value})}
+                  className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-white placeholder-gray-400"
+                  placeholder="Özellik ara..."
                 />
               </div>
-
-              <div>
-                <label htmlFor="propertyType" className="block text-sm font-medium text-gray-700 mb-1">
-                  Özellik Tipi *
+              
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-300">
+                  Tip
                 </label>
                 <select
-                  id="propertyType"
-                  value={formData.propertyType}
-                  onChange={(e) => setFormData({...formData, propertyType: e.target.value as any})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  value={filters.type}
+                  onChange={(e) => setFilters({...filters, type: e.target.value})}
+                  className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-white"
                 >
-                  <option value="text">Metin</option>
-                  <option value="number">Sayı</option>
-                  <option value="date">Tarih</option>
-                  <option value="boolean">Evet/Hayır</option>
+                  {typeOptions.map(option => (
+                    <option key={option.value} value={option.value} className="bg-gray-700">
+                      {option.label}
+                    </option>
+                  ))}
                 </select>
               </div>
 
-              <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-                  Açıklama
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-300">
+                  Kategori
                 </label>
-                <textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="Özellik açıklaması (isteğe bağlı)"
-                  rows={3}
-                />
+                <select
+                  value={filters.category}
+                  onChange={(e) => setFilters({...filters, category: e.target.value})}
+                  className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-white"
+                >
+                  {categoryOptions.map(option => (
+                    <option key={option.value} value={option.value} className="bg-gray-700">
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="isActive"
-                  checked={formData.isActive}
-                  onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="isActive" className="ml-2 block text-sm text-gray-700">
-                  Aktif özellik
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-300">
+                  Kullanım
                 </label>
+                <select
+                  value={filters.usage}
+                  onChange={(e) => setFilters({...filters, usage: e.target.value})}
+                  className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-white"
+                >
+                  {usageOptions.map(option => (
+                    <option key={option.value} value={option.value} className="bg-gray-700">
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              <div className="flex space-x-3 pt-4">
-                <button
-                  onClick={handleSubmit}
-                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
-                  type="button"
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-300">
+                  Durum
+                </label>
+                <select
+                  value={filters.active}
+                  onChange={(e) => setFilters({...filters, active: e.target.value})}
+                  className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-white"
                 >
-                  <SaveIcon />
-                  <span>{editingProperty ? 'Güncelle' : 'Kaydet'}</span>
-                </button>
-                <button
-                  onClick={resetForm}
-                  className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors"
-                  type="button"
-                >
-                  İptal
-                </button>
+                  <option value="" className="bg-gray-700">Tüm Durumlar</option>
+                  <option value="true" className="bg-gray-700">Sadece Aktif</option>
+                  <option value="false" className="bg-gray-700">Sadece Pasif</option>
+                </select>
               </div>
             </div>
           </div>
         </div>
-      )}
 
-      {/* Loading State */}
-      {loading && (
-        <div className="flex items-center justify-center py-12">
-          <LoaderIcon />
-          <span className="ml-2 text-gray-600">Yükleniyor...</span>
-        </div>
-      )}
-
-      {/* Empty State */}
-      {!loading && properties.length === 0 && (
-        <div className="text-center py-12">
-          <p className="text-gray-500 mb-4">Henüz özellik bulunmuyor.</p>
-          <button
-            onClick={() => setShowAddForm(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-            type="button"
-          >
-            İlk özelliği ekleyin
-          </button>
-        </div>
-      )}
-
-      {/* Properties Table */}
-      {!loading && properties.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm border">
-          <div className="p-4 border-b border-gray-200">
+        {/* Bulk Actions */}
+        {selectedIds.length > 0 && (
+          <div className="bg-gradient-to-r from-blue-900/50 to-indigo-900/50 border border-blue-600/50 p-6 rounded-xl mb-6 shadow-sm">
             <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-600">
-                Toplam {properties.length} özellik
+              <span className="text-blue-300 font-semibold flex items-center space-x-2">
+                <span className="text-xl">📋</span>
+                <span>{selectedIds.length} özellik seçildi</span>
+              </span>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => handleBulkAction('activate')}
+                  className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-2 rounded-lg text-sm hover:from-green-700 hover:to-emerald-700 transition-all duration-200 font-medium shadow-sm"
+                  type="button"
+                >
+                  Aktif Yap
+                </button>
+                <button
+                  onClick={() => handleBulkAction('deactivate')}
+                  className="bg-gradient-to-r from-orange-600 to-red-600 text-white px-4 py-2 rounded-lg text-sm hover:from-orange-700 hover:to-red-700 transition-all duration-200 font-medium shadow-sm"
+                  type="button"
+                >
+                  Pasif Yap
+                </button>
+                <button
+                  onClick={() => handleBulkAction('delete')}
+                  className="bg-gradient-to-r from-red-600 to-pink-600 text-white px-4 py-2 rounded-lg text-sm hover:from-red-700 hover:to-pink-700 transition-all duration-200 font-medium shadow-sm"
+                  type="button"
+                >
+                  Sil
+                </button>
               </div>
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={selectedIds.length === properties.length && properties.length > 0}
-                  onChange={(e) => handleSelectAll(e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <span className="text-sm text-gray-700">Tümünü Seç</span>
-              </label>
             </div>
           </div>
+        )}
 
-          {/* Table Content */}
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Seç
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Özellik Adı
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tip
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Açıklama
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Kullanım
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Durum
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    İşlemler
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {properties.map((property) => (
-                  <tr 
-                    key={property.propertyId}
-                    className={`hover:bg-gray-50 ${
-                      selectedIds.includes(property.propertyId) ? 'bg-blue-50' : ''
-                    }`}
+        {/* Add/Edit Modal */}
+        {showAddForm && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 w-full max-w-md overflow-hidden">
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-bold text-white flex items-center space-x-2">
+                    <span className="text-2xl">{editingProperty ? '✏️' : '➕'}</span>
+                    <span>{editingProperty ? 'Özellik Düzenle' : 'Yeni Özellik Ekle'}</span>
+                  </h2>
+                  <button
+                    onClick={resetForm}
+                    className="text-blue-200 hover:text-white hover:bg-blue-500/20 p-2 rounded-lg transition-all duration-200"
+                    type="button"
+                    aria-label="Kapat"
                   >
-                    {/* Checkbox */}
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.includes(property.propertyId)}
-                        onChange={(e) => handleSelectProperty(property.propertyId, e.target.checked)}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                      />
-                    </td>
+                    <CloseIcon />
+                  </button>
+                </div>
+              </div>
 
-                    {/* Özellik Adı */}
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {property.propertyName}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        ID: {property.propertyId}
-                      </div>
-                    </td>
+              <div className="p-6 space-y-6">
+                <div className="space-y-2">
+                  <label htmlFor="propertyName" className="block text-sm font-semibold text-gray-300">
+                    Özellik Adı *
+                  </label>
+                  <input
+                    id="propertyName"
+                    type="text"
+                    required
+                    value={formData.propertyName}
+                    onChange={(e) => setFormData({...formData, propertyName: e.target.value})}
+                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-white placeholder-gray-400"
+                    placeholder="Özellik adını girin"
+                  />
+                </div>
 
-                    {/* Tip */}
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getTypeColor(property.propertyType)}`}>
-                        {getTypeLabel(property.propertyType)}
-                      </span>
-                    </td>
+                <div className="space-y-2">
+                  <label htmlFor="propertyType" className="block text-sm font-semibold text-gray-300">
+                    Özellik Tipi *
+                  </label>
+                  <select
+                    id="propertyType"
+                    value={formData.propertyType}
+                    onChange={(e) => setFormData({...formData, propertyType: e.target.value as any})}
+                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-white"
+                  >
+                    <option value="text" className="bg-gray-700">📝 Metin</option>
+                    <option value="number" className="bg-gray-700">🔢 Sayı</option>
+                    <option value="date" className="bg-gray-700">📅 Tarih</option>
+                    <option value="boolean" className="bg-gray-700">☑️ Evet/Hayır</option>
+                  </select>
+                </div>
 
-                    {/* Açıklama */}
-                    <td className="px-4 py-4">
-                      <div className="text-sm text-gray-900 max-w-xs">
-                        {property.description ? (
-                          <span title={property.description}>
-                            {property.description.length > 50 
-                              ? `${property.description.substring(0, 50)}...` 
-                              : property.description
-                            }
-                          </span>
-                        ) : (
-                          <span className="text-gray-400 italic">Açıklama yok</span>
-                        )}
-                      </div>
-                    </td>
+                <div className="space-y-2">
+                  <label htmlFor="description" className="block text-sm font-semibold text-gray-300">
+                    Açıklama
+                  </label>
+                  <textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none text-white placeholder-gray-400"
+                    placeholder="Özellik açıklaması (isteğe bağlı)"
+                    rows={3}
+                  />
+                </div>
 
-                    {/* Kullanım */}
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-blue-600 font-medium">
-                            {property._count.furnitureProperties + property._count.furnitureSetProperties}
-                          </span>
-                          <span className="text-gray-500">toplam</span>
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {property._count.furnitureProperties} mobilya, {property._count.furnitureSetProperties} set
-                        </div>
-                      </div>
-                    </td>
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="checkbox"
+                    id="isActive"
+                    checked={formData.isActive}
+                    onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
+                    className="w-5 h-5 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
+                  />
+                  <label htmlFor="isActive" className="text-sm font-medium text-gray-300 cursor-pointer">
+                    Aktif özellik olarak yayınla
+                  </label>
+                </div>
 
-                    {/* Durum */}
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        property.isActive 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {property.isActive ? 'Aktif' : 'Pasif'}
-                      </span>
-                    </td>
-
-                    {/* İşlemler */}
-                    <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => toggleActive(property.propertyId, property.isActive)}
-                          className={`p-1.5 rounded transition-colors ${
-                            property.isActive 
-                              ? 'text-orange-600 hover:bg-orange-100' 
-                              : 'text-green-600 hover:bg-green-100'
-                          }`}
-                          title={property.isActive ? 'Pasif Yap' : 'Aktif Yap'}
-                          type="button"
-                        >
-                          {property.isActive ? <EyeOffIcon /> : <EyeIcon />}
-                        </button>
-                        <button
-                          onClick={() => startEdit(property)}
-                          className="p-1.5 text-blue-600 hover:bg-blue-100 rounded transition-colors"
-                          title="Düzenle"
-                          type="button"
-                        >
-                          <EditIcon />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(property.propertyId, property.propertyName)}
-                          className="p-1.5 text-red-600 hover:bg-red-100 rounded transition-colors"
-                          title="Sil"
-                          type="button"
-                          disabled={property._count.furnitureProperties + property._count.furnitureSetProperties > 0}
-                        >
-                          <TrashIcon />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* En Çok Kullanılan Özellikler (İstatistik açıksa) */}
-          {showStats && stats?.mostUsed && stats.mostUsed.length > 0 && (
-            <div className="p-4 border-t border-gray-200">
-              <h3 className="text-sm font-medium text-gray-900 mb-3">
-                En Çok Kullanılan Özellikler
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {stats.mostUsed.slice(0, 6).map((item, index) => (
-                  <div key={item.propertyName} className="bg-gray-50 p-3 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded">
-                          #{index + 1}
-                        </span>
-                        <span className="text-sm font-medium text-gray-900">
-                          {item.propertyName}
-                        </span>
-                      </div>
-                      <span className="text-sm font-bold text-blue-600">
-                        {item.totalUsage}
-                      </span>
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {item.furnitureUsage} mobilya, {item.furnitureSetUsage} set
-                    </div>
-                  </div>
-                ))}
+                <div className="flex space-x-3 pt-4">
+                  <button
+                    onClick={handleSubmit}
+                    className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center justify-center space-x-2 font-medium shadow-lg"
+                    type="button"
+                  >
+                    <SaveIcon />
+                    <span>{editingProperty ? 'Güncelle' : 'Kaydet'}</span>
+                  </button>
+                  <button
+                    onClick={resetForm}
+                    className="flex-1 bg-gray-700 text-gray-300 py-3 px-4 rounded-xl hover:bg-gray-600 transition-all duration-200 font-medium border border-gray-600"
+                    type="button"
+                  >
+                    İptal
+                  </button>
+                </div>
               </div>
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-20">
+            <div className="bg-gray-800 rounded-2xl p-8 shadow-2xl border border-gray-700">
+              <div className="flex items-center space-x-4">
+                <LoaderIcon />
+                <span className="text-gray-300 font-medium">Özellikler yükleniyor...</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && properties.length === 0 && (
+          <div className="text-center py-20">
+            <div className="bg-gray-800 rounded-2xl p-12 shadow-2xl border border-gray-700">
+              <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                <PropertyIcon />
+              </div>
+              <h3 className="text-xl font-bold text-gray-200 mb-4">Henüz özellik bulunmuyor</h3>
+              <p className="text-gray-400 mb-8 max-w-md mx-auto">
+                Mobilyalarınız için özel özellikler tanımlayarak daha detaylı katalog oluşturun.
+              </p>
+              <button
+                onClick={() => setShowAddForm(true)}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-medium shadow-lg inline-flex items-center space-x-2"
+                type="button"
+              >
+                <PlusIcon />
+                <span>İlk özelliği ekleyin</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Properties Table */}
+        {!loading && properties.length > 0 && (
+          <div className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden">
+            <div className="bg-gradient-to-r from-green-600 to-teal-600 px-6 py-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-white flex items-center space-x-2">
+                  <span className="text-2xl">📋</span>
+                  <span>Özellik Listesi ({properties.length})</span>
+                </h2>
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.length === properties.length && properties.length > 0}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                    className="w-5 h-5 text-green-600 bg-gray-700 border-gray-600 rounded focus:ring-green-500 focus:ring-2"
+                  />
+                  <span className="text-sm font-medium text-green-100">Tümünü Seç</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Table Content */}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-700">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                      Seç
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                      Özellik Adı
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                      Tip
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                      Açıklama
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                      Kullanım
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                      Durum
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                      İşlemler
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-700">
+                  {properties.map((property) => (
+                    <tr 
+                      key={property.propertyId}
+                      className={`hover:bg-gray-700/50 transition-colors duration-200 ${
+                        selectedIds.includes(property.propertyId) ? 'bg-blue-900/20' : ''
+                      }`}
+                    >
+                      {/* Checkbox */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(property.propertyId)}
+                          onChange={(e) => handleSelectProperty(property.propertyId, e.target.checked)}
+                          className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
+                        />
+                      </td>
+
+                      {/* Property Name */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center">
+                            {getTypeIcon(property.propertyType)}
+                          </div>
+                          <div>
+                            <div className="text-sm font-semibold text-gray-200">
+                              {property.propertyName}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              ID: {property.propertyId}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Type */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${getTypeColor(property.propertyType)}`}>
+                          {getTypeLabel(property.propertyType)}
+                        </span>
+                      </td>
+
+                      {/* Description */}
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-300 max-w-xs">
+                          {property.description ? (
+                            <span title={property.description} className="block">
+                              {property.description.length > 50 
+                                ? `${property.description.substring(0, 50)}...` 
+                                : property.description
+                              }
+                            </span>
+                          ) : (
+                            <span className="text-gray-500 italic">Açıklama yok</span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Usage */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <span className="text-blue-400 font-semibold text-lg">
+                              {property._count.furnitureProperties + property._count.furnitureSetProperties}
+                            </span>
+                            <span className="text-gray-400 text-xs">toplam</span>
+                          </div>
+                          <div className="text-xs text-gray-500 space-y-1">
+                            <div className="flex items-center space-x-1">
+                              <span>🪑</span>
+                              <span>{property._count.furnitureProperties} mobilya</span>
+                            </div>
+                            <div className="flex items-center space-x-1">
+                              <span>📦</span>
+                              <span>{property._count.furnitureSetProperties} set</span>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Status */}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${
+                          property.isActive 
+                            ? 'bg-green-900/30 text-green-300 border-green-600/30' 
+                            : 'bg-red-900/30 text-red-300 border-red-600/30'
+                        }`}>
+                          {property.isActive ? '✅ Aktif' : '❌ Pasif'}
+                        </span>
+                      </td>
+
+                      {/* Actions */}
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => toggleActive(property.propertyId, property.isActive)}
+                            className={`p-2 rounded-lg transition-all duration-200 border ${
+                              property.isActive 
+                                ? 'text-orange-400 hover:bg-orange-500/20 border-orange-500/30' 
+                                : 'text-green-400 hover:bg-green-500/20 border-green-500/30'
+                            }`}
+                            title={property.isActive ? 'Pasif Yap' : 'Aktif Yap'}
+                            type="button"
+                          >
+                            {property.isActive ? <EyeOffIcon /> : <EyeIcon />}
+                          </button>
+                          <button
+                            onClick={() => startEdit(property)}
+                            className="p-2 text-blue-400 hover:bg-blue-500/20 border border-blue-500/30 rounded-lg transition-all duration-200"
+                            title="Düzenle"
+                            type="button"
+                          >
+                            <EditIcon />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(property.propertyId, property.propertyName)}
+                            className="p-2 text-red-400 hover:bg-red-500/20 border border-red-500/30 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Sil"
+                            type="button"
+                            disabled={property._count.furnitureProperties + property._count.furnitureSetProperties > 0}
+                          >
+                            <TrashIcon />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Most Used Properties (If stats are shown) */}
+            {showStats && stats?.mostUsed && stats.mostUsed.length > 0 && (
+              <div className="bg-gray-700 p-6 border-t border-gray-600">
+                <div className="flex items-center space-x-3 mb-6">
+                  <div className="w-10 h-10 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center">
+                    <TrophyIcon />
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-200">
+                    En Çok Kullanılan Özellikler
+                  </h3>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {stats.mostUsed.slice(0, 6).map((item, index) => (
+                    <div key={item.propertyName} className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-600 p-4 rounded-xl hover:shadow-lg transition-shadow duration-200">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center space-x-3">
+                          <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+                            index === 0 ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30' :
+                            index === 1 ? 'bg-gray-500/20 text-gray-300 border border-gray-500/30' :
+                            index === 2 ? 'bg-orange-500/20 text-orange-300 border border-orange-500/30' :
+                            'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                          }`}>
+                            #{index + 1}
+                          </span>
+                          <span className="text-sm font-semibold text-gray-200 truncate max-w-[120px]" title={item.propertyName}>
+                            {item.propertyName}
+                          </span>
+                        </div>
+                        <span className="text-lg font-bold text-blue-400">
+                          {item.totalUsage}
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-500 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="flex items-center space-x-1">
+                            <span>🪑</span>
+                            <span>Mobilya:</span>
+                          </span>
+                          <span className="font-medium text-gray-400">{item.furnitureUsage}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="flex items-center space-x-1">
+                            <span>📦</span>
+                            <span>Set:</span>
+                          </span>
+                          <span className="font-medium text-gray-400">{item.furnitureSetUsage}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
