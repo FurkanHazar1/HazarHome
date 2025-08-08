@@ -4,8 +4,11 @@ import { getToken } from 'next-auth/jwt'
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  console.log('🔒 Middleware checking path:', pathname)
+
   // Public routes - always allow
   if (isPublicRoute(pathname)) {
+    console.log('✅ Public route, allowing access')
     return NextResponse.next()
   }
 
@@ -15,10 +18,16 @@ export async function middleware(request: NextRequest) {
     secret: process.env.NEXTAUTH_SECRET,
   })
 
+  console.log('🎫 Token found:', !!token)
+  if (token) {
+    console.log('👤 User role:', token?.role)
+  }
+
   // Check if route needs protection
   if (pathname.startsWith('/admin') || (pathname.startsWith('/api/') && !isPublicApiRoute(pathname))) {
     // No token - redirect to login
     if (!token) {
+      console.log('❌ No token, redirecting to login')
       const loginUrl = new URL('/auth/login', request.url)
       loginUrl.searchParams.set('callbackUrl', request.url)
       return NextResponse.redirect(loginUrl)
@@ -29,8 +38,11 @@ export async function middleware(request: NextRequest) {
     const validRoles = ['SUPER_ADMIN', 'ADMIN', 'MODERATOR']
     
     if (!validRoles.includes(userRole)) {
+      console.log('❌ Invalid role, access denied')
       return new NextResponse('Unauthorized', { status: 401 })
     }
+
+    console.log('✅ Valid token and role, allowing access')
   }
 
   return NextResponse.next()
@@ -39,9 +51,13 @@ export async function middleware(request: NextRequest) {
 // Public routes that don't need authentication
 function isPublicRoute(pathname: string): boolean {
   const publicRoutes = [
-    '/',                   // Home page
     '/auth',              // Auth pages
   ]
+  
+  // Ana sayfa ayrı kontrol
+  if (pathname === '/') {
+    return true
+  }
   
   return publicRoutes.some(route => pathname.startsWith(route))
 }
@@ -57,16 +73,16 @@ function isPublicApiRoute(pathname: string): boolean {
   return publicRoutes.some(route => pathname.startsWith(route))
 }
 
+// Middleware sadece bu rotaları kontrol etsin
 export const config = {
   matcher: [
-    "/admin/:path*",
-    "/api/categories/:path*",
-    "/api/colors/:path*", 
-    "/api/furniture/:path*",
-    "/api/furniture-sets/:path*",
-    "/api/properties/:path*",
-    "/api/images/:path*",
-    "/api/setup/:path*",
-    "/api/cleanup/:path*"
-  ]
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!_next/static|_next/image|favicon.ico).*)',
+  ],
 }

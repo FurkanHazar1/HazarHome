@@ -78,7 +78,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                placeholder="admin@hazarhome.com"
+                placeholder="email@domain.com"
                 className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder-white/40 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
               />
             </div>
@@ -130,23 +130,6 @@ export default function LoginPage() {
               )}
             </button>
           </form>
-
-          {/* Test Credentials */}
-          <div className="mt-6 pt-6 border-t border-white/20">
-            <p className="text-white/60 text-sm text-center mb-3">Test Hesapları:</p>
-            <div className="space-y-2 text-xs text-white/50">
-              <div className="bg-white/5 rounded-lg p-3">
-                <p><strong className="text-white/70">Super Admin:</strong></p>
-                <p>Email: admin@hazarhome.com</p>
-                <p>Şifre: admin123!</p>
-              </div>
-              <div className="bg-white/5 rounded-lg p-3">
-                <p><strong className="text-white/70">Moderator:</strong></p>
-                <p>Email: moderator@hazarhome.com</p>
-                <p>Şifre: moderator123!</p>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Back to Home */}
