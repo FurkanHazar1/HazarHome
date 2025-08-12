@@ -681,10 +681,36 @@ const handleDragStart = (e: React.DragEvent, tempId: string) => {
 
   return (
 <div className="min-h-screen bg-gradient-to-br from-gray-900 to-slate-900">
-      <div className="max-w-5xl mx-auto p-6">
+      <div className="max-w-5xl mx-auto p-4 sm:p-6">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
+        <div className="mb-6 sm:mb-8">
+          {/* Mobile Header */}
+          <div className="flex flex-col space-y-4 sm:hidden">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
+                  <FurnitureIcon />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
+                    Yeni Mobilya
+                  </h1>
+                  <p className="text-gray-400 text-sm">
+                    Ürün ekleyin
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => router.back()}
+                className="flex items-center justify-center w-10 h-10 text-gray-400 hover:text-gray-200 hover:bg-gray-800 rounded-lg transition-all duration-200"
+              >
+                <BackIcon />
+              </button>
+            </div>
+          </div>
+
+          {/* Desktop Header */}
+          <div className="hidden sm:flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
                 <FurnitureIcon />

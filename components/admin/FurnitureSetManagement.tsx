@@ -4,18 +4,21 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 
-// Utility function for image URLs with multiple fallbacks
+// Utility function for image URLs - Updated for new system
 const getImageUrl = (filePath: string): string[] => {
   if (!filePath) return []
   
+  // New system: Direct public URLs
   const normalizedPath = filePath.replace(/\\/g, '/')
-  const cleanPath = normalizedPath.replace(/^uploads\//, '')
   
+  // Priority order for new image system  
   const urlOptions = [
-    `/api/images/serve/${cleanPath}`,
-    `/uploads/${cleanPath}`,
-    `/${normalizedPath}`,
-    `/${cleanPath}`
+    // New structure: /uploads/images/furniture-sets/{category-slug}/{id}/image_{sortOrder}.jpg
+    normalizedPath.startsWith('/uploads/') ? normalizedPath : `/uploads/${normalizedPath.replace(/^uploads\//, '')}`,
+    // Legacy fallback
+    normalizedPath.startsWith('/') ? normalizedPath : `/${normalizedPath}`,
+    // API serve fallback (deprecated but still functional)
+    `/api/images/serve/${normalizedPath.replace(/^uploads\//, '')}`
   ]
   
   return urlOptions

@@ -146,7 +146,7 @@ model FurnitureImage {
   isActive    Boolean   @default(true) @map("is_active")
   
   // Relations
-  furniture   Furniture @relation(fields: [furnitureId], references: [furnitureId])
+  furniture   Furniture @relation(fields: [furnitureId], references: [furnitureId], onDelete: Cascade)
   image       Image     @relation(fields: [imageId], references: [imageId], onDelete: Cascade)
 
   @@map("furniture_images")
@@ -208,7 +208,7 @@ model FurnitureSetImage {
   isActive       Boolean      @default(true) @map("is_active")
   
   // Relations
-  furnitureSet   FurnitureSet @relation(fields: [furnitureSetId], references: [setId])
+  furnitureSet   FurnitureSet @relation(fields: [furnitureSetId], references: [setId], onDelete: Cascade)
   image          Image        @relation(fields: [imageId], references: [imageId], onDelete: Cascade)
 
   @@map("furniture_set_images")

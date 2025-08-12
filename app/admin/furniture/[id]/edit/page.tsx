@@ -2,15 +2,17 @@
 import FurnitureEdit from '@/components/admin/FurnitureEdit'
 
 interface FurnitureEditPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
-export default function FurnitureEditPage({ params }: FurnitureEditPageProps) {
+export default async function FurnitureEditPage({ params }: FurnitureEditPageProps) {
+  const { id } = await params
+  
   return (
     <div>
-      <FurnitureEdit furnitureId={params.id} />
+      <FurnitureEdit furnitureId={parseInt(id)} />
     </div>
   )
 }

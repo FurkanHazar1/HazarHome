@@ -5,10 +5,11 @@ import { prisma } from '@/lib/prisma'
 // GET - Tek özellik detayı (geliştirilmiş)
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const propertyId = parseInt(params.id)
+    const { id } = await params
+    const propertyId = parseInt(id)
 
     if (isNaN(propertyId)) {
       return NextResponse.json({
@@ -135,10 +136,11 @@ export async function GET(
 // PUT - Özellik güncelle (geliştirilmiş)
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const propertyId = parseInt(params.id)
+    const { id } = await params
+    const propertyId = parseInt(id)
     
     if (isNaN(propertyId)) {
       return NextResponse.json({
@@ -296,10 +298,11 @@ export async function PUT(
 // DELETE - Özellik sil (geliştirilmiş)
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const propertyId = parseInt(params.id)
+    const { id } = await params
+    const propertyId = parseInt(id)
 
     if (isNaN(propertyId)) {
       return NextResponse.json({
@@ -400,10 +403,11 @@ export async function DELETE(
 // PATCH - Özellik değerlerini toplu güncelle
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const propertyId = parseInt(params.id)
+    const { id } = await params
+    const propertyId = parseInt(id)
     
     if (isNaN(propertyId)) {
       return NextResponse.json({

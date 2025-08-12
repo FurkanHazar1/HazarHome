@@ -1,6 +1,12 @@
-// app/api/furniture-sets/route.ts - Furniture Sets API with Category-Based Image System
+// app/api/furniture-sets/route.ts - Simplified Image Management System
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { 
+  slugifyCategory, 
+  processImageFiles,
+  toPublicUrl,
+  deleteImage
+} from '@/lib/image-utils'
 
 // Type definitions
 interface PropertyInput {
@@ -19,113 +25,6 @@ interface ImageFileWithMetadata {
   sortOrder: number;
   imageType: 'main' | 'gallery';
   altText?: string;
-}
-
-// Helper function to process image files with category-based system
-async function processImageFiles(
-  files: File[], 
-  setName: string,
-  categoryName: string,
-  imageTypeMappings?: { [fileName: string]: 'main' | 'gallery' }
-): Promise<Array<{
-  imageData: any;
-  fileBuffer: string;
-  sortOrder: number;
-  imageType: 'main' | 'gallery';
-  categoryName: string;
-  itemName: string;
-}>> {
-  const processedImages = []
-  
-  for (let i = 0; i < files.length; i++) {
-    const file = files[i]
-    
-    // File validation
-    if (file.size > 104857600) { // 100MB
-      throw new Error(`File ${file.name} is larger than 100MB`)
-    }
-
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
-    if (!allowedTypes.includes(file.type)) {
-      throw new Error(`Unsupported file type: ${file.type}`)
-    }
-
-    // Determine image type
-    let imageType: 'main' | 'gallery' = 'gallery'
-    
-    if (imageTypeMappings && imageTypeMappings[file.name]) {
-      imageType = imageTypeMappings[file.name]
-    } else if (i === 0) {
-      // First image is main by default
-      imageType = 'main'
-    }
-
-    // Convert file to buffer
-    const arrayBuffer = await file.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
-    const base64 = buffer.toString('base64')
-
-    processedImages.push({
-      imageData: {
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type.split('/')[1],
-        originalFileName: file.name,
-        altText: `${setName} - ${imageType} image`
-      },
-      fileBuffer: base64,
-      sortOrder: imageType === 'main' ? 0 : i,
-      imageType,
-      categoryName,
-      itemName: setName
-    })
-  }
-
-  return processedImages
-}
-
-// Helper function to create images via internal API with category-based system
-async function createImagesForFurnitureSet(
-  setId: number, 
-  setName: string,
-  categoryName: string,
-  processedImages: any[]
-) {
-  const results = []
-  
-  for (const imageData of processedImages) {
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/images`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          // Category-based format for furniture sets
-          itemType: 'furnitureSet',
-          itemId: setId,
-          categoryName: imageData.categoryName,
-          itemName: imageData.itemName,
-          imageType: imageData.imageType,
-          imageData: imageData.imageData,
-          fileBuffer: imageData.fileBuffer,
-          sortOrder: imageData.sortOrder,
-          generateThumbnails: true // Always generate thumbnails
-        })
-      })
-
-      const result = await response.json()
-      if (result.success) {
-        results.push(result.data)
-      } else {
-        console.warn(`Image ${imageData.imageData.fileName} could not be created:`, result.error)
-      }
-    } catch (error) {
-      console.warn(`Error creating image ${imageData.imageData.fileName}:`, error)
-    }
-  }
-
-  return results
 }
 
 // GET - Enhanced furniture sets listing with parent category filtering
@@ -347,9 +246,7 @@ export async function GET(request: Request) {
               ...setImage,
               image: {
                 ...setImage.image,
-                url: setImage.image.filePath 
-                  ? `/api/images/serve/${setImage.image.filePath.replace('uploads/', '')}`
-                  : null
+                url: toPublicUrl(setImage.image.filePath)
               }
             }
             
@@ -373,9 +270,7 @@ export async function GET(request: Request) {
           ...setImage,
           image: {
             ...setImage.image,
-            url: setImage.image.filePath 
-              ? `/api/images/serve/${setImage.image.filePath.replace('uploads/', '')}`
-              : null
+            url: toPublicUrl(setImage.image.filePath)
           }
         }))
       }
@@ -551,6 +446,9 @@ export async function POST(request: Request) {
       }, { status: 400 })
     }
 
+    // Generate category slug for path creation
+    const categorySlug = slugifyCategory(category.categoryName)
+
     // Check for duplicate set name
     const existingSet = await prisma.furnitureSet.findFirst({
       where: {
@@ -660,23 +558,8 @@ export async function POST(request: Request) {
       }
     }
 
-    // Process image files with category-based system
-    let processedImages: any[] = []
-    if (imageFiles.length > 0) {
-      try {
-        processedImages = await processImageFiles(
-          imageFiles, 
-          setName.trim(),
-          category.categoryName,
-          parsedImageTypeMappings
-        )
-      } catch (imageProcessError) {
-        return NextResponse.json({
-          success: false,
-          error: `Image processing error: ${imageProcessError instanceof Error ? imageProcessError.message : 'Unknown error'}`
-        }, { status: 400 })
-      }
-    }
+    // Process image files with new system AFTER furniture set creation
+    // (We need set ID for proper path generation)
 
     // Main transaction - Create furniture set and related records
     const furnitureSet = await prisma.$transaction(async (tx) => {
@@ -737,19 +620,19 @@ export async function POST(request: Request) {
       timeout: 30000
     })
 
-    // Create images after successful transaction
+    // Process images after successful furniture set creation (now we have the ID)
     let imageResults: any[] = []
-    if (processedImages.length > 0) {
+    if (imageFiles.length > 0) {
       try {
-        imageResults = await createImagesForFurnitureSet(
-          furnitureSet.setId,
-          furnitureSet.setName || `Set ${furnitureSet.setId}`,
-          category.categoryName,
-          processedImages
+        imageResults = await processImageFiles(
+          imageFiles, 
+          furnitureSet.setId, // Now we have the actual ID
+          categorySlug,
+          'furniture-sets' // Use furniture-sets type
         )
-      } catch (imageError) {
-        console.warn('Image creation error:', imageError)
-        // Image error doesn't prevent set creation, just warns
+      } catch (imageProcessError) {
+        console.warn('Image processing error after furniture set creation:', imageProcessError)
+        // Image error doesn't prevent furniture set creation, just warns
       }
     }
 
@@ -840,7 +723,7 @@ export async function POST(request: Request) {
         ...si,
         image: {
           ...si.image,
-          url: si.image.filePath ? `/api/images/serve/${si.image.filePath.replace('uploads/', '')}` : null
+          url: toPublicUrl(si.image.filePath)
         }
       })) || [],
       stats: {
@@ -863,11 +746,11 @@ export async function POST(request: Request) {
         uploaded: imageResults.length,
         total: imageFiles.length,
         details: imageResults,
-        categoryBasedPaths: processedImages.map(img => ({
-          fileName: img.imageData.fileName,
-          imageType: img.imageType,
-          categoryName: img.categoryName,
-          expectedPath: `furniture-sets/${img.categoryName}/${furnitureSet.setId}_${img.itemName.toLowerCase().replace(/\s+/g, '-')}`
+        paths: imageResults.map((img: any) => ({
+          fileName: img.fileName,
+          sortOrder: img.sortOrder,
+          publicUrl: img.publicUrl,
+          savedPath: img.savedPath
         }))
       }
     }
@@ -1001,17 +884,25 @@ export async function DELETE(request: Request) {
       })
     })
 
-    // Delete images after successful transaction
+    // Delete images after successful transaction using new deleteImage function
     let imageDeleteResults = []
     if (allImageIds.length > 0) {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/images?ids=${allImageIds.join(',')}&force=true`, {
-          method: 'DELETE'
-        })
-        const imageResult = await response.json()
-        imageDeleteResults.push(imageResult)
+        console.log(`🗑️ Deleting ${allImageIds.length} furniture-set images: ${allImageIds}`)
+        for (const imageId of allImageIds) {
+          const imageIdNumber = parseInt(imageId.toString())
+          if (isNaN(imageIdNumber)) continue
+          
+          const deleted = await deleteImage(imageIdNumber, 'furniture-sets')
+          imageDeleteResults.push({ imageId, deleted })
+          if (deleted) {
+            console.log(`✅ Successfully deleted furniture-set image: ${imageId}`)
+          } else {
+            console.log(`❌ Failed to delete furniture-set image: ${imageId}`)
+          }
+        }
       } catch (error) {
-        console.warn('Image deletion error:', error)
+        console.warn('Furniture-set image deletion error:', error)
       }
     }
 

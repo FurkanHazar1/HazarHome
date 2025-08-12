@@ -1,484 +1,74 @@
-// lib/image-utils.ts - New Category-Based Image Management System
+import { promises as fs } from 'fs'
 import path from 'path'
+import { prisma } from '@/lib/prisma'
 
-// Type definitions
-export interface FilePathResult {
-  directory: string;
-  filePath: string;
-  fileName: string;
-  fullPath: string;
+// Type definitions for image management
+export type ItemType = 'furnitures' | 'furniture-sets'
+export type ImageExtension = 'jpg' | 'png' | 'webp'
+
+export interface ImagePathInfo {
+  diskDir: string
+  fileName: string
+  diskPath: string
+  publicUrl: string
 }
 
-export interface ImageMetadata {
-  itemType?: 'furniture' | 'furnitureSet';
-  itemId?: number;
-  categoryName?: string;
-  itemName?: string;
-  imageType?: 'main' | 'gallery' | 'thumbnail';
-  sortOrder?: number;
-  uploadedAt?: string;
-  originalFileName?: string;
-}
-
-export interface ThumbnailConfig {
-  width: number;
-  height: number;
-  quality: number;
-}
-
-// Thumbnail configurations
-export const THUMBNAIL_CONFIGS: Record<string, ThumbnailConfig> = {
-  main_thumb: { width: 500, height: 500, quality: 80 },
-  gallery_thumb: { width: 400, height: 400, quality: 75 },
-  small_thumb: { width: 250, height: 250, quality: 70 }
+export interface ImageFileInfo {
+  fileName: string
+  sortOrder: number
+  ext: string
 }
 
 /**
- * Create URL-friendly slug from text
+ * Converts category name to URL-friendly slug
  */
-export function createSlug(text: string): string {
-  if (!text || typeof text !== 'string') return 'unknown'
-  
-  return text
+export function slugifyCategory(categoryName: string): string {
+  return categoryName
     .toLowerCase()
-    .trim()
-    // Turkish characters
     .replace(/ğ/g, 'g')
     .replace(/ü/g, 'u')
     .replace(/ş/g, 's')
     .replace(/ı/g, 'i')
     .replace(/ö/g, 'o')
     .replace(/ç/g, 'c')
-    // Remove special characters except letters, numbers, spaces, and hyphens
-    .replace(/[^a-z0-9\s-]/g, '')
-    // Replace spaces with hyphens
-    .replace(/\s+/g, '-')
-    // Remove multiple hyphens
+    .replace(/[^a-z0-9\-_]/g, '-')
     .replace(/-+/g, '-')
-    // Remove leading and trailing hyphens
-    .replace(/^-+|-+$/g, '')
-    // Limit length
-    .substring(0, 50)
+    .replace(/^-|-$/g, '')
 }
 
 /**
- * Generate category-based file path for furniture or furniture sets
+ * Builds image paths for furniture or furniture-sets with new simplified structure
  */
-export function generateCategoryBasedPath(
-  itemType: 'furniture' | 'furnitureSet',
-  itemId: number,
-  itemName: string,
-  categoryName: string,
-  imageType: 'main' | 'gallery' | 'thumbnail',
-  originalFileName: string,
-  sortOrder: number = 1
-): FilePathResult {
-  const extension = path.extname(originalFileName)
-  const categorySlug = createSlug(categoryName)
-  const itemSlug = createSlug(itemName)
-  
-  // Create item directory name: {id}_{name_slug}
-  const itemDirName = `${itemId}_${itemSlug}`
-  
-  // Base path structure
-  const basePath = itemType === 'furniture' 
-    ? path.join('uploads', 'furniture', categorySlug, itemDirName)
-    : path.join('uploads', 'furniture-sets', categorySlug, itemDirName)
-  
-  let fileName: string
-  let subDirectory: string
-  
-  switch (imageType) {
-    case 'main':
-      fileName = `main${extension}`
-      subDirectory = ''
-      break
-      
-    case 'gallery':
-      fileName = `${sortOrder}${extension}`
-      subDirectory = 'gallery'
-      break
-      
-    case 'thumbnail':
-      // Determine thumbnail type based on sortOrder
-      if (sortOrder === 0) {
-        fileName = `main_thumb${extension}`
-      } else {
-        fileName = `${sortOrder}_thumb${extension}`
-      }
-      subDirectory = 'thumbnails'
-      break
-      
-    default:
-      fileName = `${sortOrder}${extension}`
-      subDirectory = 'gallery'
-  }
-  
-  const directory = subDirectory 
-    ? path.join(basePath, subDirectory)
-    : basePath
-  
-  const filePath = path.join(directory, fileName)
-  
+export function buildImagePaths({
+  itemType,
+  itemId,
+  categorySlug,
+  sortOrder,
+  ext = 'jpg'
+}: {
+  itemType: ItemType
+  itemId: number
+  categorySlug: string
+  sortOrder: number
+  ext?: string
+}): ImagePathInfo {
+  const fileName = `image_${sortOrder}.${ext}`
+  const diskDir = path.join(process.cwd(), 'public', 'uploads', 'images', itemType, categorySlug, itemId.toString())
+  const diskPath = path.join(diskDir, fileName)
+  const publicUrl = `/uploads/images/${itemType}/${categorySlug}/${itemId}/${fileName}`
+
   return {
-    directory,
-    filePath,
+    diskDir,
     fileName,
-    fullPath: path.resolve(filePath)
+    diskPath,
+    publicUrl
   }
 }
 
 /**
- * Generate thumbnail path from main image path
+ * Ensures directory exists, creates if not
  */
-export function generateThumbnailPath(
-  mainImagePath: string,
-  thumbnailType: 'main_thumb' | 'gallery_thumb' = 'main_thumb'
-): FilePathResult {
-  const parsedPath = path.parse(mainImagePath)
-  const directory = parsedPath.dir.replace('/gallery', '/thumbnails')
-  
-  let thumbnailFileName: string
-  if (thumbnailType === 'main_thumb') {
-    thumbnailFileName = `main_thumb${parsedPath.ext}`
-  } else {
-    // For gallery images, use the original name with _thumb suffix
-    thumbnailFileName = `${parsedPath.name}_thumb${parsedPath.ext}`
-  }
-  
-  const filePath = path.join(directory, thumbnailFileName)
-  
-  return {
-    directory,
-    filePath,
-    fileName: thumbnailFileName,
-    fullPath: path.resolve(filePath)
-  }
-}
-
-/**
- * Create comprehensive image metadata
- */
-export function createImageMetadata(
-  itemType: 'furniture' | 'furnitureSet',
-  itemId: number,
-  categoryName: string,
-  itemName: string,
-  imageType: 'main' | 'gallery' | 'thumbnail',
-  originalFileName: string | null,
-  sortOrder: number = 1
-): string {
-  const metadata: ImageMetadata = {
-    itemType,
-    itemId,
-    categoryName,
-    itemName,
-    imageType,
-    sortOrder,
-    uploadedAt: new Date().toISOString(),
-    originalFileName: originalFileName || 'unknown.jpg'
-  }
-  
-  return JSON.stringify(metadata)
-}
-
-/**
- * Parse image metadata from description field
- */
-export function parseImageMetadata(description: string | null): ImageMetadata | null {
-  if (!description) return null
-  
-  try {
-    const parsed = JSON.parse(description)
-    
-    // Validate required fields
-    if (!parsed.itemType || !parsed.itemId || !parsed.imageType) {
-      return null
-    }
-    
-    // Validate itemType
-    if (parsed.itemType !== 'furniture' && parsed.itemType !== 'furnitureSet') {
-      return null
-    }
-    
-    return parsed as ImageMetadata
-  } catch {
-    return null
-  }
-}
-
-/**
- * Check if metadata is valid and complete
- */
-export function isValidImageMetadata(metadata: ImageMetadata | null): metadata is ImageMetadata & {
-  itemType: 'furniture' | 'furnitureSet';
-  itemId: number;
-  categoryName: string;
-  itemName: string;
-  imageType: 'main' | 'gallery' | 'thumbnail';
-} {
-  return !!(
-    metadata &&
-    metadata.itemType &&
-    metadata.itemId &&
-    metadata.categoryName &&
-    metadata.itemName &&
-    metadata.imageType &&
-    (metadata.itemType === 'furniture' || metadata.itemType === 'furnitureSet') &&
-    ['main', 'gallery', 'thumbnail'].includes(metadata.imageType)
-  )
-}
-
-/**
- * Get image directory structure for item
- */
-export function getImageDirectory(
-  itemType: 'furniture' | 'furnitureSet',
-  itemId: number,
-  itemName: string,
-  categoryName: string
-): {
-  baseDir: string;
-  mainImageDir: string;
-  galleryDir: string;
-  thumbnailDir: string;
-} {
-  const categorySlug = createSlug(categoryName)
-  const itemSlug = createSlug(itemName)
-  const itemDirName = `${itemId}_${itemSlug}`
-  
-  const baseDir = itemType === 'furniture' 
-    ? path.join('uploads', 'furniture', categorySlug, itemDirName)
-    : path.join('uploads', 'furniture-sets', categorySlug, itemDirName)
-  
-  return {
-    baseDir,
-    mainImageDir: baseDir,
-    galleryDir: path.join(baseDir, 'gallery'),
-    thumbnailDir: path.join(baseDir, 'thumbnails')
-  }
-}
-
-/**
- * Normalize file path - handle Windows/Unix separators
- */
-export function normalizeFilePath(filePath: string): string {
-  if (!filePath) return ''
-  
-  // Convert Windows separators to Unix
-  let normalized = filePath.replace(/\\/g, '/')
-  
-  // Remove multiple slashes
-  normalized = normalized.replace(/\/+/g, '/')
-  
-  // Remove leading slash if exists
-  normalized = normalized.replace(/^\/+/, '')
-  
-  return normalized
-}
-
-/**
- * Get clean path without uploads prefix for URL generation
- */
-export function getCleanPathForUrl(filePath: string): string {
-  const normalized = normalizeFilePath(filePath)
-  
-  // Remove uploads prefix if exists
-  if (normalized.startsWith('uploads/')) {
-    return normalized.substring('uploads/'.length)
-  }
-  
-  return normalized
-}
-
-/**
- * Generate image URL for serving
- */
-export function getImageUrl(filePath: string): string {
-  try {
-    if (!filePath || typeof filePath !== 'string') return ''
-    
-    const cleanPath = getCleanPathForUrl(filePath)
-    
-    if (!cleanPath) return ''
-    
-    // Ensure proper URL encoding for special characters
-    const encodedPath = cleanPath
-      .split('/')
-      .map(segment => encodeURIComponent(segment))
-      .join('/')
-    
-    return `/api/images/serve/${encodedPath}`
-  } catch (error) {
-    console.warn('Error generating image URL:', error)
-    return ''
-  }
-}
-
-/**
- * Get image URL with fallback
- */
-export function getImageUrlWithFallback(
-  filePath: string, 
-  fallbackUrl: string = '/images/placeholder.jpg'
-): string {
-  if (!filePath) return fallbackUrl
-  
-  const imageUrl = getImageUrl(filePath)
-  return imageUrl || fallbackUrl
-}
-
-/**
- * Parse path to extract item information
- */
-export function parseImagePath(filePath: string): {
-  itemType: 'furniture' | 'furnitureSet' | null;
-  categoryName: string | null;
-  itemId: number | null;
-  itemName: string | null;
-  imageType: 'main' | 'gallery' | 'thumbnail' | null;
-  sortOrder: number | null;
-} {
-  const normalized = normalizeFilePath(filePath)
-  const parts = normalized.split('/')
-  
-  // Expected structure: uploads/furniture/category/id_name/[gallery|thumbnails]/filename
-  // or: uploads/furniture-sets/category/id_name/[gallery|thumbnails]/filename
-  
-  if (parts.length < 4) {
-    return {
-      itemType: null,
-      categoryName: null,
-      itemId: null,
-      itemName: null,
-      imageType: null,
-      sortOrder: null
-    }
-  }
-  
-  const itemType = parts[1] === 'furniture' ? 'furniture' : 
-                  parts[1] === 'furniture-sets' ? 'furnitureSet' : null
-  
-  const categoryName = parts[2]
-  const itemDirName = parts[3]
-  
-  // Parse item directory name: {id}_{name_slug}
-  const itemDirMatch = itemDirName.match(/^(\d+)_(.+)$/)
-  const itemId = itemDirMatch ? parseInt(itemDirMatch[1]) : null
-  const itemName = itemDirMatch ? itemDirMatch[2] : null
-  
-  // Determine image type and sort order
-  let imageType: 'main' | 'gallery' | 'thumbnail' | null = null
-  let sortOrder: number | null = null
-  
-  if (parts.length === 5) {
-    // Has subdirectory (gallery or thumbnails)
-    const subDir = parts[4]
-    const fileName = parts[5] || ''
-    
-    if (subDir === 'gallery') {
-      imageType = 'gallery'
-      const orderMatch = fileName.match(/^(\d+)\./)
-      sortOrder = orderMatch ? parseInt(orderMatch[1]) : 1
-    } else if (subDir === 'thumbnails') {
-      imageType = 'thumbnail'
-      if (fileName.startsWith('main_thumb')) {
-        sortOrder = 0
-      } else {
-        const orderMatch = fileName.match(/^(\d+)_thumb\./)
-        sortOrder = orderMatch ? parseInt(orderMatch[1]) : 1
-      }
-    }
-  } else if (parts.length === 4) {
-    // Main image (no subdirectory)
-    const fileName = parts[4] || ''
-    if (fileName.startsWith('main.')) {
-      imageType = 'main'
-      sortOrder = 0
-    }
-  }
-  
-  return {
-    itemType,
-    categoryName,
-    itemId,
-    itemName,
-    imageType,
-    sortOrder
-  }
-}
-
-/**
- * Format file size for human reading
- */
-export function formatFileSize(bytes: number | null | undefined): string {
-  if (!bytes || bytes === 0) return '0 Bytes'
-  
-  const k = 1024
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-}
-
-/**
- * Get image resolution string
- */
-export function getImageResolution(width: number | null, height: number | null): string {
-  if (!width || !height) return 'Bilinmiyor'
-  return `${width} × ${height} px`
-}
-
-/**
- * Calculate aspect ratio
- */
-export function getAspectRatio(width: number | null, height: number | null): number | null {
-  if (!width || !height) return null
-  return Math.round((width / height) * 100) / 100
-}
-
-/**
- * Get image type from extension
- */
-export function getImageTypeFromExtension(fileName: string): string {
-  if (!fileName) return 'unknown'
-  
-  const ext = path.extname(fileName).toLowerCase().substring(1)
-  const imageTypes: Record<string, string> = {
-    jpg: 'jpeg',
-    jpeg: 'jpeg',
-    png: 'png',
-    gif: 'gif',
-    webp: 'webp',
-    svg: 'svg',
-    bmp: 'bmp',
-    ico: 'icon'
-  }
-  
-  return imageTypes[ext] || ext || 'unknown'
-}
-
-/**
- * Check if file extension is supported image type
- */
-export function isSupportedImageType(fileName: string): boolean {
-  const supportedTypes = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp']
-  const ext = path.extname(fileName).toLowerCase().substring(1)
-  return supportedTypes.includes(ext)
-}
-
-/**
- * Validate item type
- */
-export function validateItemType(itemType: string): itemType is 'furniture' | 'furnitureSet' {
-  return itemType === 'furniture' || itemType === 'furnitureSet'
-}
-
-/**
- * Ensure directory exists helper
- */
-export async function ensureDirectoryExists(dirPath: string): Promise<void> {
-  const fs = await import('fs/promises')
+export async function ensureDir(dirPath: string): Promise<void> {
   try {
     await fs.access(dirPath)
   } catch {
@@ -487,120 +77,450 @@ export async function ensureDirectoryExists(dirPath: string): Promise<void> {
 }
 
 /**
- * Save physical file helper
+ * Validates image file
  */
-export async function savePhysicalFile(filePath: string, fileBuffer: Buffer): Promise<void> {
-  const fs = await import('fs/promises')
-  const directory = path.dirname(filePath)
-  await ensureDirectoryExists(directory)
-  await fs.writeFile(filePath, fileBuffer)
+export function validateImage(file: File): { isValid: boolean; error?: string } {
+  // Check file size (max 20MB as per requirements)
+  if (file.size > 20 * 1024 * 1024) {
+    return { isValid: false, error: 'File size cannot exceed 20MB' }
+  }
+
+  // Check file type
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+  if (!allowedTypes.includes(file.type)) {
+    return { isValid: false, error: 'Only JPEG, PNG and WebP files are allowed' }
+  }
+
+  return { isValid: true }
 }
 
 /**
- * Delete physical file helper
+ * Get file extension from MIME type
  */
-export async function deletePhysicalFile(filePath: string): Promise<void> {
-  const fs = await import('fs/promises')
+export function extFromMime(mimeType: string): string {
+  switch (mimeType) {
+    case 'image/jpeg':
+    case 'image/jpg':
+      return 'jpg'
+    case 'image/png':
+      return 'png'
+    case 'image/webp':
+      return 'webp'
+    default:
+      return 'jpg'
+  }
+}
+
+/**
+ * Writes image buffer to disk path
+ */
+export async function writeImage(buffer: Buffer, diskPath: string): Promise<void> {
+  const dirPath = path.dirname(diskPath)
+  await ensureDir(dirPath)
+  await fs.writeFile(diskPath, buffer)
+}
+
+/**
+ * Reads directory and returns image files info
+ */
+export async function readDirImages(diskDir: string): Promise<ImageFileInfo[]> {
   try {
-    await fs.unlink(filePath)
+    const files = await fs.readdir(diskDir)
+    const imageFiles: ImageFileInfo[] = []
     
-    // Try to remove empty directories
-    const directory = path.dirname(filePath)
-    try {
-      const files = await fs.readdir(directory)
-      if (files.length === 0) {
-        await fs.rmdir(directory)
-        
-        // Try to remove parent directory if empty
-        const parentDir = path.dirname(directory)
-        try {
-          const parentFiles = await fs.readdir(parentDir)
-          if (parentFiles.length === 0) {
-            await fs.rmdir(parentDir)
-          }
-        } catch {}
+    for (const file of files) {
+      const match = file.match(/^image_(\d+)\.(\w+)$/)
+      if (match) {
+        imageFiles.push({
+          fileName: file,
+          sortOrder: parseInt(match[1]),
+          ext: match[2]
+        })
       }
-    } catch {}
-  } catch (error) {
-    console.warn(`Could not delete file ${filePath}:`, error)
+    }
+    
+    return imageFiles.sort((a, b) => a.sortOrder - b.sortOrder)
+  } catch {
+    return []
   }
 }
 
 /**
- * Generate possible legacy paths for backward compatibility
+ * Process multiple image files for furniture or furniture-sets with new simplified system
  */
-export function generateLegacyPaths(normalizedPath: string): string[] {
-  const pathsToTry: string[] = []
-  
-  // Original path
-  pathsToTry.push(normalizedPath)
-  
-  // Legacy furniture paths
-  if (normalizedPath.includes('furniture/')) {
-    pathsToTry.push(normalizedPath.replace('furniture/', 'furniture/'))
-  }
-  
-  // Legacy furniture set paths
-  if (normalizedPath.includes('furniture-sets/')) {
-    pathsToTry.push(normalizedPath.replace('furniture-sets/', 'furnituresets/'))
-  }
-  
-  // Add uploads prefix variations
-  if (!normalizedPath.startsWith('uploads/')) {
-    pathsToTry.push(path.join('uploads', normalizedPath))
-  }
-  
-  return [...new Set(pathsToTry)]
-}
-
-/**
- * Check if path follows new structure
- */
-export function isNewStructurePath(filePath: string): boolean {
-  const normalized = normalizeFilePath(filePath)
-  
-  // Check if it follows the new structure pattern
-  const newStructurePattern = /^uploads\/(furniture|furniture-sets)\/[^\/]+\/\d+_[^\/]+\/(main\.|gallery\/\d+\.|thumbnails\/.*_thumb\.)/
-  
-  return newStructurePattern.test(normalized)
-}
-
-/**
- * Migration helper: convert old path to new path
- */
-export function convertLegacyPathToNew(
-  oldPath: string,
-  itemType: 'furniture' | 'furnitureSet',
+export async function processImageFiles(
+  files: File[],
   itemId: number,
-  itemName: string,
-  categoryName: string,
-  imageType: 'main' | 'gallery' | 'thumbnail',
-  sortOrder: number = 1
-): FilePathResult {
-  const extension = path.extname(oldPath)
-  const originalFileName = path.basename(oldPath)
-  
-  return generateCategoryBasedPath(
-    itemType,
-    itemId,
-    itemName,
-    categoryName,
-    imageType,
-    originalFileName,
-    sortOrder
-  )
+  categorySlug: string,
+  itemType: ItemType = 'furnitures'
+): Promise<Array<{
+  fileName: string
+  sortOrder: number
+  publicUrl: string
+  savedPath: string
+  fileSize: number
+}>> {
+  const results = []
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i]
+    const sortOrder = i + 1
+
+    // Validate file
+    const validation = validateImage(file)
+    if (!validation.isValid) {
+      throw new Error(`File ${file.name}: ${validation.error}`)
+    }
+
+    // Get extension from file type
+    const extension = extFromMime(file.type)
+    
+    // Build paths using new system
+    const paths = buildImagePaths({
+      itemType,
+      itemId,
+      categorySlug,
+      sortOrder,
+      ext: extension
+    })
+
+    // Save file using new method
+    const buffer = Buffer.from(await file.arrayBuffer())
+    await writeImage(buffer, paths.diskPath)
+
+    // Create image record in database with relative path for DB storage
+    const relativePath = `uploads/images/${itemType}/${categorySlug}/${itemId}/${paths.fileName}`
+    const imageRecord = await prisma.image.create({
+      data: {
+        fileName: paths.fileName,
+        filePath: relativePath,
+        altText: `Image ${sortOrder}`,
+        description: null,
+        width: null, // Could be determined with sharp library
+        height: null,
+        fileSize: file.size
+      }
+    })
+
+    // Create furniture-image relationship
+    if (itemType === 'furnitures') {
+      await prisma.furnitureImage.create({
+        data: {
+          furnitureId: itemId,
+          imageId: imageRecord.imageId,
+          imageType: sortOrder === 1 ? 'main' : 'gallery', // Use sortOrder logic: image_1 = cover
+          sortOrder: sortOrder,
+          isActive: true
+        }
+      })
+    } else if (itemType === 'furniture-sets') {
+      await prisma.furnitureSetImage.create({
+        data: {
+          furnitureSetId: itemId,
+          imageId: imageRecord.imageId,
+          imageType: sortOrder === 1 ? 'main' : 'gallery', // Use sortOrder logic: image_1 = cover
+          sortOrder: sortOrder,
+          isActive: true
+        }
+      })
+    }
+
+    results.push({
+      fileName: paths.fileName,
+      sortOrder: sortOrder,
+      publicUrl: paths.publicUrl,
+      savedPath: paths.diskPath,
+      fileSize: file.size
+    })
+  }
+
+  return results
 }
-export function convertImageType(dbImageType: string): 'main' | 'gallery' | 'thumbnail' {
-  switch (dbImageType) {
+
+/**
+ * Renumber existing images to maintain sequence (both DB and disk files)
+ * Prevents conflicts by using temporary naming strategy
+ */
+export async function renumberImages(
+  diskDir: string,
+  itemId: number,
+  itemType: ItemType = 'furnitures'
+): Promise<void> {
+  try {
+    // Read current disk images
+    const currentImages = await readDirImages(diskDir)
+    if (currentImages.length === 0) return
+
+    // Step 1: Rename all files to temporary names to avoid conflicts
+    const tempMappings: Array<{original: string, temp: string, final: string, sortOrder: number}> = []
+    
+    for (let i = 0; i < currentImages.length; i++) {
+      const currentImage = currentImages[i]
+      const newSortOrder = i + 1
+      const tempFileName = `temp_${Date.now()}_${i}.${currentImage.ext}`
+      const finalFileName = `image_${newSortOrder}.${currentImage.ext}`
+      
+      tempMappings.push({
+        original: currentImage.fileName,
+        temp: tempFileName,
+        final: finalFileName,
+        sortOrder: newSortOrder
+      })
+    }
+
+    // Step 2: Rename all to temp names first
+    for (const mapping of tempMappings) {
+      const originalPath = path.join(diskDir, mapping.original)
+      const tempPath = path.join(diskDir, mapping.temp)
+      
+      try {
+        await fs.rename(originalPath, tempPath)
+      } catch (error) {
+        console.warn(`Failed to rename ${mapping.original} to temp:`, error)
+      }
+    }
+
+    // Step 3: Rename temp files to final names
+    for (const mapping of tempMappings) {
+      const tempPath = path.join(diskDir, mapping.temp)
+      const finalPath = path.join(diskDir, mapping.final)
+      
+      try {
+        await fs.rename(tempPath, finalPath)
+      } catch (error) {
+        console.warn(`Failed to rename temp to ${mapping.final}:`, error)
+      }
+    }
+
+    // Step 4: Update database records
+    if (itemType === 'furnitures') {
+      const furnitureImages = await prisma.furnitureImage.findMany({
+        where: { furnitureId: itemId, isActive: true },
+        include: { image: true },
+        orderBy: { sortOrder: 'asc' }
+      })
+
+      for (let i = 0; i < furnitureImages.length; i++) {
+        const newSortOrder = i + 1
+        const furnitureImage = furnitureImages[i]
+        const mapping = tempMappings[i]
+
+        if (mapping) {
+          const newRelativePath = furnitureImage.image.filePath.replace(
+            /image_\d+\.\w+$/,
+            mapping.final
+          )
+
+          // Update sortOrder and imageType
+          await prisma.furnitureImage.update({
+            where: { id: furnitureImage.id },
+            data: { 
+              sortOrder: newSortOrder,
+              imageType: newSortOrder === 1 ? 'main' : 'gallery'
+            }
+          })
+
+          // Update image filePath if needed
+          await prisma.image.update({
+            where: { imageId: furnitureImage.imageId },
+            data: {
+              fileName: mapping.final,
+              filePath: newRelativePath
+            }
+          })
+        }
+      }
+    } else if (itemType === 'furniture-sets') {
+      const furnitureSetImages = await prisma.furnitureSetImage.findMany({
+        where: { furnitureSetId: itemId, isActive: true },
+        include: { image: true },
+        orderBy: { sortOrder: 'asc' }
+      })
+
+      for (let i = 0; i < furnitureSetImages.length; i++) {
+        const newSortOrder = i + 1
+        const furnitureSetImage = furnitureSetImages[i]
+        const mapping = tempMappings[i]
+
+        if (mapping) {
+          const newRelativePath = furnitureSetImage.image.filePath.replace(
+            /image_\d+\.\w+$/,
+            mapping.final
+          )
+
+          // Update sortOrder and imageType
+          await prisma.furnitureSetImage.update({
+            where: { id: furnitureSetImage.id },
+            data: { 
+              sortOrder: newSortOrder,
+              imageType: newSortOrder === 1 ? 'main' : 'gallery'
+            }
+          })
+
+          // Update image filePath if needed
+          await prisma.image.update({
+            where: { imageId: furnitureSetImage.imageId },
+            data: {
+              fileName: mapping.final,
+              filePath: newRelativePath
+            }
+          })
+        }
+      }
+    }
+
+  } catch (error) {
+    console.error('Error renumbering images:', error)
+    throw error
+  }
+}
+
+/**
+ * Delete image file and database records with new system
+ */
+/**
+ * Delete image by ID - handles both database and file deletion
+ */
+export async function deleteImage(
+  imageId: number,
+  itemType: ItemType = 'furnitures'
+): Promise<boolean> {
+  try {
+    console.log(`🗑️ Deleting image ID: ${imageId} for ${itemType}`)
+    
+    // First get the image record to find file path
+    const image = await prisma.image.findUnique({
+      where: { imageId: imageId }
+    })
+
+    if (!image) {
+      console.warn(`❌ Image ${imageId} not found in database`)
+      return false
+    }
+
+    // Delete physical file
+    const filePath = path.join(process.cwd(), 'public', image.filePath)
+    try {
+      await fs.unlink(filePath)
+      console.log(`✅ Physical file deleted: ${filePath}`)
+    } catch (error) {
+      console.warn(`⚠️ File deletion error (file might not exist): ${error}`)
+    }
+
+    // Delete from database - Prisma will handle cascading due to onDelete: Cascade
+    await prisma.image.delete({
+      where: { imageId: imageId }
+    })
+    
+    console.log(`✅ Image ${imageId} deleted from database`)
+    return true
+    
+  } catch (error) {
+    console.error(`❌ Error deleting image ${imageId}:`, error)
+    return false
+  }
+}
+
+/**
+ * Recursively delete directory and all contents
+ */
+export async function deleteDirRecursive(dirPath: string): Promise<void> {
+  try {
+    const stat = await fs.stat(dirPath)
+    if (!stat.isDirectory()) {
+      await fs.unlink(dirPath)
+      return
+    }
+
+    const files = await fs.readdir(dirPath)
+    await Promise.all(
+      files.map(file => deleteDirRecursive(path.join(dirPath, file)))
+    )
+    await fs.rmdir(dirPath)
+  } catch (error) {
+    // Directory might not exist, which is fine
+    console.warn('Directory deletion warning:', error)
+  }
+}
+
+/**
+ * Move directory from old location to new location (for category changes)
+ */
+export async function moveDir(oldDir: string, newDir: string): Promise<void> {
+  try {
+    // Ensure new directory parent exists
+    await ensureDir(path.dirname(newDir))
+    
+    // Move directory
+    await fs.rename(oldDir, newDir)
+  } catch (error) {
+    console.error('Directory move error:', error)
+    throw error
+  }
+}
+
+/**
+ * Convert image type from old system to new system
+ */
+export function convertImageType(oldType: string): string {
+  switch (oldType.toLowerCase()) {
     case 'main_image':
     case 'main':
+    case 'cover':
       return 'main'
+    case 'gallery_image':
     case 'gallery':
       return 'gallery'
     case 'thumbnail':
       return 'thumbnail'
     default:
-      console.warn(`Unknown image type: ${dbImageType}, defaulting to 'gallery'`)
       return 'gallery'
   }
+}
+
+/**
+ * Normalize file path for cross-platform compatibility
+ */
+export function normalizeFilePath(filePath: string): string {
+  return filePath.replace(/\\/g, '/').replace(/\/+/g, '/')
+}
+
+/**
+ * Generate legacy paths for backward compatibility
+ */
+export function generateLegacyPaths(categoryName: string, itemId: number, itemName: string): string[] {
+  const normalizedName = itemName.toLowerCase().replace(/\s+/g, '-')
+  const categorySlug = slugifyCategory(categoryName)
+  
+  return [
+    `uploads/furniture/${categorySlug}/${itemId}_${normalizedName}`,
+    `uploads/furniture/${categoryName.toLowerCase()}/${itemId}_${normalizedName}`,
+    `uploads/furniture/${normalizedName}`
+  ]
+}
+
+/**
+ * Check if path uses new structure
+ */
+export function isNewStructurePath(filePath: string): boolean {
+  return filePath.includes('/uploads/images/furnitures/') || 
+         filePath.includes('/uploads/images/furniture-sets/')
+}
+
+/**
+ * Convert file path to public URL
+ */
+export function toPublicUrl(filePath: string): string {
+  // If already starts with /, return as is
+  if (filePath.startsWith('/')) {
+    return filePath
+  }
+  
+  // If doesn't start with uploads/, add it
+  if (!filePath.startsWith('uploads/')) {
+    return `/uploads/${filePath}`
+  }
+  
+  // Add leading slash
+  return `/${filePath}`
 }

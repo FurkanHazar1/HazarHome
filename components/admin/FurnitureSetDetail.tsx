@@ -5,17 +5,21 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 
+// Utility function for image URLs - Updated for new system
 const getImageUrl = (filePath: string): string[] => {
   if (!filePath) return []
   
+  // New system: Direct public URLs
   const normalizedPath = filePath.replace(/\\/g, '/')
-  const cleanPath = normalizedPath.replace(/^uploads\//, '')
   
+  // Priority order for new image system
   const urlOptions = [
-    `/api/images/serve/${cleanPath}`,
-    `/uploads/${cleanPath}`,
-    `/${normalizedPath}`,
-    `/${cleanPath}`
+    // New structure: /uploads/images/furniture-sets/{category-slug}/{id}/image_{sortOrder}.jpg
+    normalizedPath.startsWith('/uploads/') ? normalizedPath : `/uploads/${normalizedPath.replace(/^uploads\//, '')}`,
+    // Legacy fallback
+    normalizedPath.startsWith('/') ? normalizedPath : `/${normalizedPath}`,
+    // API serve fallback (deprecated but still functional)
+    `/api/images/serve/${normalizedPath.replace(/^uploads\//, '')}`
   ]
   
   return urlOptions
@@ -327,7 +331,7 @@ const ImageZoomModal = ({
 
   if (!isOpen || !image) return null
 
-  const imageUrl = image.url || `/api/images/serve/${image.filePath.replace(/^uploads\//, '')}`
+  const imageUrl = image.url || `/uploads/${image.filePath.replace(/^uploads\//, '')}`
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-95 z-50 flex items-center justify-center p-4 backdrop-blur-sm">

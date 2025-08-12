@@ -5,10 +5,11 @@ import { prisma } from '@/lib/prisma'
 // GET - Tek kategori detayı (geliştirilmiş)
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const categoryId = parseInt(params.id)
+    const { id } = await params
+    const categoryId = parseInt(id)
 
     if (isNaN(categoryId)) {
       return NextResponse.json({
@@ -103,10 +104,11 @@ export async function GET(
 // PUT - Kategori güncelle (geliştirilmiş)
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const categoryId = parseInt(params.id)
+    const { id } = await params
+    const categoryId = parseInt(id)
     
     if (isNaN(categoryId)) {
       return NextResponse.json({
@@ -316,10 +318,11 @@ export async function PUT(
 // DELETE - Kategori sil (geliştirilmiş)
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const categoryId = parseInt(params.id)
+    const { id } = await params
+    const categoryId = parseInt(id)
 
     if (isNaN(categoryId)) {
       return NextResponse.json({

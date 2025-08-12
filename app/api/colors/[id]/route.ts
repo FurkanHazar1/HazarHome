@@ -5,10 +5,11 @@ import { prisma } from '@/lib/prisma'
 // GET - Tek renk detayı
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const colorId = parseInt(params.id)
+    const { id } = await params
+    const colorId = parseInt(id)
 
     if (isNaN(colorId)) {
       return NextResponse.json({
@@ -70,10 +71,11 @@ export async function GET(
 // PUT - Renk güncelle
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const colorId = parseInt(params.id)
+    const { id } = await params
+    const colorId = parseInt(id)
     const { colorName, colorCode, isActive } = await request.json()
 
     if (isNaN(colorId)) {
@@ -153,10 +155,11 @@ export async function PUT(
 // DELETE - Renk sil
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const colorId = parseInt(params.id)
+    const { id } = await params
+    const colorId = parseInt(id)
 
     if (isNaN(colorId)) {
       return NextResponse.json({

@@ -188,14 +188,7 @@ export async function GET() {
       }),
       prisma.furniture.findMany({
         include: {
-          category: true,
-          _count: {
-            select: {
-              furnitureColors: true,
-              furnitureProperties: true,
-              furnitureImages: true
-            }
-          }
+          category: true
         },
         orderBy: { createdAt: 'desc' },
         take: 10

@@ -77,8 +77,17 @@ const MoneyIcon = () => <span className="text-lg">💰</span>
 
 const generateImageUrl = (filePath: string): string => {
   if (!filePath) return ''
-  const cleanPath = filePath.replace('uploads/', '')
-  return `/api/images/serve/${cleanPath}`
+  
+  // New system: Direct public URLs
+  const normalizedPath = filePath.replace(/\\/g, '/')
+  
+  // Priority: new structure first, then fallback to API serve
+  if (normalizedPath.startsWith('/uploads/')) {
+    return normalizedPath
+  } else {
+    const cleanPath = normalizedPath.replace(/^uploads\//, '')
+    return `/uploads/${cleanPath}` // Try direct public first
+  }
 }
 
 export default function FurnitureSetAdd() {

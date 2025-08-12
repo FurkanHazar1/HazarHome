@@ -5,19 +5,21 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 
-// FIXED: Updated image URL function to prioritize original images over thumbnails
+// FIXED: Updated image URL function for new image system
 const getImageUrl = (filePath: string): string[] => {
   if (!filePath) return []
   
+  // New system: Direct public URLs
   const normalizedPath = filePath.replace(/\\/g, '/')
-  const cleanPath = normalizedPath.replace(/^uploads\//, '')
   
-  // FIXED: Prioritize original images, avoid thumbnail paths
+  // Priority order for new image system
   const urlOptions = [
-    `/api/images/serve/${cleanPath}`,
-    `/uploads/${cleanPath}`,
-    `/${normalizedPath}`,
-    `/${cleanPath}`
+    // New structure: /uploads/images/furnitures/{category-slug}/{id}/image_{sortOrder}.jpg
+    normalizedPath.startsWith('/uploads/') ? normalizedPath : `/uploads/${normalizedPath.replace(/^uploads\//, '')}`,
+    // Legacy fallback
+    normalizedPath.startsWith('/') ? normalizedPath : `/${normalizedPath}`,
+    // API serve fallback (deprecated but still functional)
+    `/api/images/serve/${normalizedPath.replace(/^uploads\//, '')}`
   ]
   
   // FIXED: Filter out thumbnail URLs to ensure we get original images
@@ -346,7 +348,7 @@ const ImageZoomModal = ({
 
   // FIXED: Get original image URL, not thumbnail
   const originalUrls = getImageUrl(image.filePath)
-  const imageUrl = originalUrls[0] || `/api/images/serve/${image.filePath.replace(/^uploads\//, '')}`
+  const imageUrl = originalUrls[0] || `/uploads/${image.filePath.replace(/^uploads\//, '')}`
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-95 z-50 flex items-center justify-center p-4 backdrop-blur-sm">

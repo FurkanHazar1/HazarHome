@@ -1,15 +1,17 @@
 import FurnitureDetail from '@/components/admin/FurnitureDetail'
 
 interface FurnitureDetailPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
-export default function FurnitureDetailPage({ params }: FurnitureDetailPageProps) {
+export default async function FurnitureDetailPage({ params }: FurnitureDetailPageProps) {
+  const { id } = await params
+  
   return (
     <div>
-      <FurnitureDetail furnitureId={params.id} />
+      <FurnitureDetail furnitureId={parseInt(id)} />
     </div>
   )
 }
