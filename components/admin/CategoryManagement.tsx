@@ -49,7 +49,6 @@ export default function CategoryManagement() {
   const [success, setSuccess] = useState<string>('')
   const [showAddForm, setShowAddForm] = useState<boolean>(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
-  const [isMobile, setIsMobile] = useState<boolean>(false)
 
   // Form state
   const [formData, setFormData] = useState<FormData>({
@@ -58,20 +57,6 @@ export default function CategoryManagement() {
     parentId: null,
     isActive: true
   })
-
-  // Check if mobile
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768)
-    }
-    
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    
-    return () => {
-      window.removeEventListener('resize', checkMobile)
-    }
-  }, [])
 
   // Load categories from API
   const loadCategories = async (): Promise<void> => {
@@ -251,22 +236,22 @@ export default function CategoryManagement() {
   // Render main categories with dark theme
   const renderMainCategories = () => {
     return categories.map((mainCategory) => (
-      <div key={mainCategory.categoryId} className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 mb-6 overflow-hidden hover:shadow-3xl transition-shadow duration-300">
+      <div key={mainCategory.categoryId} className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 mb-4 sm:mb-6 overflow-hidden hover:shadow-3xl transition-shadow duration-300">
         {/* Main Category Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4 flex-1">
-              <div className="w-12 h-12 bg-gray-800/30 rounded-xl flex items-center justify-center backdrop-blur-sm">
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-4 sm:px-6 py-4 sm:py-5">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-start space-x-3 sm:space-x-4 flex-1">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-800/30 rounded-xl flex items-center justify-center backdrop-blur-sm flex-shrink-0">
                 <FolderIcon />
               </div>
-              <div className="flex-1">
-                <h3 className="text-xl font-bold text-white mb-1">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-1">
                   {mainCategory.categoryName}
                 </h3>
                 {mainCategory.description && (
-                  <p className="text-blue-100 text-sm opacity-90">{mainCategory.description}</p>
+                  <p className="text-blue-100 text-sm opacity-90 line-clamp-2">{mainCategory.description}</p>
                 )}
-                <div className="flex items-center space-x-6 mt-3">
+                <div className="flex flex-wrap items-center gap-3 sm:gap-6 mt-3">
                   <div className="flex items-center space-x-2">
                     <span className="text-blue-200 text-sm">📁</span>
                     <span className="text-blue-100 text-sm font-medium">
@@ -279,7 +264,7 @@ export default function CategoryManagement() {
                       {mainCategory._count.furnitures} mobilya
                     </span>
                   </div>
-                  <span className={`px-3 py-1 text-xs font-bold rounded-full border ${
+                  <span className={`px-2 sm:px-3 py-1 text-xs font-bold rounded-full border ${
                     mainCategory.isActive 
                       ? 'bg-green-500/20 text-green-300 border-green-500/30' 
                       : 'bg-red-500/20 text-red-300 border-red-500/30'
@@ -291,10 +276,10 @@ export default function CategoryManagement() {
             </div>
             
             {/* Main Category Actions */}
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 sm:flex-shrink-0">
               <button
                 onClick={() => toggleActive(mainCategory.categoryId, mainCategory.isActive)}
-                className={`p-3 rounded-xl transition-all duration-200 backdrop-blur-sm ${
+                className={`p-2 sm:p-3 rounded-xl transition-all duration-200 backdrop-blur-sm ${
                   mainCategory.isActive 
                     ? 'text-orange-300 hover:bg-orange-500/20 border border-orange-500/30' 
                     : 'text-green-300 hover:bg-green-500/20 border border-green-500/30'
@@ -306,7 +291,7 @@ export default function CategoryManagement() {
               </button>
               <button
                 onClick={() => startEdit(mainCategory)}
-                className="p-3 text-blue-200 hover:bg-blue-500/20 border border-blue-500/30 rounded-xl transition-all duration-200 backdrop-blur-sm"
+                className="p-2 sm:p-3 text-blue-200 hover:bg-blue-500/20 border border-blue-500/30 rounded-xl transition-all duration-200 backdrop-blur-sm"
                 title="Düzenle"
                 type="button"
               >
@@ -314,7 +299,7 @@ export default function CategoryManagement() {
               </button>
               <button
                 onClick={() => handleDelete(mainCategory.categoryId, mainCategory.categoryName)}
-                className="p-3 text-red-300 hover:bg-red-500/20 border border-red-500/30 rounded-xl transition-all duration-200 backdrop-blur-sm"
+                className="p-2 sm:p-3 text-red-300 hover:bg-red-500/20 border border-red-500/30 rounded-xl transition-all duration-200 backdrop-blur-sm"
                 title="Sil"
                 type="button"
               >
@@ -326,12 +311,12 @@ export default function CategoryManagement() {
 
         {/* Sub Categories */}
         {mainCategory.children && mainCategory.children.length > 0 && (
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="p-4 sm:p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
               {mainCategory.children.map((subCategory) => (
                 <div
                   key={subCategory.categoryId}
-                  className="group bg-gradient-to-br from-gray-700 to-gray-800 border border-gray-600 rounded-xl p-4 hover:shadow-lg hover:border-gray-500 transition-all duration-200"
+                  className="group bg-gradient-to-br from-gray-700 to-gray-800 border border-gray-600 rounded-xl p-3 sm:p-4 hover:shadow-lg hover:border-gray-500 transition-all duration-200"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center space-x-3 flex-1">
@@ -368,10 +353,10 @@ export default function CategoryManagement() {
                   </div>
                   
                   {/* Sub Category Actions */}
-                  <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <div className="flex items-center space-x-1 sm:space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                     <button
                       onClick={() => toggleActive(subCategory.categoryId, subCategory.isActive)}
-                      className={`flex-1 p-2 rounded-lg text-xs font-medium transition-all duration-200 ${
+                      className={`flex-1 p-1.5 sm:p-2 rounded-lg text-xs font-medium transition-all duration-200 ${
                         subCategory.isActive 
                           ? 'text-orange-400 hover:bg-orange-500/20 border border-orange-500/30' 
                           : 'text-green-400 hover:bg-green-500/20 border border-green-500/30'
@@ -383,7 +368,7 @@ export default function CategoryManagement() {
                     </button>
                     <button
                       onClick={() => startEdit(subCategory)}
-                      className="flex-1 p-2 text-blue-400 hover:bg-blue-500/20 border border-blue-500/30 rounded-lg text-xs font-medium transition-all duration-200"
+                      className="flex-1 p-1.5 sm:p-2 text-blue-400 hover:bg-blue-500/20 border border-blue-500/30 rounded-lg text-xs font-medium transition-all duration-200"
                       title="Düzenle"
                       type="button"
                     >
@@ -391,7 +376,7 @@ export default function CategoryManagement() {
                     </button>
                     <button
                       onClick={() => handleDelete(subCategory.categoryId, subCategory.categoryName)}
-                      className="flex-1 p-2 text-red-400 hover:bg-red-500/20 border border-red-500/30 rounded-lg text-xs font-medium transition-all duration-200"
+                      className="flex-1 p-1.5 sm:p-2 text-red-400 hover:bg-red-500/20 border border-red-500/30 rounded-lg text-xs font-medium transition-all duration-200"
                       title="Sil"
                       type="button"
                     >
@@ -419,45 +404,19 @@ export default function CategoryManagement() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-slate-900">
-      <div className="max-w-6xl mx-auto p-4 sm:p-6">
-        {/* Header - Responsive */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+        {/* Header */}
         <div className="mb-6 sm:mb-8">
-          {/* Mobile Header */}
-          <div className="flex flex-col space-y-4 md:hidden">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
-                <CategoryIcon />
-              </div>
-              <div className="flex-1">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
-                  Kategori Yönetimi
-                </h1>
-                <p className="text-gray-400 text-sm">
-                  Kategorileri yönetin
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => setShowAddForm(true)}
-              className="flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-medium shadow-lg w-full"
-              type="button"
-            >
-              <PlusIcon />
-              <span>Yeni Kategori</span>
-            </button>
-          </div>
-
-          {/* Desktop Header */}
-          <div className="hidden md:flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center space-x-3 sm:space-x-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
                 <CategoryIcon />
               </div>
               <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
+                <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
                   Kategori Yönetimi
                 </h1>
-                <p className="text-gray-400 mt-1">
+                <p className="text-gray-400 mt-1 text-sm sm:text-base">
                   Mobilya kategorilerini yönetin ve düzenleyin
                 </p>
               </div>
@@ -465,7 +424,7 @@ export default function CategoryManagement() {
             
             <button
               onClick={() => setShowAddForm(true)}
-              className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-medium shadow-lg"
+              className="flex items-center justify-center space-x-2 px-4 sm:px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-medium shadow-lg w-full sm:w-auto"
               type="button"
             >
               <PlusIcon />
@@ -476,42 +435,37 @@ export default function CategoryManagement() {
 
         {/* Alert Messages */}
         {error && (
-          <div className="bg-gradient-to-r from-red-900/50 to-red-800/50 border border-red-600/50 text-red-300 px-6 py-4 rounded-xl mb-6 shadow-sm" role="alert">
+          <div className="bg-gradient-to-r from-red-900/50 to-red-800/50 border border-red-600/50 text-red-300 px-4 sm:px-6 py-3 sm:py-4 rounded-xl mb-4 sm:mb-6 shadow-sm" role="alert">
             <div className="flex items-center space-x-2">
-              <span className="text-xl">⚠️</span>
-              <span className="font-medium">{error}</span>
+              <span className="text-lg sm:text-xl">⚠️</span>
+              <span className="font-medium text-sm sm:text-base">{error}</span>
             </div>
           </div>
         )}
         
         {success && (
-          <div className="bg-gradient-to-r from-green-900/50 to-emerald-800/50 border border-green-600/50 text-green-300 px-6 py-4 rounded-xl mb-6 shadow-sm" role="alert">
+          <div className="bg-gradient-to-r from-green-900/50 to-emerald-800/50 border border-green-600/50 text-green-300 px-4 sm:px-6 py-3 sm:py-4 rounded-xl mb-4 sm:mb-6 shadow-sm" role="alert">
             <div className="flex items-center space-x-2">
               <SuccessIcon />
-              <span className="font-medium">{success}</span>
+              <span className="font-medium text-sm sm:text-base">{success}</span>
             </div>
           </div>
         )}
 
-        {/* Add/Edit Modal - Responsive */}
+        {/* Add/Edit Modal */}
         {showAddForm && (
           <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className={`bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 w-full overflow-hidden ${
-              isMobile ? 'max-w-sm' : 'max-w-md'
-            }`}>
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-4 sm:px-6 py-3 sm:py-4">
+            <div className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 w-full max-w-md max-h-[90vh] overflow-y-auto">
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-4 sm:px-6 py-4">
                 <div className="flex items-center justify-between">
-                  <h2 className={`font-bold text-white flex items-center space-x-2 ${
-                    isMobile ? 'text-lg' : 'text-xl'
-                  }`}>
-                    <span className={isMobile ? 'text-xl' : 'text-2xl'}>
-                      {editingCategory ? '✏️' : '➕'}
-                    </span>
-                    <span>{editingCategory ? 'Düzenle' : 'Yeni Kategori'}</span>
+                  <h2 className="text-lg sm:text-xl font-bold text-white flex items-center space-x-2">
+                    <span className="text-xl sm:text-2xl">{editingCategory ? '✏️' : '➕'}</span>
+                    <span className="hidden sm:inline">{editingCategory ? 'Kategori Düzenle' : 'Yeni Kategori Ekle'}</span>
+                    <span className="sm:hidden">{editingCategory ? 'Düzenle' : 'Yeni'}</span>
                   </h2>
                   <button
                     onClick={resetForm}
-                    className="text-blue-200 hover:text-white hover:bg-blue-500/20 p-1.5 sm:p-2 rounded-lg transition-all duration-200"
+                    className="text-blue-200 hover:text-white hover:bg-blue-500/20 p-2 rounded-lg transition-all duration-200"
                     type="button"
                     aria-label="Kapat"
                   >
@@ -520,9 +474,7 @@ export default function CategoryManagement() {
                 </div>
               </div>
 
-              <div className={`space-y-4 sm:space-y-6 ${
-                isMobile ? 'p-4' : 'p-6'
-              }`}>
+              <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
                 <div className="space-y-2">
                   <label htmlFor="categoryName" className="block text-sm font-semibold text-gray-300">
                     Kategori Adı *
@@ -584,7 +536,7 @@ export default function CategoryManagement() {
                   </label>
                 </div>
 
-                <div className="flex space-x-3 pt-4">
+                <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 pt-4">
                   <button
                     onClick={handleSubmit}
                     className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center justify-center space-x-2 font-medium shadow-lg"
@@ -608,11 +560,11 @@ export default function CategoryManagement() {
 
         {/* Loading State */}
         {loading && (
-          <div className="flex items-center justify-center py-20">
-            <div className="bg-gray-800 rounded-2xl p-8 shadow-2xl border border-gray-700">
+          <div className="flex items-center justify-center py-12 sm:py-20">
+            <div className="bg-gray-800 rounded-2xl p-6 sm:p-8 shadow-2xl border border-gray-700">
               <div className="flex items-center space-x-4">
                 <LoaderIcon />
-                <span className="text-gray-300 font-medium">Kategoriler yükleniyor...</span>
+                <span className="text-gray-300 font-medium text-sm sm:text-base">Kategoriler yükleniyor...</span>
               </div>
             </div>
           </div>
@@ -620,18 +572,18 @@ export default function CategoryManagement() {
 
         {/* Empty State */}
         {!loading && categories.length === 0 && (
-          <div className="text-center py-20">
-            <div className="bg-gray-800 rounded-2xl p-12 shadow-2xl border border-gray-700">
-              <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+          <div className="text-center py-12 sm:py-20">
+            <div className="bg-gray-800 rounded-2xl p-8 sm:p-12 shadow-2xl border border-gray-700">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                 <CategoryIcon />
               </div>
-              <h3 className="text-xl font-bold text-gray-200 mb-4">Henüz kategori bulunmuyor</h3>
-              <p className="text-gray-400 mb-8 max-w-md mx-auto">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-200 mb-3 sm:mb-4">Henüz kategori bulunmuyor</h3>
+              <p className="text-gray-400 mb-6 sm:mb-8 max-w-md mx-auto text-sm sm:text-base">
                 Mobilya kataloğunuzu organize etmek için ilk kategoriyi oluşturun.
               </p>
               <button
                 onClick={() => setShowAddForm(true)}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-medium shadow-lg inline-flex items-center space-x-2"
+                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 sm:px-8 py-3 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 font-medium shadow-lg inline-flex items-center space-x-2 w-full sm:w-auto justify-center"
                 type="button"
               >
                 <PlusIcon />
@@ -645,30 +597,30 @@ export default function CategoryManagement() {
         {!loading && categories.length > 0 && (
           <div>
             {/* Stats Header */}
-            <div className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 p-6 mb-8">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-teal-500 rounded-xl flex items-center justify-center">
+            <div className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 p-4 sm:p-6 mb-6 sm:mb-8">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 lg:gap-0">
+                <div className="flex items-center space-x-3 sm:space-x-4">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-green-500 to-teal-500 rounded-xl flex items-center justify-center">
                     <StatsIcon />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold text-gray-200">Kategori İstatistikleri</h2>
-                    <p className="text-gray-400 text-sm">Toplam kategori bilgileri</p>
+                    <h2 className="text-lg sm:text-xl font-bold text-gray-200">Kategori İstatistikleri</h2>
+                    <p className="text-gray-400 text-xs sm:text-sm">Toplam kategori bilgileri</p>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
-                  <div className="bg-gradient-to-r from-blue-900/30 to-indigo-900/30 rounded-xl p-4 border border-blue-600/30">
-                    <div className="text-2xl font-bold text-blue-300">{categories.length}</div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 text-center">
+                  <div className="bg-gradient-to-r from-blue-900/30 to-indigo-900/30 rounded-xl p-3 sm:p-4 border border-blue-600/30">
+                    <div className="text-xl sm:text-2xl font-bold text-blue-300">{categories.length}</div>
                     <div className="text-xs text-blue-400 font-medium">Ana Kategori</div>
                   </div>
-                  <div className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 rounded-xl p-4 border border-purple-600/30">
-                    <div className="text-2xl font-bold text-purple-300">
+                  <div className="bg-gradient-to-r from-purple-900/30 to-pink-900/30 rounded-xl p-3 sm:p-4 border border-purple-600/30">
+                    <div className="text-xl sm:text-2xl font-bold text-purple-300">
                       {categories.reduce((sum, cat) => sum + cat._count.children, 0)}
                     </div>
                     <div className="text-xs text-purple-400 font-medium">Alt Kategori</div>
                   </div>
-                  <div className="bg-gradient-to-r from-green-900/30 to-emerald-900/30 rounded-xl p-4 border border-green-600/30">
-                    <div className="text-2xl font-bold text-green-300">
+                  <div className="bg-gradient-to-r from-green-900/30 to-emerald-900/30 rounded-xl p-3 sm:p-4 border border-green-600/30">
+                    <div className="text-xl sm:text-2xl font-bold text-green-300">
                       {categories.reduce((sum, cat) => sum + cat._count.furnitures, 0)}
                     </div>
                     <div className="text-xs text-green-400 font-medium">Toplam Mobilya</div>
@@ -678,7 +630,7 @@ export default function CategoryManagement() {
             </div>
 
             {/* Categories Grid */}
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {renderMainCategories()}
             </div>
           </div>

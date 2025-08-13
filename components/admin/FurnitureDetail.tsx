@@ -555,15 +555,15 @@ export default function ModernFurnitureDetail({ furnitureId }: { furnitureId: nu
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-to-r from-indigo-600/20 to-pink-600/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         
         {/* Loading State */}
         {loading && (
-          <div className="flex items-center justify-center py-20">
-            <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-12 border border-white/20 shadow-2xl">
+          <div className="flex items-center justify-center py-12 sm:py-20">
+            <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-8 sm:p-12 border border-white/20 shadow-2xl">
               <div className="flex items-center space-x-4">
                 <LoaderIcon />
-                <span className="text-white font-medium text-lg">Mobilya detayları yükleniyor...</span>
+                <span className="text-white font-medium text-sm sm:text-base lg:text-lg">Mobilya detayları yükleniyor...</span>
               </div>
             </div>
           </div>
@@ -571,10 +571,10 @@ export default function ModernFurnitureDetail({ furnitureId }: { furnitureId: nu
 
         {/* Error State */}
         {error && (
-          <div className="bg-red-500/20 backdrop-blur-sm border border-red-500/30 text-red-100 px-6 py-4 rounded-2xl mb-6 shadow-lg">
+          <div className="bg-red-500/20 backdrop-blur-sm border border-red-500/30 text-red-100 px-4 sm:px-6 py-3 sm:py-4 rounded-2xl mb-4 sm:mb-6 shadow-lg">
             <div className="flex items-center space-x-2">
-              <span className="text-xl">⚠️</span>
-              <span className="font-medium">{error}</span>
+              <span className="text-lg sm:text-xl">⚠️</span>
+              <span className="font-medium text-sm sm:text-base">{error}</span>
             </div>
           </div>
         )}
@@ -583,20 +583,20 @@ export default function ModernFurnitureDetail({ furnitureId }: { furnitureId: nu
         {!loading && furniture && (
           <>
             {/* Header */}
-            <div className="mb-8">
-              <div className="flex items-center justify-between mb-8">
+            <div className="mb-6 sm:mb-8">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-4">
                 <button
                   onClick={() => router.back()}
-                  className="group flex items-center space-x-3 px-6 py-3 bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 rounded-2xl transition-all duration-300 border border-white/20 hover:border-white/30"
+                  className="group flex items-center space-x-3 px-4 sm:px-6 py-3 bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 rounded-2xl transition-all duration-300 border border-white/20 hover:border-white/30 w-full sm:w-auto justify-center sm:justify-start"
                 >
                   <ArrowLeftIcon />
                   <span className="font-medium">Geri Dön</span>
                 </button>
                 
-                <div className="flex items-center space-x-4">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-4">
                   <Link
                     href={`/admin/furniture/${furniture?.furnitureId || 0}/edit`}
-                    className="group flex items-center space-x-3 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                    className="group flex items-center space-x-3 px-4 sm:px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 justify-center"
                   >
                     <EditIcon />
                     <span className="font-medium">Düzenle</span>
@@ -604,7 +604,7 @@ export default function ModernFurnitureDetail({ furnitureId }: { furnitureId: nu
                   
                   <button
                     onClick={handleDelete}
-                    className="group flex items-center space-x-3 px-6 py-3 bg-gradient-to-r from-red-600 to-pink-600 text-white hover:from-red-700 hover:to-pink-700 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                    className="group flex items-center space-x-3 px-4 sm:px-6 py-3 bg-gradient-to-r from-red-600 to-pink-600 text-white hover:from-red-700 hover:to-pink-700 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 justify-center"
                   >
                     <DeleteIcon />
                     <span className="font-medium">Sil</span>
@@ -613,10 +613,10 @@ export default function ModernFurnitureDetail({ furnitureId }: { furnitureId: nu
               </div>
 
               {/* Title Section */}
-              <div className="text-center mb-12">
-                <div className="inline-flex items-center space-x-3 px-6 py-2 bg-white/10 backdrop-blur-sm rounded-full mb-4 border border-white/20">
+              <div className="text-center mb-8 sm:mb-12">
+                <div className="inline-flex items-center space-x-3 px-4 sm:px-6 py-2 bg-white/10 backdrop-blur-sm rounded-full mb-4 border border-white/20">
                   <FurnitureIcon />
-                  <span className="text-white/80 font-medium">{furniture?.category?.categoryName || 'Kategorisiz'}</span>
+                  <span className="text-white/80 font-medium text-sm sm:text-base">{furniture?.category?.categoryName || 'Kategorisiz'}</span>
                 </div>
                 
                 <h1 className="text-5xl font-bold bg-gradient-to-r from-white via-blue-100 to-indigo-200 bg-clip-text text-transparent mb-4 leading-tight">

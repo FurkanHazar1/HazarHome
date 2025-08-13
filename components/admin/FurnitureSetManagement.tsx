@@ -902,30 +902,30 @@ export default function FurnitureSetManager() {
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-to-r from-indigo-600/20 to-pink-600/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="p-3 bg-blue-500/20 backdrop-blur-sm rounded-xl border border-blue-500/30">
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center space-x-3 sm:space-x-4">
+              <div className="p-2 sm:p-3 bg-blue-500/20 backdrop-blur-sm rounded-xl border border-blue-500/30">
                 <FurnitureSetIcon />
               </div>
               <div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-white via-blue-100 to-indigo-200 bg-clip-text text-transparent">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-white via-blue-100 to-indigo-200 bg-clip-text text-transparent leading-tight">
                   Mobilya Takımı Yönetimi
                 </h1>
-                <p className="text-white/70 mt-2 text-lg">
+                <p className="text-white/70 mt-1 sm:mt-2 text-sm sm:text-base lg:text-lg">
                   Mobilya takımlarını görüntüleyin, düzenleyin ve yönetin
                 </p>
               </div>
             </div>
             
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center justify-between sm:justify-end space-x-2 sm:space-x-3">
               {/* View Mode Toggle */}
               <div className="flex items-center bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-1">
                 <button
                   onClick={() => setViewMode('table')}
-                  className={`p-2 rounded-lg transition-colors ${
+                  className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
                     viewMode === 'table' 
                       ? 'bg-blue-500/30 text-blue-200 border border-blue-400/50' 
                       : 'text-white/60 hover:text-white/80 hover:bg-white/10'
@@ -936,7 +936,7 @@ export default function FurnitureSetManager() {
                 </button>
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded-lg transition-colors ${
+                  className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
                     viewMode === 'grid' 
                       ? 'bg-blue-500/30 text-blue-200 border border-blue-400/50' 
                       : 'text-white/60 hover:text-white/80 hover:bg-white/10'
@@ -949,35 +949,36 @@ export default function FurnitureSetManager() {
 
               <button
                 onClick={handleExport}
-                className="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 rounded-xl shadow-lg"
+                className="inline-flex items-center px-3 sm:px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 rounded-xl shadow-lg text-sm"
                 title="Dışa Aktar"
               >
                 <ExportIcon />
-                <span className="ml-2 hidden sm:block">Dışa Aktar</span>
+                <span className="ml-1.5 sm:ml-2 hidden sm:block">Dışa Aktar</span>
               </button>
 
               <button
                 onClick={loadFurnitureSets}
                 disabled={loading}
-                className="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 disabled:opacity-50 rounded-xl shadow-lg"
+                className="inline-flex items-center px-3 sm:px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 disabled:opacity-50 rounded-xl shadow-lg text-sm"
+                title="Yenile"
               >
                 <RefreshIcon />
-                <span className="ml-2 hidden sm:block">Yenile</span>
+                <span className="ml-1.5 sm:ml-2 hidden sm:block">Yenile</span>
               </button>
 
               <Link
                 href="/admin/furniture-sets/add"
-                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                className="inline-flex items-center px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 text-sm sm:text-base"
               >
                 <PlusIcon />
-                <span className="ml-2 font-medium">Yeni Takım</span>
+                <span className="ml-1.5 sm:ml-2 font-medium">Yeni Takım</span>
               </Link>
             </div>
           </div>
 
           {/* Enhanced Stats Cards */}
           {stats && (
-            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="mt-6 sm:mt-8 grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
               {[
                 { 
                   label: 'Toplam Takım', 
@@ -1012,14 +1013,14 @@ export default function FurnitureSetManager() {
                   change: 'Takım başına'
                 }
               ].map((stat, index) => (
-                <div key={index} className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-6 hover:bg-white/10 transition-all duration-300 shadow-2xl">
+                <div key={index} className="bg-white/5 backdrop-blur-sm rounded-xl sm:rounded-2xl border border-white/10 p-4 sm:p-6 hover:bg-white/10 transition-all duration-300 shadow-2xl">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-sm font-medium text-white/70 mb-1">{stat.label}</h3>
-                      <p className="text-3xl font-bold text-white">{stat.value}</p>
-                      <p className="text-xs text-white/60 mt-1">{stat.change}</p>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-xs sm:text-sm font-medium text-white/70 mb-1 truncate">{stat.label}</h3>
+                      <p className="text-lg sm:text-2xl lg:text-3xl font-bold text-white leading-tight">{stat.value}</p>
+                      <p className="text-xs text-white/60 mt-1 truncate">{stat.change}</p>
                     </div>
-                    <div className={`w-14 h-14 rounded-xl bg-gradient-to-r ${stat.color} flex items-center justify-center text-white shadow-lg`}>
+                    <div className={`w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-lg sm:rounded-xl bg-gradient-to-r ${stat.color} flex items-center justify-center text-white shadow-lg flex-shrink-0 ml-2`}>
                       <stat.icon />
                     </div>
                   </div>
@@ -1549,7 +1550,7 @@ export default function FurnitureSetManager() {
               </div>
             ) : (
               /* Grid View */
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                 {furnitureSets.map((furnitureSet) => (
                   <FurnitureSetCard key={furnitureSet.setId} furnitureSet={furnitureSet} />
                 ))}

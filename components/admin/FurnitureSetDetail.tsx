@@ -507,15 +507,15 @@ export default function ModernFurnitureSetDetail({ setId }: { setId: number }) {
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-to-r from-indigo-600/20 to-pink-600/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         
         {/* Loading State */}
         {loading && (
-          <div className="flex items-center justify-center py-20">
-            <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-12 border border-white/20 shadow-2xl">
-              <div className="flex items-center space-x-4">
+          <div className="flex items-center justify-center py-12 sm:py-20">
+            <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-6 sm:p-12 border border-white/20 shadow-2xl">
+              <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4 text-center sm:text-left">
                 <LoaderIcon />
-                <span className="text-white font-medium text-lg">Mobilya takımı detayları yükleniyor...</span>
+                <span className="text-white font-medium text-sm sm:text-lg">Mobilya takımı detayları yükleniyor...</span>
               </div>
             </div>
           </div>
@@ -523,10 +523,10 @@ export default function ModernFurnitureSetDetail({ setId }: { setId: number }) {
 
         {/* Error State */}
         {error && (
-          <div className="bg-red-500/20 backdrop-blur-sm border border-red-500/30 text-red-100 px-6 py-4 rounded-2xl mb-6 shadow-lg">
+          <div className="bg-red-500/20 backdrop-blur-sm border border-red-500/30 text-red-100 px-4 sm:px-6 py-3 sm:py-4 rounded-2xl mb-4 sm:mb-6 shadow-lg">
             <div className="flex items-center space-x-2">
-              <span className="text-xl">⚠️</span>
-              <span className="font-medium">{error}</span>
+              <span className="text-lg sm:text-xl">⚠️</span>
+              <span className="font-medium text-sm sm:text-base">{error}</span>
             </div>
           </div>
         )}
@@ -535,20 +535,20 @@ export default function ModernFurnitureSetDetail({ setId }: { setId: number }) {
         {!loading && furnitureSet && (
           <>
             {/* Header */}
-            <div className="mb-8">
-              <div className="flex items-center justify-between mb-8">
+            <div className="mb-6 sm:mb-8">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 mb-6 sm:mb-8">
                 <button
                   onClick={() => router.back()}
-                  className="group flex items-center space-x-3 px-6 py-3 bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 rounded-2xl transition-all duration-300 border border-white/20 hover:border-white/30"
+                  className="group flex items-center space-x-2 sm:space-x-3 px-4 sm:px-6 py-2 sm:py-3 bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 rounded-xl sm:rounded-2xl transition-all duration-300 border border-white/20 hover:border-white/30 text-sm sm:text-base"
                 >
                   <ArrowLeftIcon />
                   <span className="font-medium">Geri Dön</span>
                 </button>
                 
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2 sm:space-x-4 w-full sm:w-auto">
                   <Link
                     href={`/admin/furniture-sets/${furnitureSet?.setId || 0}/edit`}
-                    className="group flex items-center space-x-3 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                    className="group flex items-center justify-center space-x-2 sm:space-x-3 px-3 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 rounded-xl sm:rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 text-xs sm:text-base flex-1 sm:flex-none"
                   >
                     <EditIcon />
                     <span className="font-medium">Düzenle</span>
@@ -556,36 +556,34 @@ export default function ModernFurnitureSetDetail({ setId }: { setId: number }) {
                   
                   <button
                     onClick={handleDelete}
-                    className="group flex items-center space-x-3 px-6 py-3 bg-gradient-to-r from-red-600 to-pink-600 text-white hover:from-red-700 hover:to-pink-700 rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                    className="group flex items-center justify-center space-x-2 sm:space-x-3 px-3 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-red-600 to-pink-600 text-white hover:from-red-700 hover:to-pink-700 rounded-xl sm:rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 text-xs sm:text-base flex-1 sm:flex-none"
                   >
                     <DeleteIcon />
                     <span className="font-medium">Sil</span>
                   </button>
                 </div>
-              </div>
-
-              {/* Title Section */}
-              <div className="text-center mb-12">
-                <div className="inline-flex items-center space-x-3 px-6 py-2 bg-white/10 backdrop-blur-sm rounded-full mb-4 border border-white/20">
+              </div>              {/* Title Section */}
+              <div className="text-center mb-8 sm:mb-12">
+                <div className="inline-flex items-center space-x-2 sm:space-x-3 px-3 sm:px-6 py-1.5 sm:py-2 bg-white/10 backdrop-blur-sm rounded-full mb-3 sm:mb-4 border border-white/20 text-xs sm:text-base">
                   <TagIcon />
                   <span className="text-white/80 font-medium">{furnitureSet?.category?.categoryName || 'Kategorisiz'}</span>
                 </div>
                 
-                <h1 className="text-5xl font-bold bg-gradient-to-r from-white via-blue-100 to-indigo-200 bg-clip-text text-transparent mb-4 leading-tight">
+                <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold bg-gradient-to-r from-white via-blue-100 to-indigo-200 bg-clip-text text-transparent mb-3 sm:mb-4 leading-tight px-4">
                   {furnitureSet?.setName || 'Mobilya Takımı'}
                 </h1>
                 
-                <div className="flex items-center justify-center space-x-6 text-white/80">
+                <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-6 text-white/80 text-xs sm:text-base">
                   <div className="flex items-center space-x-2">
                     <PackageIcon />
                     <span>{furnitureSet?.stats?.uniqueFurnitureCount || 0} Mobilya</span>
                   </div>
-                  <div className="w-2 h-2 bg-white/40 rounded-full"></div>
+                  <div className="hidden sm:block w-2 h-2 bg-white/40 rounded-full"></div>
                   <div className="flex items-center space-x-2">
                     <span>{furnitureSet?.stats?.totalQuantity || 0} Adet</span>
                   </div>
-                  <div className="w-2 h-2 bg-white/40 rounded-full"></div>
-                  <div className={`inline-flex items-center px-4 py-1 rounded-full text-sm font-medium ${
+                  <div className="hidden sm:block w-2 h-2 bg-white/40 rounded-full"></div>
+                  <div className={`inline-flex items-center px-3 sm:px-4 py-1 rounded-full text-xs sm:text-sm font-medium ${
                     furnitureSet?.isActive 
                       ? 'bg-green-500/20 text-green-300 border border-green-500/30' 
                       : 'bg-red-500/20 text-red-300 border border-red-500/30'
@@ -594,14 +592,14 @@ export default function ModernFurnitureSetDetail({ setId }: { setId: number }) {
                   </div>
                 </div>
 
-                <div className="mt-6">
-                  <div className="text-6xl font-bold bg-gradient-to-r from-green-400 to-emerald-300 bg-clip-text text-transparent">
+                <div className="mt-4 sm:mt-6">
+                  <div className="text-3xl sm:text-4xl lg:text-6xl font-bold bg-gradient-to-r from-green-400 to-emerald-300 bg-clip-text text-transparent">
                     {furnitureSet?.metadata?.formattedPrice || '₺0'}
                   </div>
                   {furnitureSet?.pricingAnalysis?.isSetCheaper && (
-                    <div className="mt-2 inline-flex items-center space-x-2 px-4 py-2 bg-green-500/20 backdrop-blur-sm rounded-full border border-green-500/30">
+                    <div className="mt-2 inline-flex items-center space-x-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-green-500/20 backdrop-blur-sm rounded-full border border-green-500/30">
                       <StarIcon />
-                      <span className="text-green-300 font-medium">
+                      <span className="text-green-300 font-medium text-xs sm:text-base">
                         {furnitureSet.pricingAnalysis.formattedSavings} tasarruf
                       </span>
                     </div>
@@ -611,12 +609,12 @@ export default function ModernFurnitureSetDetail({ setId }: { setId: number }) {
             </div>
 
             {/* Main Content Grid */}
-            <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 mb-12">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 mb-8 sm:mb-12">
               
               {/* Image Gallery - 7 columns */}
-              <div className="xl:col-span-7 space-y-6">
-                <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-6 border border-white/10 shadow-2xl">
-                  <div className="aspect-square relative rounded-2xl overflow-hidden mb-6">
+              <div className="lg:col-span-7 space-y-4 sm:space-y-6">
+                <div className="bg-white/5 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-white/10 shadow-2xl">
+                  <div className="aspect-square relative rounded-xl sm:rounded-2xl overflow-hidden mb-4 sm:mb-6">
                     {selectedImage ? (
                       <FurnitureSetImageDisplay
                         image={selectedImage}
@@ -626,10 +624,10 @@ export default function ModernFurnitureSetDetail({ setId }: { setId: number }) {
                         priority={true}
                       />
                     ) : (
-                      <div className="w-full h-full bg-slate-800 flex items-center justify-center rounded-2xl">
+                      <div className="w-full h-full bg-slate-800 flex items-center justify-center rounded-xl sm:rounded-2xl">
                         <div className="text-center text-slate-400">
                           <ImageIcon />
-                          <p className="text-sm mt-2">Görsel bulunamadı</p>
+                          <p className="text-xs sm:text-sm mt-2">Görsel bulunamadı</p>
                         </div>
                       </div>
                     )}
@@ -637,12 +635,12 @@ export default function ModernFurnitureSetDetail({ setId }: { setId: number }) {
 
                   {/* Thumbnail Navigation */}
                   {getAllImages.length > 1 && (
-                    <div className="grid grid-cols-5 gap-3">
+                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3">
                       {getAllImages.map((imageItem, index) => (
                         <button
                           key={`${imageItem.image.imageId}-${index}`}
                           onClick={() => setSelectedImageIndex(index)}
-                          className={`group aspect-square rounded-xl overflow-hidden border-2 transition-all duration-300 ${
+                          className={`group aspect-square rounded-lg sm:rounded-xl overflow-hidden border-2 transition-all duration-300 ${
                             selectedImageIndex === index
                               ? 'border-blue-500 ring-2 ring-blue-500/50 scale-105'
                               : 'border-white/20 hover:border-white/40'
@@ -658,17 +656,17 @@ export default function ModernFurnitureSetDetail({ setId }: { setId: number }) {
                   )}
 
                   {/* Image Stats */}
-                  <div className="mt-6 grid grid-cols-3 gap-4">
+                  <div className="mt-4 sm:mt-6 grid grid-cols-3 gap-2 sm:gap-4">
                     {[
                       { label: "Toplam Görsel", value: furnitureSet?.stats?.totalImages || 0, color: "from-blue-500 to-blue-600" },
                       { label: "Ana Görsel", value: furnitureSet?.imageGallery?.main?.length || 0, color: "from-purple-500 to-purple-600" },
                       { label: "Galeri", value: furnitureSet?.imageGallery?.gallery?.length || 0, color: "from-green-500 to-green-600" }
                     ].map((stat, index) => (
-                      <div key={index} className="text-center p-4 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10">
-                        <div className={`text-2xl font-bold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent`}>
+                      <div key={index} className="text-center p-2 sm:p-4 bg-white/5 backdrop-blur-sm rounded-lg sm:rounded-xl border border-white/10">
+                        <div className={`text-lg sm:text-2xl font-bold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent`}>
                           {stat.value}
                         </div>
-                        <div className="text-sm text-white/70 mt-1">{stat.label}</div>
+                        <div className="text-xs sm:text-sm text-white/70 mt-1">{stat.label}</div>
                       </div>
                     ))}
                   </div>
@@ -676,42 +674,42 @@ export default function ModernFurnitureSetDetail({ setId }: { setId: number }) {
               </div>
 
               {/* Info Panel - 5 columns */}
-              <div className="xl:col-span-5 space-y-6">
+              <div className="lg:col-span-5 space-y-4 sm:space-y-6">
                 
                 {/* Pricing Analysis */}
                 {furnitureSet.pricingAnalysis && (
-                  <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-8 border border-white/10 shadow-2xl">
-                    <div className="flex items-center space-x-3 mb-6">
-                      <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center">
+                  <div className="bg-white/5 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-8 border border-white/10 shadow-2xl">
+                    <div className="flex items-center space-x-2 sm:space-x-3 mb-4 sm:mb-6">
+                      <div className="w-8 h-8 sm:w-12 sm:h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg sm:rounded-xl flex items-center justify-center">
                         <CurrencyIcon />
                       </div>
-                      <h3 className="text-2xl font-bold text-white">Fiyat Analizi</h3>
+                      <h3 className="text-lg sm:text-2xl font-bold text-white">Fiyat Analizi</h3>
                     </div>
                     
-                    <div className="space-y-6">
-                      <div className="flex justify-between items-center p-4 bg-white/5 rounded-xl">
-                        <span className="text-white/80 font-medium">Takım Fiyatı:</span>
-                        <span className="text-2xl font-bold text-blue-300">{furnitureSet?.pricingAnalysis?.formattedSetPrice || '₺0'}</span>
+                    <div className="space-y-4 sm:space-y-6">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 p-3 sm:p-4 bg-white/5 rounded-lg sm:rounded-xl">
+                        <span className="text-white/80 font-medium text-sm sm:text-base">Takım Fiyatı:</span>
+                        <span className="text-lg sm:text-2xl font-bold text-blue-300">{furnitureSet?.pricingAnalysis?.formattedSetPrice || '₺0'}</span>
                       </div>
                       
-                      <div className="flex justify-between items-center p-4 bg-white/5 rounded-xl">
-                        <span className="text-white/80 font-medium">Tek Tek Fiyat:</span>
-                        <span className="text-xl font-medium text-white">{furnitureSet?.pricingAnalysis?.formattedIndividualPrice || '₺0'}</span>
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 p-3 sm:p-4 bg-white/5 rounded-lg sm:rounded-xl">
+                        <span className="text-white/80 font-medium text-sm sm:text-base">Tek Tek Fiyat:</span>
+                        <span className="text-base sm:text-xl font-medium text-white">{furnitureSet?.pricingAnalysis?.formattedIndividualPrice || '₺0'}</span>
                       </div>
                       
-                      <div className="border-t border-white/20 pt-6">
-                        <div className="flex justify-between items-center p-6 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-xl border border-green-500/30">
-                          <span className="font-bold text-white text-lg">
+                      <div className="border-t border-white/20 pt-4 sm:pt-6">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0 p-4 sm:p-6 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-lg sm:rounded-xl border border-green-500/30">
+                          <span className="font-bold text-white text-base sm:text-lg">
                             {furnitureSet?.pricingAnalysis?.isSetCheaper ? 'Toplam Tasarruf:' : 'Fark:'}
                           </span>
-                          <div className="text-right">
-                            <span className={`text-3xl font-bold ${
+                          <div className="text-left sm:text-right">
+                            <span className={`text-xl sm:text-3xl font-bold ${
                               furnitureSet?.pricingAnalysis?.isSetCheaper ? 'text-green-300' : 'text-red-300'
                             }`}>
                               {furnitureSet?.pricingAnalysis?.isSetCheaper ? '-' : '+'}
                               {furnitureSet?.pricingAnalysis?.formattedSavings || '₺0'}
                             </span>
-                            <div className={`text-sm ${
+                            <div className={`text-xs sm:text-sm ${
                               furnitureSet?.pricingAnalysis?.isSetCheaper ? 'text-green-400' : 'text-red-400'
                             }`}>
                               (%{Math.abs(furnitureSet?.pricingAnalysis?.savingsPercentage || 0).toFixed(1)})
@@ -725,41 +723,41 @@ export default function ModernFurnitureSetDetail({ setId }: { setId: number }) {
 
                 {/* Description */}
                 {furnitureSet.description && (
-                  <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-8 border border-white/10 shadow-2xl">
-                    <div className="flex items-center space-x-3 mb-6">
-                      <div className="w-12 h-12 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="bg-white/5 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-8 border border-white/10 shadow-2xl">
+                    <div className="flex items-center space-x-2 sm:space-x-3 mb-4 sm:mb-6">
+                      <div className="w-8 h-8 sm:w-12 sm:h-12 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg sm:rounded-xl flex items-center justify-center">
+                        <svg className="w-4 h-4 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                       </div>
-                      <h3 className="text-2xl font-bold text-white">Açıklama</h3>
+                      <h3 className="text-lg sm:text-2xl font-bold text-white">Açıklama</h3>
                     </div>
-                    <p className="text-white/80 leading-relaxed text-lg">{furnitureSet?.description || 'Açıklama bulunmuyor.'}</p>
+                    <p className="text-white/80 leading-relaxed text-sm sm:text-lg">{furnitureSet?.description || 'Açıklama bulunmuyor.'}</p>
                   </div>
                 )}
 
                 {/* Colors */}
                 {furnitureSet?.colorOptions && furnitureSet.colorOptions.length > 0 && (
-                  <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-8 border border-white/10 shadow-2xl">
-                    <div className="flex items-center space-x-3 mb-6">
-                      <div className="w-12 h-12 bg-gradient-to-r from-pink-500 to-rose-500 rounded-xl flex items-center justify-center">
+                  <div className="bg-white/5 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-8 border border-white/10 shadow-2xl">
+                    <div className="flex items-center space-x-2 sm:space-x-3 mb-4 sm:mb-6">
+                      <div className="w-8 h-8 sm:w-12 sm:h-12 bg-gradient-to-r from-pink-500 to-rose-500 rounded-lg sm:rounded-xl flex items-center justify-center">
                         <ColorIcon />
                       </div>
-                      <h3 className="text-2xl font-bold text-white">
+                      <h3 className="text-lg sm:text-2xl font-bold text-white">
                         Renkler ({furnitureSet.colorOptions.length})
                       </h3>
                     </div>
-                    <div className="grid grid-cols-1 gap-4">
+                    <div className="grid grid-cols-1 gap-3 sm:gap-4">
                       {furnitureSet.colorOptions.map(color => (
-                        <div key={color.colorId} className="flex items-center space-x-4 p-4 bg-white/5 rounded-xl border border-white/10">
+                        <div key={color.colorId} className="flex items-center space-x-3 sm:space-x-4 p-3 sm:p-4 bg-white/5 rounded-lg sm:rounded-xl border border-white/10">
                           <div
-                            className="w-12 h-12 rounded-full border-4 border-white/30 shadow-lg ring-2 ring-white/20"
+                            className="w-8 h-8 sm:w-12 sm:h-12 rounded-full border-2 sm:border-4 border-white/30 shadow-lg ring-1 sm:ring-2 ring-white/20"
                             style={{ backgroundColor: color.colorCode }}
                             title={color.colorCode}
                           />
                           <div className="flex-1">
-                            <p className="font-semibold text-white">{color.colorName}</p>
-                            <p className="text-sm text-white/60">{color.colorCode}</p>
+                            <p className="font-semibold text-white text-sm sm:text-base">{color.colorName}</p>
+                            <p className="text-xs sm:text-sm text-white/60">{color.colorCode}</p>
                           </div>
                         </div>
                       ))}
@@ -768,35 +766,35 @@ export default function ModernFurnitureSetDetail({ setId }: { setId: number }) {
                 )}
 
                 {/* Quick Stats */}
-                <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-8 border border-white/10 shadow-2xl">
-                  <h3 className="text-2xl font-bold text-white mb-6">İstatistikler</h3>
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="bg-white/5 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-8 border border-white/10 shadow-2xl">
+                  <h3 className="text-lg sm:text-2xl font-bold text-white mb-4 sm:mb-6">İstatistikler</h3>
+                  <div className="grid grid-cols-2 gap-2 sm:gap-4">
                     {[
                       { label: "Toplam Adet", value: furnitureSet?.stats?.totalQuantity || 0, color: "from-blue-500 to-blue-600", icon: "📦" },
                       { label: "Farklı Mobilya", value: furnitureSet?.stats?.uniqueFurnitureCount || 0, color: "from-green-500 to-green-600", icon: "🪑" },
                       { label: "Renkler", value: furnitureSet?.stats?.totalColors || 0, color: "from-purple-500 to-purple-600", icon: "🎨" },
                       { label: "Özellikler", value: furnitureSet?.stats?.totalProperties || 0, color: "from-yellow-500 to-yellow-600", icon: "🏷️" }
                     ].map((stat, index) => (
-                      <div key={index} className="text-center p-6 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 group hover:bg-white/10 transition-all duration-300">
-                        <div className="text-3xl mb-2">{stat.icon}</div>
-                        <div className={`text-3xl font-bold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent mb-1`}>
+                      <div key={index} className="text-center p-3 sm:p-6 bg-white/5 backdrop-blur-sm rounded-lg sm:rounded-xl border border-white/10 group hover:bg-white/10 transition-all duration-300">
+                        <div className="text-lg sm:text-3xl mb-1 sm:mb-2">{stat.icon}</div>
+                        <div className={`text-lg sm:text-3xl font-bold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent mb-1`}>
                           {stat.value}
                         </div>
-                        <div className="text-sm text-white/70">{stat.label}</div>
+                        <div className="text-xs sm:text-sm text-white/70">{stat.label}</div>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 {/* Created Date */}
-                <div className="bg-white/5 backdrop-blur-sm rounded-3xl p-6 border border-white/10 shadow-2xl">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-gradient-to-r from-gray-500 to-slate-500 rounded-lg flex items-center justify-center">
+                <div className="bg-white/5 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-white/10 shadow-2xl">
+                  <div className="flex items-center space-x-2 sm:space-x-3">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-gray-500 to-slate-500 rounded-lg flex items-center justify-center">
                       <CalendarIcon />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-white">Oluşturulma Tarihi</h4>
-                      <p className="text-white/70">{furnitureSet?.createdAt ? formatDate(furnitureSet.createdAt) : 'Bilinmiyor'}</p>
+                      <h4 className="font-semibold text-white text-sm sm:text-base">Oluşturulma Tarihi</h4>
+                      <p className="text-white/70 text-xs sm:text-base">{furnitureSet?.createdAt ? formatDate(furnitureSet.createdAt) : 'Bilinmiyor'}</p>
                     </div>
                   </div>
                 </div>
@@ -804,21 +802,21 @@ export default function ModernFurnitureSetDetail({ setId }: { setId: number }) {
             </div>
 
             {/* Furniture Items Section */}
-            <div className="bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10 shadow-2xl overflow-hidden mb-12">
-              <div className="bg-gradient-to-r from-orange-600/80 to-red-600/80 backdrop-blur-sm px-8 py-6 border-b border-white/10">
-                <h2 className="text-3xl font-bold text-white flex items-center space-x-3">
+            <div className="bg-white/5 backdrop-blur-sm rounded-2xl sm:rounded-3xl border border-white/10 shadow-2xl overflow-hidden mb-8 sm:mb-12">
+              <div className="bg-gradient-to-r from-orange-600/80 to-red-600/80 backdrop-blur-sm px-4 sm:px-8 py-4 sm:py-6 border-b border-white/10">
+                <h2 className="text-xl sm:text-3xl font-bold text-white flex items-center space-x-2 sm:space-x-3">
                   <PackageIcon />
                   <span>Takımdaki Mobilyalar ({furnitureSet?.stats?.uniqueFurnitureCount || 0})</span>
                 </h2>
               </div>
               
-              <div className="p-8">
+              <div className="p-4 sm:p-8">
                 {furnitureSet?.furnitureItems && furnitureSet.furnitureItems.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
                     {furnitureSet.furnitureItems.map((item, index) => (
-                      <div key={item.furnitureId} className="group bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
+                      <div key={item.furnitureId} className="group bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:shadow-2xl">
                         {/* Furniture Image */}
-                        <div className="aspect-square mb-6 rounded-xl overflow-hidden bg-slate-800/50">
+                        <div className="aspect-square mb-4 sm:mb-6 rounded-lg sm:rounded-xl overflow-hidden bg-slate-800/50">
                           {item.furniture?.images && item.furniture.images.length > 0 ? (
                             <FurnitureSetImageDisplay
                               image={item.furniture.images[0].image}
@@ -832,43 +830,43 @@ export default function ModernFurnitureSetDetail({ setId }: { setId: number }) {
                         </div>
                         
                         {/* Furniture Info */}
-                        <div className="space-y-4">
+                        <div className="space-y-3 sm:space-y-4">
                           <div>
-                            <h3 className="font-bold text-white text-lg mb-1">{item.furniture?.furnitureName || 'Bilinmeyen Mobilya'}</h3>
-                            <p className="text-white/60">{item.furniture?.furnitureType || 'Bilinmeyen Tip'}</p>
+                            <h3 className="font-bold text-white text-base sm:text-lg mb-1">{item.furniture?.furnitureName || 'Bilinmeyen Mobilya'}</h3>
+                            <p className="text-white/60 text-sm">{item.furniture?.furnitureType || 'Bilinmeyen Tip'}</p>
                           </div>
                           
-                          <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
-                            <span className="text-white/80 font-medium">Adet:</span>
-                            <span className="font-bold text-blue-300 text-xl">{item.quantity || 0}</span>
+                          <div className="flex items-center justify-between p-2 sm:p-3 bg-white/5 rounded-lg">
+                            <span className="text-white/80 font-medium text-sm sm:text-base">Adet:</span>
+                            <span className="font-bold text-blue-300 text-lg sm:text-xl">{item.quantity || 0}</span>
                           </div>
                           
-                          <div className="border-t border-white/20 pt-4 space-y-3">
+                          <div className="border-t border-white/20 pt-3 sm:pt-4 space-y-2 sm:space-y-3">
                             <div className="flex items-center justify-between">
-                              <span className="text-white/80">Birim Fiyat:</span>
-                              <span className="font-medium text-white">{item.formattedItemPrice || '₺0'}</span>
+                              <span className="text-white/80 text-sm sm:text-base">Birim Fiyat:</span>
+                              <span className="font-medium text-white text-sm sm:text-base">{item.formattedItemPrice || '₺0'}</span>
                             </div>
-                            <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-lg border border-green-500/30">
-                              <span className="font-bold text-white">Toplam:</span>
-                              <span className="font-bold text-2xl text-green-300">{item.formattedItemTotalPrice || '₺0'}</span>
+                            <div className="flex items-center justify-between p-2 sm:p-3 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-lg border border-green-500/30">
+                              <span className="font-bold text-white text-sm sm:text-base">Toplam:</span>
+                              <span className="font-bold text-lg sm:text-2xl text-green-300">{item.formattedItemTotalPrice || '₺0'}</span>
                             </div>
                           </div>
                           
                           <div className="pt-2">
                             <Link
                               href={`/admin/furniture/${item.furniture?.furnitureId || 0}`}
-                              className="inline-flex items-center text-blue-300 hover:text-blue-200 font-medium group-hover:translate-x-1 transition-all duration-200"
+                              className="inline-flex items-center text-blue-300 hover:text-blue-200 font-medium group-hover:translate-x-1 transition-all duration-200 text-sm sm:text-base"
                             >
                               Detayları Gör
-                              <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="w-3 h-3 sm:w-4 sm:h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                               </svg>
                             </Link>
                           </div>
                           
                           {item.furniture && !item.furniture.isActive && (
-                            <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-3">
-                              <span className="text-sm text-red-300 font-medium">⚠️ Bu mobilya artık aktif değil</span>
+                            <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-2 sm:p-3">
+                              <span className="text-xs sm:text-sm text-red-300 font-medium">⚠️ Bu mobilya artık aktif değil</span>
                             </div>
                           )}
                         </div>
@@ -876,11 +874,11 @@ export default function ModernFurnitureSetDetail({ setId }: { setId: number }) {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-12">
+                  <div className="text-center py-8 sm:py-12">
                     <div className="text-white/40 mb-4">
                       <PackageIcon />
                     </div>
-                    <p className="text-white/60">Bu takımda henüz mobilya bulunmuyor.</p>
+                    <p className="text-white/60 text-sm sm:text-base">Bu takımda henüz mobilya bulunmuyor.</p>
                   </div>
                 )}
               </div>
@@ -888,28 +886,28 @@ export default function ModernFurnitureSetDetail({ setId }: { setId: number }) {
 
             {/* Properties Section */}
             {furnitureSet?.propertiesByType && Object.keys(furnitureSet.propertiesByType).length > 0 && (
-              <div className="bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
-                <div className="bg-gradient-to-r from-green-600/80 to-teal-600/80 backdrop-blur-sm px-8 py-6 border-b border-white/10">
-                  <h2 className="text-3xl font-bold text-white flex items-center space-x-3">
+              <div className="bg-white/5 backdrop-blur-sm rounded-2xl sm:rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
+                <div className="bg-gradient-to-r from-green-600/80 to-teal-600/80 backdrop-blur-sm px-4 sm:px-8 py-4 sm:py-6 border-b border-white/10">
+                  <h2 className="text-xl sm:text-3xl font-bold text-white flex items-center space-x-2 sm:space-x-3">
                     <TagIcon />
                     <span>Özellikler ({furnitureSet?.stats?.totalProperties || 0})</span>
                   </h2>
                 </div>
                 
-                <div className="p-8">
-                  <div className="space-y-8">
+                <div className="p-4 sm:p-8">
+                  <div className="space-y-6 sm:space-y-8">
                     {Object.entries(furnitureSet.propertiesByType).map(([type, properties]) => (
-                      <div key={type} className="border-l-4 border-gradient-to-b from-blue-500 to-purple-500 pl-8">
-                        <h3 className="text-2xl font-bold text-white mb-6 capitalize flex items-center space-x-2">
+                      <div key={type} className="border-l-2 sm:border-l-4 border-gradient-to-b from-blue-500 to-purple-500 pl-4 sm:pl-8">
+                        <h3 className="text-lg sm:text-2xl font-bold text-white mb-4 sm:mb-6 capitalize flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2">
                           <span>{type}</span>
-                          <span className="text-sm bg-white/20 px-3 py-1 rounded-full">({properties?.length || 0})</span>
+                          <span className="text-xs sm:text-sm bg-white/20 px-2 sm:px-3 py-1 rounded-full w-fit">({properties?.length || 0})</span>
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                           {properties?.map((property) => (
-                            <div key={property.propertyId} className="bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 hover:bg-white/10 transition-all duration-300">
-                              <div className="flex items-start justify-between mb-3">
-                                <h4 className="font-bold text-white text-lg">{property.propertyName}</h4>
-                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                            <div key={property.propertyId} className="bg-white/5 backdrop-blur-sm rounded-lg sm:rounded-xl p-4 sm:p-6 border border-white/10 hover:bg-white/10 transition-all duration-300">
+                              <div className="flex flex-col sm:flex-row items-start justify-between gap-2 sm:gap-0 mb-3">
+                                <h4 className="font-bold text-white text-base sm:text-lg">{property.propertyName}</h4>
+                                <span className={`inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs font-medium ${
                                   property.isActive 
                                     ? 'bg-green-500/20 text-green-300 border border-green-500/30' 
                                     : 'bg-red-500/20 text-red-300 border border-red-500/30'
@@ -917,9 +915,9 @@ export default function ModernFurnitureSetDetail({ setId }: { setId: number }) {
                                   {property.isActive ? 'Aktif' : 'Pasif'}
                                 </span>
                               </div>
-                              <p className="text-white font-semibold text-xl">{property.propertyValue}</p>
+                              <p className="text-white font-semibold text-lg sm:text-xl">{property.propertyValue}</p>
                               {property.description && (
-                                <p className="text-white/60 mt-2">{property.description}</p>
+                                <p className="text-white/60 mt-2 text-sm sm:text-base">{property.description}</p>
                               )}
                             </div>
                           )) || []}

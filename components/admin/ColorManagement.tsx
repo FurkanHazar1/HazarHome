@@ -287,39 +287,40 @@ export default function ColorManagement() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-slate-900">
-      <div className="max-w-6xl mx-auto p-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-pink-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center space-x-3 sm:space-x-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-pink-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
                 <ColorIcon />
               </div>
               <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
+                <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
                   Renk Yönetimi
                 </h1>
-                <p className="text-gray-400 mt-1">
+                <p className="text-gray-400 mt-1 text-sm sm:text-base">
                   Mobilya renklerini yönetin ve paletinizi oluşturun
                 </p>
               </div>
             </div>
             
-            <div className="flex items-center space-x-3">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <button
                 onClick={() => setShowStats(!showStats)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all duration-200 font-medium border ${
+                className={`flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl transition-all duration-200 font-medium border text-sm ${
                   showStats 
                     ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white border-blue-500' 
                     : 'bg-gray-800 text-gray-300 hover:bg-gray-700 border-gray-600'
                 }`}
               >
                 <StatsIcon />
-                <span>İstatistikler</span>
+                <span className="hidden sm:inline">İstatistikler</span>
+                <span className="sm:hidden">Stats</span>
               </button>
               <button
                 onClick={() => setShowAddForm(true)}
-                className="flex items-center space-x-2 px-6 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-xl hover:from-pink-700 hover:to-purple-700 transition-all duration-200 font-medium shadow-lg"
+                className="flex items-center space-x-2 px-4 sm:px-6 py-2 bg-gradient-to-r from-pink-600 to-purple-600 text-white rounded-xl hover:from-pink-700 hover:to-purple-700 transition-all duration-200 font-medium shadow-lg w-full sm:w-auto justify-center text-sm"
               >
                 <PlusIcon />
                 <span>Yeni Renk</span>
@@ -330,19 +331,19 @@ export default function ColorManagement() {
 
         {/* Alert Messages */}
         {error && (
-          <div className="bg-gradient-to-r from-red-900/50 to-red-800/50 border border-red-600/50 text-red-300 px-6 py-4 rounded-xl mb-6 shadow-sm" role="alert">
+          <div className="bg-gradient-to-r from-red-900/50 to-red-800/50 border border-red-600/50 text-red-300 px-4 sm:px-6 py-3 sm:py-4 rounded-xl mb-4 sm:mb-6 shadow-sm" role="alert">
             <div className="flex items-center space-x-2">
-              <span className="text-xl">⚠️</span>
-              <span className="font-medium">{error}</span>
+              <span className="text-lg sm:text-xl">⚠️</span>
+              <span className="font-medium text-sm sm:text-base">{error}</span>
             </div>
           </div>
         )}
         
         {success && (
-          <div className="bg-gradient-to-r from-green-900/50 to-emerald-800/50 border border-green-600/50 text-green-300 px-6 py-4 rounded-xl mb-6 shadow-sm" role="alert">
+          <div className="bg-gradient-to-r from-green-900/50 to-emerald-800/50 border border-green-600/50 text-green-300 px-4 sm:px-6 py-3 sm:py-4 rounded-xl mb-4 sm:mb-6 shadow-sm" role="alert">
             <div className="flex items-center space-x-2">
               <SuccessIcon />
-              <span className="font-medium">{success}</span>
+              <span className="font-medium text-sm sm:text-base">{success}</span>
             </div>
           </div>
         )}

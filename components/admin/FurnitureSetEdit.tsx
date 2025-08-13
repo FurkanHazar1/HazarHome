@@ -874,43 +874,43 @@ const handleSubmit = async () => {
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-to-r from-indigo-600/20 to-pink-600/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
       </div>
 
-      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 lg:gap-0">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <button
                 onClick={() => router.back()}
-                className="group flex items-center space-x-3 px-6 py-3 bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 rounded-2xl transition-all duration-300 border border-white/20 hover:border-white/30"
+                className="group flex items-center space-x-2 sm:space-x-3 px-4 sm:px-6 py-2 sm:py-3 bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 rounded-xl sm:rounded-2xl transition-all duration-300 border border-white/20 hover:border-white/30 text-sm sm:text-base"
               >
                 <ArrowLeftIcon />
                 <span className="font-medium">Geri Dön</span>
               </button>
             </div>
             
-            <div className="text-center">
-              <div className="inline-flex items-center space-x-3 px-6 py-2 bg-white/10 backdrop-blur-sm rounded-full mb-4 border border-white/20">
-                <span className="text-2xl">✏️</span>
+            <div className="text-center w-full lg:w-auto">
+              <div className="inline-flex items-center space-x-2 sm:space-x-3 px-3 sm:px-6 py-1.5 sm:py-2 bg-white/10 backdrop-blur-sm rounded-full mb-3 sm:mb-4 border border-white/20 text-xs sm:text-base">
+                <span className="text-lg sm:text-2xl">✏️</span>
                 <span className="text-white/80 font-medium">Mobilya Takımı Düzenle</span>
               </div>
               
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-white via-blue-100 to-indigo-200 bg-clip-text text-transparent leading-tight">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-white via-blue-100 to-indigo-200 bg-clip-text text-transparent leading-tight px-4">
                 {furnitureSet?.setName || 'Mobilya Takımı Düzenle'}
               </h1>
             </div>
 
-            <div className="w-32"></div> {/* Spacer for balance */}
+            <div className="hidden lg:block w-32"></div> {/* Spacer for balance */}
           </div>
         </div>
 
         {/* Loading State */}
         {loading && (
-          <div className="flex items-center justify-center py-20">
-            <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-12 border border-white/20 shadow-2xl">
-              <div className="flex items-center space-x-4">
+          <div className="flex items-center justify-center py-12 sm:py-20">
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-6 sm:p-12 border border-white/20 shadow-2xl">
+              <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4 text-center sm:text-left">
                 <LoaderIcon />
-                <span className="text-white font-medium text-lg">Veriler yükleniyor...</span>
+                <span className="text-white font-medium text-sm sm:text-lg">Veriler yükleniyor...</span>
               </div>
             </div>
           </div>
@@ -918,31 +918,31 @@ const handleSubmit = async () => {
 
         {/* Error State */}
         {error && (
-          <div className="bg-red-500/20 backdrop-blur-sm border border-red-500/30 text-red-100 px-6 py-4 rounded-2xl mb-6 shadow-lg">
+          <div className="bg-red-500/20 backdrop-blur-sm border border-red-500/30 text-red-100 px-4 sm:px-6 py-3 sm:py-4 rounded-2xl mb-4 sm:mb-6 shadow-lg">
             <div className="flex items-center space-x-2">
-              <span className="text-xl">⚠️</span>
-              <span className="font-medium">{error}</span>
+              <span className="text-lg sm:text-xl">⚠️</span>
+              <span className="font-medium text-sm sm:text-base">{error}</span>
             </div>
           </div>
         )}
 
         {/* Form */}
         {!loading && furnitureSet && (
-          <div className="space-y-8">
+          <div className="space-y-6 sm:space-y-8">
             
             {/* Basic Information */}
-            <div className="bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
-              <div className="bg-gradient-to-r from-blue-600/80 to-purple-600/80 backdrop-blur-sm px-8 py-6 border-b border-white/10">
-                <h2 className="text-2xl font-bold text-white flex items-center space-x-3">
-                  <span className="text-3xl">📋</span>
+            <div className="bg-white/5 backdrop-blur-sm rounded-2xl sm:rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
+              <div className="bg-gradient-to-r from-blue-600/80 to-purple-600/80 backdrop-blur-sm px-4 sm:px-8 py-4 sm:py-6 border-b border-white/10">
+                <h2 className="text-lg sm:text-2xl font-bold text-white flex items-center space-x-2 sm:space-x-3">
+                  <span className="text-xl sm:text-3xl">📋</span>
                   <span>Temel Bilgiler</span>
                 </h2>
               </div>
               
-              <div className="p-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="p-4 sm:p-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-white/90">
+                    <label className="block text-xs sm:text-sm font-semibold text-white/90">
                       Takım Adı *
                     </label>
                     <input
@@ -950,27 +950,27 @@ const handleSubmit = async () => {
                       name="setName"
                       value={formData.setName}
                       onChange={handleInputChange}
-                      className={`w-full px-4 py-3 bg-white/10 backdrop-blur-sm border rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                      className={`w-full px-3 sm:px-4 py-2 sm:py-3 bg-white/10 backdrop-blur-sm border rounded-lg sm:rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm sm:text-base ${
                         errors.setName ? 'border-red-400 bg-red-500/20' : 'border-white/20'
                       }`}
                       placeholder="Örn: Modern Salon Takımı"
                       required
                     />
-                    {errors.setName && <p className="text-sm text-red-300 flex items-center space-x-1">
+                    {errors.setName && <p className="text-xs sm:text-sm text-red-300 flex items-center space-x-1">
                       <span>⚠️</span>
                       <span>{errors.setName}</span>
                     </p>}
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-white/90">
+                    <label className="block text-xs sm:text-sm font-semibold text-white/90">
                       Kategori *
                     </label>
                     <select
                       name="categoryId"
                       value={formData.categoryId}
                       onChange={handleInputChange}
-                      className={`w-full px-4 py-3 bg-white/10 backdrop-blur-sm border rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                      className={`w-full px-3 sm:px-4 py-2 sm:py-3 bg-white/10 backdrop-blur-sm border rounded-lg sm:rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm sm:text-base ${
                         errors.categoryId ? 'border-red-400 bg-red-500/20' : 'border-white/20'
                       }`}
                       required
@@ -982,13 +982,13 @@ const handleSubmit = async () => {
                         </option>
                       ))}
                     </select>
-                    {errors.categoryId && <p className="text-sm text-red-300 flex items-center space-x-1">
+                    {errors.categoryId && <p className="text-xs sm:text-sm text-red-300 flex items-center space-x-1">
                       <span>⚠️</span>
                       <span>{errors.categoryId}</span>
                     </p>}
                     {selectedCategory && (
-                      <div className="mt-3 p-4 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
-                        <div className="text-sm text-white/80">
+                      <div className="mt-2 sm:mt-3 p-3 sm:p-4 bg-white/10 backdrop-blur-sm rounded-lg sm:rounded-xl border border-white/20">
+                        <div className="text-xs sm:text-sm text-white/80">
                           <span className="font-semibold">Seçilen Kategori:</span> {selectedCategory.categoryName}
                         </div>
                       </div>
@@ -996,7 +996,7 @@ const handleSubmit = async () => {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-white/90">
+                    <label className="block text-xs sm:text-sm font-semibold text-white/90">
                       Fiyat (₺) *
                     </label>
                     <div className="relative">
@@ -1007,46 +1007,46 @@ const handleSubmit = async () => {
                         onChange={handleInputChange}
                         min="0"
                         step="0.01"
-                        className={`w-full px-4 py-3 pl-12 bg-white/10 backdrop-blur-sm border rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${
+                        className={`w-full px-3 sm:px-4 py-2 sm:py-3 pl-8 sm:pl-12 bg-white/10 backdrop-blur-sm border rounded-lg sm:rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm sm:text-base ${
                           errors.price ? 'border-red-400 bg-red-500/20' : 'border-white/20'
                         }`}
                         placeholder="0.00"
                         required
                       />
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <span className="text-white/60 text-lg">₺</span>
+                      <div className="absolute inset-y-0 left-0 pl-2 sm:pl-3 flex items-center pointer-events-none">
+                        <span className="text-white/60 text-sm sm:text-lg">₺</span>
                       </div>
                     </div>
-                    {errors.price && <p className="text-sm text-red-300 flex items-center space-x-1">
+                    {errors.price && <p className="text-xs sm:text-sm text-red-300 flex items-center space-x-1">
                       <span>⚠️</span>
                       <span>{errors.price}</span>
                     </p>}
                   </div>
 
                   <div className="flex items-center">
-                    <label className="flex items-center space-x-3 cursor-pointer">
+                    <label className="flex items-center space-x-2 sm:space-x-3 cursor-pointer">
                       <input
                         type="checkbox"
                         name="isActive"
                         checked={formData.isActive}
                         onChange={handleInputChange}
-                        className="w-5 h-5 text-blue-600 bg-white/20 border-white/30 rounded focus:ring-blue-500 focus:ring-2"
+                        className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 bg-white/20 border-white/30 rounded focus:ring-blue-500 focus:ring-2"
                       />
-                      <span className="text-sm font-medium text-white/90">Aktif olarak yayınla</span>
+                      <span className="text-xs sm:text-sm font-medium text-white/90">Aktif olarak yayınla</span>
                     </label>
                   </div>
                 </div>
 
-                <div className="mt-6 space-y-2">
-                  <label className="block text-sm font-semibold text-white/90">
+                <div className="mt-4 sm:mt-6 space-y-2">
+                  <label className="block text-xs sm:text-sm font-semibold text-white/90">
                     Açıklama
                   </label>
                   <textarea
                     name="description"
                     value={formData.description}
                     onChange={handleInputChange}
-                    rows={4}
-                    className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none"
+                    rows={3}
+                    className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg sm:rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none text-sm sm:text-base"
                     placeholder="Takım hakkında detaylar..."
                   />
                 </div>
@@ -1630,11 +1630,11 @@ const handleSubmit = async () => {
             </div>
 
             {/* Submit Buttons */}
-            <div className="flex justify-end space-x-4 pt-6">
+            <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 pt-4 sm:pt-6">
               <button
                 type="button"
                 onClick={() => router.back()}
-                className="px-8 py-3 bg-white/10 backdrop-blur-sm border border-white/20 text-white rounded-xl hover:bg-white/20 transition-all duration-200 font-medium"
+                className="px-6 sm:px-8 py-2 sm:py-3 bg-white/10 backdrop-blur-sm border border-white/20 text-white rounded-lg sm:rounded-xl hover:bg-white/20 transition-all duration-200 font-medium text-sm sm:text-base order-2 sm:order-1"
               >
                 İptal
               </button>
@@ -1642,7 +1642,7 @@ const handleSubmit = async () => {
                 type="button"
                 onClick={handleSubmit}
                 disabled={saving}
-                className="flex items-center space-x-2 px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium shadow-lg"
+                className="flex items-center justify-center space-x-2 px-6 sm:px-8 py-2 sm:py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg sm:rounded-xl hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium shadow-lg text-sm sm:text-base order-1 sm:order-2"
               >
                 {saving ? <LoaderIcon /> : <SaveIcon />}
                 <span>{saving ? 'Güncelleniyor...' : 'Değişiklikleri Kaydet'}</span>
@@ -1655,36 +1655,36 @@ const handleSubmit = async () => {
       {/* Furniture Selection Modal */}
       {showFurnitureModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white/10 backdrop-blur-md rounded-3xl max-w-4xl w-full max-h-96 overflow-hidden shadow-2xl border border-white/20">
-            <div className="bg-gradient-to-r from-orange-600/80 to-red-600/80 backdrop-blur-sm px-6 py-4 flex items-center justify-between border-b border-white/20">
-              <h3 className="text-xl font-bold text-white flex items-center space-x-2">
-                <span className="text-2xl">🪑</span>
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl sm:rounded-3xl max-w-4xl w-full max-h-[80vh] sm:max-h-96 overflow-hidden shadow-2xl border border-white/20">
+            <div className="bg-gradient-to-r from-orange-600/80 to-red-600/80 backdrop-blur-sm px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between border-b border-white/20">
+              <h3 className="text-lg sm:text-xl font-bold text-white flex items-center space-x-2">
+                <span className="text-xl sm:text-2xl">🪑</span>
                 <span>Mobilya Seç</span>
               </h3>
               <button
                 onClick={() => setShowFurnitureModal(false)}
-                className="text-white hover:text-white/80 p-2 hover:bg-white/20 rounded-lg transition-all duration-200"
+                className="text-white hover:text-white/80 p-1 sm:p-2 hover:bg-white/20 rounded-lg transition-all duration-200"
               >
-                <span className="text-xl">×</span>
+                <span className="text-lg sm:text-xl">×</span>
               </button>
             </div>
-            <div className="p-6 overflow-y-auto max-h-80">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 sm:p-6 overflow-y-auto max-h-[60vh] sm:max-h-80">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
                 {furnitureList
                   .filter(furniture => !selectedFurniture.find(item => item.furnitureId === furniture.furnitureId))
                   .map(furniture => (
                   <div
                     key={furniture.furnitureId}
-                    className="group bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4 hover:border-orange-400 hover:bg-white/20 cursor-pointer transition-all duration-200"
+                    className="group bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg sm:rounded-xl p-3 sm:p-4 hover:border-orange-400 hover:bg-white/20 cursor-pointer transition-all duration-200"
                     onClick={() => addFurniture(furniture)}
                   >
-                    <h4 className="font-semibold text-white group-hover:text-orange-200 transition-colors">
+                    <h4 className="font-semibold text-white group-hover:text-orange-200 transition-colors text-sm sm:text-base">
                       {furniture.furnitureName}
                     </h4>
-                    <p className="text-sm text-white/60 mt-1">{furniture.furnitureType}</p>
+                    <p className="text-xs sm:text-sm text-white/60 mt-1">{furniture.furnitureType}</p>
                     <div className="flex items-center space-x-2 mt-2">
-                      <span className="text-lg">💰</span>
-                      <span className="text-sm font-medium text-green-300">
+                      <span className="text-sm sm:text-lg">💰</span>
+                      <span className="text-xs sm:text-sm font-medium text-green-300">
                         ₺{Number(furniture.price).toLocaleString('tr-TR')}
                       </span>
                     </div>

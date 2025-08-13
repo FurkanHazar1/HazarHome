@@ -681,45 +681,19 @@ const handleDragStart = (e: React.DragEvent, tempId: string) => {
 
   return (
 <div className="min-h-screen bg-gradient-to-br from-gray-900 to-slate-900">
-      <div className="max-w-5xl mx-auto p-4 sm:p-6">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Header */}
         <div className="mb-6 sm:mb-8">
-          {/* Mobile Header */}
-          <div className="flex flex-col space-y-4 sm:hidden">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
-                  <FurnitureIcon />
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
-                    Yeni Mobilya
-                  </h1>
-                  <p className="text-gray-400 text-sm">
-                    Ürün ekleyin
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => router.back()}
-                className="flex items-center justify-center w-10 h-10 text-gray-400 hover:text-gray-200 hover:bg-gray-800 rounded-lg transition-all duration-200"
-              >
-                <BackIcon />
-              </button>
-            </div>
-          </div>
-
-          {/* Desktop Header */}
-          <div className="hidden sm:flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center space-x-3 sm:space-x-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
                 <FurnitureIcon />
               </div>
               <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
+                <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
                   Yeni Mobilya Ekle
                 </h1>
-                <p className="text-gray-400 mt-1">
+                <p className="text-gray-400 mt-1 text-sm sm:text-base">
                   Mobilya kataloğuna yeni ürün ekleyin
                 </p>
               </div>
@@ -727,7 +701,7 @@ const handleDragStart = (e: React.DragEvent, tempId: string) => {
             
             <button
               onClick={() => router.back()}
-              className="flex items-center space-x-2 px-4 py-2 text-gray-400 hover:text-gray-200 hover:bg-gray-800 rounded-lg transition-all duration-200"
+              className="flex items-center justify-center space-x-2 px-4 py-2 text-gray-400 hover:text-gray-200 hover:bg-gray-800 rounded-lg transition-all duration-200 w-full sm:w-auto"
             >
               <BackIcon />
               <span>Geri</span>
@@ -737,11 +711,11 @@ const handleDragStart = (e: React.DragEvent, tempId: string) => {
 
         {/* Loading State */}
         {dataLoading && (
-          <div className="flex items-center justify-center py-20">
-            <div className="bg-gray-800 rounded-2xl p-8 shadow-2xl border border-gray-700">
+          <div className="flex items-center justify-center py-12 sm:py-20">
+            <div className="bg-gray-800 rounded-2xl p-6 sm:p-8 shadow-2xl border border-gray-700">
               <div className="flex items-center space-x-4">
                 <LoaderIcon />
-                <span className="text-gray-300 font-medium">Veriler yükleniyor...</span>
+                <span className="text-gray-300 font-medium text-sm sm:text-base">Veriler yükleniyor...</span>
               </div>
             </div>
           </div>
@@ -749,17 +723,17 @@ const handleDragStart = (e: React.DragEvent, tempId: string) => {
 
         {/* Error State */}
         {errors.submit && (
-          <div className="bg-gradient-to-r from-red-900/50 to-red-800/50 border border-red-600/50 text-red-300 px-6 py-4 rounded-xl mb-6 shadow-sm">
+          <div className="bg-gradient-to-r from-red-900/50 to-red-800/50 border border-red-600/50 text-red-300 px-4 sm:px-6 py-3 sm:py-4 rounded-xl mb-4 sm:mb-6 shadow-sm">
             <div className="flex items-center space-x-2">
-              <span className="text-xl">⚠️</span>
-              <span className="font-medium">{errors.submit}</span>
+              <span className="text-lg sm:text-xl">⚠️</span>
+              <span className="font-medium text-sm sm:text-base">{errors.submit}</span>
             </div>
           </div>
         )}
 
         {/* Form */}
         {!dataLoading && (
-          <form onSubmit={handleSubmit} className="space-y-8">
+          <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
             {/* Basic Information */}
             <div className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden">
               <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4">
@@ -769,8 +743,8 @@ const handleDragStart = (e: React.DragEvent, tempId: string) => {
                 </h2>
               </div>
               
-              <div className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="p-4 sm:p-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-gray-300">
                       Mobilya Adı *
