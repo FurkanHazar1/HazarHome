@@ -26,6 +26,10 @@ export default function DarkAdminLayout({
 }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [isSearching, setIsSearching] = useState(false)
   const pathname = usePathname()
   const { data: session } = useSession()
 
@@ -33,36 +37,68 @@ export default function DarkAdminLayout({
     await signOut({ callbackUrl: '/auth/login' })
   }
 
+  // Search function
+  const handleSearch = async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([])
+      return
+    }
+
+    setIsSearching(true)
+    try {
+      // Search furniture
+      const furnitureResponse = await fetch(`/api/furniture?search=${encodeURIComponent(query)}`)
+      const furniture = await furnitureResponse.json()
+      
+      // Search furniture sets
+      const setsResponse = await fetch(`/api/furniture-sets?search=${encodeURIComponent(query)}`)
+      const sets = await setsResponse.json()
+
+      const results = [
+        ...((Array.isArray(furniture) ? furniture : []).map((item: any) => ({
+          ...item,
+          type: 'furniture',
+          href: `/admin/furniture/${item.id}`
+        }))),
+        ...((Array.isArray(sets) ? sets : []).map((item: any) => ({
+          ...item,
+          type: 'furniture-set',
+          href: `/admin/furniture-sets/${item.id}`
+        })))
+      ]
+
+      setSearchResults(results)
+    } catch (error) {
+      console.error('Arama hatası:', error)
+      setSearchResults([])
+    } finally {
+      setIsSearching(false)
+    }
+  }
+
+  // Close search when route changes
+  useEffect(() => {
+    setIsSearchOpen(false)
+    setSearchQuery('')
+    setSearchResults([])
+  }, [pathname])
+
   // Close mobile menu when route changes
   useEffect(() => {
     setIsMobileMenuOpen(false)
   }, [pathname])
 
-  // Navigation sections
+  // Navigation sections - Sadeleştirilmiş
   const navigationSections: NavSection[] = [
     {
-      title: 'Ana Yönetim',
+      title: 'Yönetim',
       items: [
         { name: 'Dashboard', href: '/admin/dashboard', icon: '📊' },
         { name: 'Kategoriler', href: '/admin/categories', icon: '📂' },
-        { name: 'Özellikler', href: '/admin/properties', icon: '🏷️' },
-        { name: 'Renkler', href: '/admin/colors', icon: '🎨' },
-      ]
-    },
-    {
-      title: 'Ürün Yönetimi',
-      items: [
         { name: 'Mobilyalar', href: '/admin/furniture', icon: '🪑' },
-        { name: 'Mobilya Setleri', href: '/admin/furniture-sets', icon: '🛋️' },
-        { name: 'Görseller', href: '/admin/images', icon: '🖼️' },
-      ]
-    },
-    {
-      title: 'Sistem',
-      items: [
-        { name: 'Ayarlar', href: '/admin/settings', icon: '⚙️' },
-        { name: 'Kullanıcılar', href: '/admin/users', icon: '👥' },
-        { name: 'Aktivite', href: '/admin/activity', icon: '📈' },
+        { name: 'Mobilya Takımları', href: '/admin/furniture-sets', icon: '🛋️' },
+        { name: 'Renkler', href: '/admin/colors', icon: '🎨' },
+        { name: 'Özellikler', href: '/admin/properties', icon: '🏷️' },
       ]
     }
   ]
@@ -124,17 +160,17 @@ export default function DarkAdminLayout({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-slate-900">
-      {/* Top Navigation */}
+      {/* Top Navigation - Mobil optimized */}
       <nav className="bg-gray-800/80 backdrop-blur-sm shadow-xl border-b border-gray-700/50 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
+          <div className="flex justify-between items-center h-12 sm:h-14 lg:h-16">
             {/* Logo and Mobile Menu Button */}
             <div className="flex items-center">
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="lg:hidden p-2 rounded-md text-gray-300 hover:text-white hover:bg-gray-700/60 transition-all duration-200"
+                className="lg:hidden p-1.5 sm:p-2 rounded-md text-gray-300 hover:text-white hover:bg-gray-700/60 transition-all duration-200"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   {isMobileMenuOpen ? (
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   ) : (
@@ -143,24 +179,20 @@ export default function DarkAdminLayout({
                 </svg>
               </button>
               
-              <Link href="/admin/dashboard" className="flex items-center space-x-3 ml-2 lg:ml-0">
+              <Link href="/admin/dashboard" className="flex items-center space-x-1.5 sm:space-x-2 lg:space-x-3 ml-1 sm:ml-2 lg:ml-0">
                 {/* SVG Logo */}
-                <div className="w-10 h-10 relative flex items-center justify-center">
+                <div className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 relative flex items-center justify-center">
                   <Image
                     src="/logo.svg"
-                    alt="HazarHome Logo"
+                    alt="HazarHome"
                     width={40}
                     height={40}
-                    className="object-contain"
-                    priority
+                    className="w-full h-full"
                   />
                 </div>
-                
-                <div className="hidden sm:block">
-                  <h1 className="text-xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
-                    HazarHome
-                  </h1>
-                  <p className="text-xs text-gray-400 -mt-1">Admin Panel</p>
+                <div className="flex flex-col">
+                  <span className="text-white font-bold text-sm sm:text-base lg:text-xl leading-tight">HazarHome</span>
+                  <span className="text-gray-400 text-xs sm:text-sm lg:text-sm leading-tight">Admin Panel</span>
                 </div>
               </Link>
             </div>
@@ -191,7 +223,10 @@ export default function DarkAdminLayout({
             {/* Right Section */}
             <div className="flex items-center space-x-4">
               {/* Search Button */}
-              <button className="p-2 text-gray-300 hover:text-white hover:bg-gray-700/60 rounded-lg transition-all duration-200">
+              <button 
+                onClick={() => setIsSearchOpen(true)}
+                className="p-2 text-gray-300 hover:text-white hover:bg-gray-700/60 rounded-lg transition-all duration-200"
+              >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
@@ -361,6 +396,98 @@ export default function DarkAdminLayout({
           </Link>
         </div>
       </div>
+
+      {/* Search Modal */}
+      {isSearchOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-start justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:p-0">
+            <div 
+              className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity backdrop-blur-sm"
+              onClick={() => setIsSearchOpen(false)}
+            />
+            
+            <div className="relative inline-block align-bottom bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <div className="bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium text-white">Arama</h3>
+                  <button
+                    onClick={() => setIsSearchOpen(false)}
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Mobilya veya mobilya seti ara..."
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value)
+                      handleSearch(e.target.value)
+                    }}
+                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    autoFocus
+                  />
+                  {isSearching && (
+                    <div className="absolute right-3 top-3">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Search Results */}
+                <div className="mt-4 max-h-96 overflow-y-auto">
+                  {searchResults.length > 0 ? (
+                    <div className="space-y-2">
+                      {searchResults.map((item, index) => (
+                        <Link
+                          key={`search-${item.type}-${item.id}`}
+                          href={item.href}
+                          className="block p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div className="flex-shrink-0">
+                              <span className="text-2xl">
+                                {item.type === 'furniture' ? '🪑' : '🛋️'}
+                              </span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-white truncate">
+                                {item.name}
+                              </p>
+                              <p className="text-xs text-gray-400">
+                                {item.type === 'furniture' ? 'Mobilya' : 'Mobilya Seti'}
+                                {item.category && ` • ${item.category.name}`}
+                              </p>
+                            </div>
+                            <div className="text-gray-400">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : searchQuery && !isSearching ? (
+                    <div className="text-center py-8">
+                      <p className="text-gray-400 text-sm">Sonuç bulunamadı</p>
+                    </div>
+                  ) : !searchQuery ? (
+                    <div className="text-center py-8">
+                      <p className="text-gray-400 text-sm">Arama yapmak için yazın...</p>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Click outside to close dropdowns */}
       {(isMobileMenuOpen || isUserMenuOpen) && (

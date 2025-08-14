@@ -1163,13 +1163,18 @@ export default function FurnitureEdit({ furnitureId }: { furnitureId: number }) 
               </div>
             )}
 
-            {/* Enhanced Images Section with Category-Based Features */}
-            <div className="bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
-              <div className="bg-gradient-to-r from-indigo-600/80 to-blue-600/80 backdrop-blur-sm px-8 py-6 border-b border-white/10">
+            {/* Enhanced Images Section - Modern Design */}
+            <div className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden">
+              <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold text-white flex items-center space-x-3">
-                    <span className="text-3xl">🖼️</span>
-                    <span>Görseller ({existingImages.length + newImages.length})</span>
+                  <h2 className="text-xl font-bold text-white flex items-center space-x-2">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span>Ürün Görselleri</span>
+                    <span className="bg-white/20 text-white text-sm px-2 py-1 rounded-full">
+                      {existingImages.length + newImages.length}
+                    </span>
                   </h2>
                   
                   {/* Enhanced Image Options */}
@@ -1179,9 +1184,9 @@ export default function FurnitureEdit({ furnitureId }: { furnitureId: number }) 
                         type="checkbox"
                         checked={generateThumbnails}
                         onChange={(e) => setGenerateThumbnails(e.target.checked)}
-                        className="w-4 h-4 text-blue-600 bg-white/20 border-white/30 rounded focus:ring-blue-500 focus:ring-2"
+                        className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
                       />
-                      <span className="text-white/90">Otomatik thumbnail</span>
+                      <span className="text-white">Otomatik thumbnail</span>
                     </label>
                     
                     <label className="flex items-center space-x-2 cursor-pointer">
@@ -1189,9 +1194,9 @@ export default function FurnitureEdit({ furnitureId }: { furnitureId: number }) 
                         type="checkbox"
                         checked={reorganizeFiles}
                         onChange={(e) => setReorganizeFiles(e.target.checked)}
-                        className="w-4 h-4 text-blue-600 bg-white/20 border-white/30 rounded focus:ring-blue-500 focus:ring-2"
+                        className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
                       />
-                      <span className="text-white/90">Dosyaları yeniden düzenle</span>
+                      <span className="text-white">Dosyaları yeniden düzenle</span>
                     </label>
                   </div>
                 </div>
@@ -1205,146 +1210,160 @@ export default function FurnitureEdit({ furnitureId }: { furnitureId: number }) 
                 )}
               </div>
               
-              <div className="p-8">
-                {/* Image Upload */}
-                <div className="mb-6">
-                  <label className="block text-sm font-semibold text-white/90 mb-2">
-                    Yeni Görsel Yükle
-                  </label>
+              <div className="p-6 space-y-6">
+                {/* Modern File Upload Area */}
+                <div 
+                  className="relative border-2 border-dashed border-gray-600 rounded-2xl p-8 transition-all duration-300 hover:border-indigo-500 hover:bg-gray-700/20 group cursor-pointer"
+                  onClick={() => document.getElementById('imageInput')?.click()}
+                >
                   <input
+                    id="imageInput"
                     type="file"
                     multiple
                     accept="image/*"
                     onChange={handleImageUpload}
-                    className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-600 file:text-white hover:file:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                    className="hidden"
                   />
-                  <div className="mt-2 space-y-1 text-xs">
-                    <p className="text-white/60">
-                      Maksimum 100MB, desteklenen formatlar: JPG, PNG, GIF, WebP
-                    </p>
-                    <p className="text-blue-300">
-                      💡 Kategori tabanlı dosya sistemi kullanılıyor. Görseller otomatik olarak düzenlenir.
-                    </p>
-                    {generateThumbnails && (
-                      <p className="text-green-300">
-                        🖼️ Ana ve galeri görselleri için otomatik thumbnail oluşturulacak
+                  
+                  <div className="text-center space-y-4">
+                    <div className="w-16 h-16 mx-auto bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">
+                      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                    </div>
+                    
+                    <div>
+                      <h3 className="text-lg font-semibold text-white mb-2">
+                        Yeni Görsel Ekle
+                      </h3>
+                      <p className="text-gray-400 text-sm mb-4">
+                        Görselleri seçin veya buraya sürükleyip bırakın
                       </p>
-                    )}
-                    {reorganizeFiles && (
-                      <p className="text-yellow-300">
-                        📁 Mevcut dosyalar da yeni kategoriye göre yeniden düzenlenecek
-                      </p>
-                    )}
+                      
+                      <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg text-sm font-medium transform group-hover:scale-105 transition-transform duration-200">
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        Dosya Seç
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-6 grid grid-cols-2 gap-4 text-xs text-gray-500">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span>Maksimum 100MB</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <span>JPG, PNG, WebP, GIF</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                      <span>Kategoriye göre düzenleme</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                      <span>Otomatik thumbnail</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Existing Images */}
+                {/* Existing Images - Modern Grid */}
                 {existingImages.length > 0 && (
-                  <div className="mb-8">
-                    <h3 className="text-lg font-semibold text-white/90 mb-4 flex items-center space-x-2">
-                      <span>📷</span>
-                      <span>Mevcut Görseller ({existingImages.length})</span>
-                    </h3>
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold text-white">
+                        Mevcut Görseller
+                      </h3>
+                      <div className="text-sm text-gray-400">
+                        {existingImages.filter(img => img.imageType === 'main' || img.imageType === 'main_image').length} ana, {existingImages.filter(img => img.imageType === 'gallery').length} galeri
+                      </div>
+                    </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                       {existingImages.map((imageItem) => (
-                        <div key={imageItem.image.imageId} className="relative bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl overflow-hidden group hover:bg-white/15 transition-all duration-200">
-                          <div className="aspect-square relative">
+                        <div key={imageItem.image.imageId} className="group relative bg-gray-700 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                          <div className="aspect-square relative overflow-hidden">
                             <FurnitureImageDisplay
                               image={imageItem.image}
                               alt={imageItem.image.altText || 'Furniture image'}
                             />
                             
-                            {/* Remove Button */}
+                            {/* Image Type Badge */}
+                            <div className={`absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-bold shadow-lg backdrop-blur-sm ${
+                              imageItem.imageType === 'main' || imageItem.imageType === 'main_image'
+                                ? 'bg-yellow-500/90 text-white border border-yellow-400/50' 
+                                : 'bg-blue-500/90 text-white border border-blue-400/50'
+                            }`}>
+                              {imageItem.imageType === 'main' || imageItem.imageType === 'main_image' ? '⭐ Ana Görsel' : '📸 Galeri'}
+                            </div>
+                            
+                            {/* Sort Order Badge */}
+                            <div className="absolute top-3 right-3 w-8 h-8 bg-black/70 backdrop-blur-sm text-white rounded-full flex items-center justify-center text-sm font-bold border border-white/20">
+                              {imageItem.sortOrder || imageItem.image.sortOrder}
+                            </div>
+                            
+                            {/* Delete Button */}
                             <button
                               type="button"
                               onClick={() => removeExistingImage(imageItem.image.imageId)}
-                              className="absolute top-2 right-2 w-8 h-8 bg-red-500/80 backdrop-blur-sm text-white rounded-full flex items-center justify-center hover:bg-red-600/80 transition-all duration-200 opacity-0 group-hover:opacity-100"
+                              className="absolute bottom-3 right-3 p-2 bg-red-500/90 hover:bg-red-600 text-white rounded-full shadow-lg backdrop-blur-sm transition-all duration-200 opacity-0 group-hover:opacity-100"
                               title="Görseli kaldır"
                             >
-                              <DeleteIcon />
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
                             </button>
-                            
-                            {/* Sort Order Badge */}
-                            <div className="absolute top-2 left-2 bg-indigo-600/80 backdrop-blur-sm text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
-                              {imageItem.sortOrder}
-                            </div>
                           </div>
                           
-                          <div className="p-4">
-                            <div className="flex items-center justify-between mb-3">
-                              <span className="text-sm font-medium text-white/90 truncate" title={imageItem.image.fileName}>
-                                {imageItem.image.fileName}
-                              </span>
+                          <div className="p-4 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <div className="text-sm font-medium text-gray-300 truncate">
+                                {imageItem.image.fileName || `Görsel ${imageItem.image.sortOrder}`}
+                              </div>
                               {imageItem.image.fileSize && (
-                                <span className="text-xs text-white/60">
+                                <span className="text-xs text-gray-500">
                                   {(imageItem.image.fileSize / 1024 / 1024).toFixed(1)}MB
                                 </span>
                               )}
                             </div>
                             
-                            {/* Image Type Buttons */}
-                            <div className="flex space-x-2 mb-3">
-                              <button
-                                type="button"
-                                onClick={() => changeExistingImageType(imageItem.image.imageId, 'main')}
-                                className={`flex items-center space-x-1 px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-                                  imageItem.imageType === 'main' || imageItem.imageType === 'main_image'
-                                    ? 'bg-yellow-500/30 text-yellow-200 border border-yellow-400/50'
-                                    : 'bg-white/10 text-white/70 hover:bg-white/20'
-                                }`}
-                              >
-                                <StarIcon />
-                                <span>Ana</span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => changeExistingImageType(imageItem.image.imageId, 'gallery')}
-                                className={`flex items-center space-x-1 px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-                                  imageItem.imageType === 'gallery'
-                                    ? 'bg-blue-500/30 text-blue-200 border border-blue-400/50'
-                                    : 'bg-white/10 text-white/70 hover:bg-white/20'
-                                }`}
-                              >
-                                <GalleryIcon />
-                                <span>Galeri</span>
-                              </button>
-                            </div>
-                            
-                            {/* Sort Order Controls */}
+                            {/* Modern Sort Controls */}
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-1">
                                 <button
                                   type="button"
                                   onClick={() => moveExistingImageUp(imageItem.image.imageId)}
-                                  disabled={existingImages.findIndex(img => img.image.imageId === imageItem.image.imageId) === 0}
-                                  className="p-1 text-white/60 hover:text-white hover:bg-white/20 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200"
+                                  disabled={imageItem.sortOrder === 1}
+                                  className="p-2 rounded-lg bg-gray-600 hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                   title="Yukarı taşı"
                                 >
-                                  <UpIcon />
+                                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                  </svg>
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => moveExistingImageDown(imageItem.image.imageId)}
-                                  disabled={existingImages.findIndex(img => img.image.imageId === imageItem.image.imageId) === existingImages.length - 1}
-                                  className="p-1 text-white/60 hover:text-white hover:bg-white/20 rounded disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200"
+                                  disabled={imageItem.sortOrder === existingImages.length}
+                                  className="p-2 rounded-lg bg-gray-600 hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                   title="Aşağı taşı"
                                 >
-                                  <DownIcon />
+                                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                  </svg>
                                 </button>
                               </div>
                               
-                              <div className="flex items-center space-x-2">
-                                <span className="text-xs text-white/60">Sıra:</span>
-                                <input
-                                  type="number"
-                                  min="1"
-                                  max={existingImages.length}
-                                  value={imageItem.sortOrder}
-                                  onChange={(e) => updateExistingImageSortOrder(imageItem.image.imageId, parseInt(e.target.value))}
-                                  className="w-12 px-1 py-1 text-xs bg-white/10 backdrop-blur-sm border border-white/20 rounded text-white text-center focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                />
-                              </div>
+                              <input
+                                type="number"
+                                min="1"
+                                max={existingImages.length}
+                                value={imageItem.sortOrder || imageItem.image.sortOrder}
+                                onChange={(e) => updateExistingImageSortOrder(imageItem.image.imageId, parseInt(e.target.value))}
+                                className="w-16 px-2 py-1 text-sm border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-600 text-white text-center"
+                              />
                             </div>
                           </div>
                         </div>
@@ -1353,17 +1372,21 @@ export default function FurnitureEdit({ furnitureId }: { furnitureId: number }) 
                   </div>
                 )}
 
-                {/* New Images */}
+                {/* New Images - Modern Grid */}
                 {newImages.length > 0 && (
-                  <div className="mb-8">
-                    <h3 className="text-lg font-semibold text-white/90 mb-4 flex items-center space-x-2">
-                      <span>🆕</span>
-                      <span>Yeni Görseller ({newImages.length})</span>
-                    </h3>
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold text-white">
+                        Yeni Görseller
+                      </h3>
+                      <div className="text-sm text-gray-400">
+                        {newImages.length} yeni görsel
+                      </div>
+                    </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                       {newImages.map((image) => (
-                        <div key={image.tempId} className="relative bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl overflow-hidden group hover:bg-white/15 transition-all duration-200">
+                        <div key={image.tempId} className="group relative bg-gray-700 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                           <div className="aspect-square relative">
                             <Image
                               src={image.preview}
@@ -1376,14 +1399,16 @@ export default function FurnitureEdit({ furnitureId }: { furnitureId: number }) 
                             <button
                               type="button"
                               onClick={() => removeNewImage(image.tempId)}
-                              className="absolute top-2 right-2 w-8 h-8 bg-red-500/80 backdrop-blur-sm text-white rounded-full flex items-center justify-center hover:bg-red-600/80 transition-all duration-200 opacity-0 group-hover:opacity-100"
+                              className="absolute bottom-3 right-3 p-2 bg-red-500/90 hover:bg-red-600 text-white rounded-full shadow-lg backdrop-blur-sm transition-all duration-200 opacity-0 group-hover:opacity-100"
                               title="Görseli kaldır"
                             >
-                              <DeleteIcon />
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
                             </button>
                             
                             {/* Sort Order Badge */}
-                            <div className="absolute top-2 left-2 bg-green-600/80 backdrop-blur-sm text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">
+                            <div className="absolute top-3 right-3 w-8 h-8 bg-black/70 backdrop-blur-sm text-white rounded-full flex items-center justify-center text-sm font-bold border border-white/20">
                               {image.sortOrder}
                             </div>
                           </div>

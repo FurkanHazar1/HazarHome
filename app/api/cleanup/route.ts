@@ -1,6 +1,35 @@
 // app/api/cleanup/route.ts
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import fs from 'fs'
+import path from 'path'
+
+// Fiziksel dosyaları sil
+async function cleanupPhysicalFiles() {
+  try {
+    console.log('🗂️ Fiziksel dosyalar temizleniyor...')
+    
+    const uploadsDir = path.join(process.cwd(), 'uploads')
+    const publicUploadsDir = path.join(process.cwd(), 'public', 'uploads')
+    
+    // uploads klasörünü temizle
+    if (fs.existsSync(uploadsDir)) {
+      fs.rmSync(uploadsDir, { recursive: true, force: true })
+      console.log('   - uploads/ klasörü temizlendi')
+    }
+    
+    // public/uploads klasörünü temizle
+    if (fs.existsSync(publicUploadsDir)) {
+      fs.rmSync(publicUploadsDir, { recursive: true, force: true })
+      console.log('   - public/uploads/ klasörü temizlendi')
+    }
+    
+    return true
+  } catch (error) {
+    console.error('❌ Fiziksel dosya temizleme hatası:', error)
+    return false
+  }
+}
 
 export async function DELETE() {
   try {
@@ -119,14 +148,41 @@ export async function DELETE() {
     })
 
     console.log('✅ Veritabanı temizleme işlemi tamamlandı!')
+    
+    // ID sequence'leri sıfırla (PostgreSQL için)
+    console.log('🔄 ID sequenceleri sifirlanıyor...')
+    try {
+      await prisma.$executeRaw`ALTER SEQUENCE "Category_id_seq" RESTART WITH 1;`
+      await prisma.$executeRaw`ALTER SEQUENCE "Color_id_seq" RESTART WITH 1;`
+      await prisma.$executeRaw`ALTER SEQUENCE "Property_id_seq" RESTART WITH 1;`
+      await prisma.$executeRaw`ALTER SEQUENCE "Image_id_seq" RESTART WITH 1;`
+      await prisma.$executeRaw`ALTER SEQUENCE "Furniture_id_seq" RESTART WITH 1;`
+      await prisma.$executeRaw`ALTER SEQUENCE "FurnitureSet_id_seq" RESTART WITH 1;`
+      await prisma.$executeRaw`ALTER SEQUENCE "FurnitureImage_id_seq" RESTART WITH 1;`
+      await prisma.$executeRaw`ALTER SEQUENCE "FurnitureProperty_id_seq" RESTART WITH 1;`
+      await prisma.$executeRaw`ALTER SEQUENCE "FurnitureColor_id_seq" RESTART WITH 1;`
+      await prisma.$executeRaw`ALTER SEQUENCE "FurnitureSetImage_id_seq" RESTART WITH 1;`
+      await prisma.$executeRaw`ALTER SEQUENCE "FurnitureSetProperty_id_seq" RESTART WITH 1;`
+      await prisma.$executeRaw`ALTER SEQUENCE "FurnitureSetColor_id_seq" RESTART WITH 1;`
+      await prisma.$executeRaw`ALTER SEQUENCE "FurnitureSetAndFurniture_id_seq" RESTART WITH 1;`
+      console.log('✅ Tum ID sequenceleri 1den baslamak uzere sifirlandi!')
+    } catch (sequenceError) {
+      console.warn('⚠️ ID sequence sifirlama uyarisi:', sequenceError)
+      console.log('💡 SQLite kullaniyorsaniz bu normal bir durumdur.')
+    }
+    
+    // Fiziksel dosyaları temizle
+    const filesCleanedUp = await cleanupPhysicalFiles()
 
     return NextResponse.json({
       success: true,
-      message: 'Tüm test verileri başarıyla temizlendi',
+      message: 'Tüm test verileri, ID sequence\'leri ve fiziksel dosyalar başarıyla sıfırlandı',
       stats: result,
       summary: {
         totalTablesCleared: 13,
         totalRecordsDeleted: result.totalDeleted,
+        sequencesReset: true,
+        physicalFilesCleanedUp: filesCleanedUp,
         clearedTables: [
           'furniture_sets__and_furniture',
           'furniture_set_images', 

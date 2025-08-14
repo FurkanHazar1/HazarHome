@@ -1267,43 +1267,67 @@ const handleSubmit = async () => {
               </div>
             )}
 
-            {/* Images */}
-            <div className="bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10 shadow-2xl overflow-hidden">
-              <div className="bg-gradient-to-r from-indigo-600/80 to-blue-600/80 backdrop-blur-sm px-8 py-6 border-b border-white/10">
-                <h2 className="text-2xl font-bold text-white flex items-center space-x-3">
-                  <span className="text-3xl">🖼️</span>
-                  <span>Görseller ({existingImages.length + newImages.length})</span>
+            {/* Modern Images Section */}
+            <div className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden">
+              <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4">
+                <h2 className="text-xl font-bold text-white flex items-center space-x-2">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span>Görseller</span>
+                  <span className="text-sm bg-white/20 px-2 py-1 rounded-full">
+                    {existingImages.length + newImages.length}
+                  </span>
                 </h2>
               </div>
               
-              <div className="p-8">
-                {/* Image Upload */}
-                <div className="mb-6">
-                  <label className="block text-sm font-semibold text-white/90 mb-2">
-                    Yeni Görsel Yükle
-                  </label>
+              <div className="p-6 space-y-6">
+                {/* Modern Upload Area */}
+                <div className="relative">
                   <input
                     type="file"
                     multiple
                     accept="image/*"
                     onChange={handleImageUpload}
-                    className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-600 file:text-white hover:file:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    id="furniture-set-edit-image-upload"
                   />
-                  <p className="text-xs text-white/60 mt-2">
-                    Maksimum 100MB, desteklenen formatlar: JPG, PNG, GIF, WebP
-                  </p>
+                  <label
+                    htmlFor="furniture-set-edit-image-upload"
+                    className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-600 rounded-2xl bg-gradient-to-br from-gray-700/50 to-gray-800/50 hover:from-indigo-600/10 hover:to-purple-600/10 hover:border-indigo-500/50 transition-all duration-300 cursor-pointer group"
+                  >
+                    <div className="w-16 h-16 mb-4 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-indigo-300 transition-colors">
+                      Yeni Görseller Yükle
+                    </h3>
+                    <p className="text-gray-400 text-center text-sm mb-3">
+                      Dosyaları buraya sürükleyip bırakın veya seçmek için tıklayın
+                    </p>
+                    <div className="flex items-center space-x-4 text-xs text-gray-500">
+                      <span>📎 Çoklu seçim</span>
+                      <span>📏 Maks 100MB</span>
+                      <span>🖼️ JPG, PNG, GIF, WebP</span>
+                    </div>
+                  </label>
                 </div>
 
-                {/* Existing Images */}
+                {/* Existing Images - Modern Grid */}
                 {existingImages.length > 0 && (
-                  <div className="mb-8">
-                    <h3 className="text-lg font-semibold text-white/90 mb-4 flex items-center space-x-2">
-                      <span>📷</span>
-                      <span>Mevcut Görseller ({existingImages.length}) - Sadece Ana Görseller</span>
-                      <span className="text-sm text-white/60 font-normal">(Thumbnail'lar otomatik yönetilir)</span>
-                    </h3>
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold text-white">
+                        Mevcut Görseller
+                      </h3>
+                      <div className="text-sm text-gray-400">
+                        {existingImages.filter(img => img.imageType === 'main').length} ana, {existingImages.filter(img => img.imageType === 'gallery').length} galeri
+                      </div>
+                    </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                       {existingImages
                         .sort((a, b) => {
                           const aOrder = imageOrderUpdates[a.image.imageId] || a.sortOrder
@@ -1315,134 +1339,114 @@ const handleSubmit = async () => {
                           const totalImages = existingImages.length + newImages.length
                           
                           return (
-                            <div key={imageItem.image.imageId} className="relative bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl overflow-hidden group hover:bg-white/15 transition-all duration-200">
-                              <div className="aspect-square relative">
+                            <div key={imageItem.image.imageId} className="group relative bg-gray-700 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                              <div className="aspect-square relative overflow-hidden">
                                 <FurnitureSetImageDisplay
                                   image={imageItem.image}
                                   alt={imageItem.image.altText || 'Furniture image'}
                                 />
                                 
-                                {/* Remove Button */}
-                                <button
-                                  type="button"
-                                  onClick={() => removeExistingImage(imageItem.image.imageId)}
-                                  className="absolute top-2 right-2 w-8 h-8 bg-red-500/80 backdrop-blur-sm text-white rounded-full flex items-center justify-center hover:bg-red-600/80 transition-all duration-200 opacity-0 group-hover:opacity-100"
-                                  title="Görseli Sil (Thumbnail'lar da silinir)"
-                                >
-                                  <DeleteIcon />
-                                </button>
+                                {/* Image Type Badge */}
+                                <div className={`absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-bold shadow-lg backdrop-blur-sm ${
+                                  imageItem.imageType === 'main'
+                                    ? 'bg-yellow-500/90 text-white border border-yellow-400/50' 
+                                    : 'bg-blue-500/90 text-white border border-blue-400/50'
+                                }`}>
+                                  {imageItem.imageType === 'main' ? '⭐ Ana Görsel' : '📸 Galeri'}
+                                </div>
                                 
                                 {/* Sort Order Badge */}
-                                <div className="absolute top-2 left-2 bg-indigo-600/80 backdrop-blur-sm text-white rounded-full w-10 h-10 flex items-center justify-center text-sm font-bold border-2 border-white/30">
+                                <div className="absolute top-3 right-3 w-8 h-8 bg-black/70 backdrop-blur-sm text-white rounded-full flex items-center justify-center text-sm font-bold border border-white/20">
                                   {currentOrder}
                                 </div>
                                 
-                                {/* Main Image Badge */}
-                                {imageItem.imageType === 'main' && (
-                                  <div className="absolute top-14 left-2 bg-yellow-500/80 backdrop-blur-sm text-white rounded-full px-3 py-1 text-xs font-bold flex items-center space-x-1">
-                                    <StarIcon />
-                                    <span>ANA</span>
-                                  </div>
-                                )}
+                                {/* Delete Button */}
+                                <button
+                                  type="button"
+                                  onClick={() => removeExistingImage(imageItem.image.imageId)}
+                                  className="absolute bottom-3 right-3 p-2 bg-red-500/90 hover:bg-red-600 text-white rounded-full shadow-lg backdrop-blur-sm transition-all duration-200 opacity-0 group-hover:opacity-100"
+                                  title="Görseli Sil"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
+                                </button>
                               </div>
                               
-                              <div className="p-4">
-                                <div className="flex items-center justify-between mb-3">
-                                  <span className="text-sm font-medium text-white/90 truncate">
+                              <div className="p-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <div className="text-sm font-medium text-gray-300 truncate" title={imageItem.image.fileName}>
                                     {imageItem.image.fileName}
-                                  </span>
-                                  <span className="text-xs text-white/60 bg-white/10 px-2 py-1 rounded">
-                                    {(imageItem.image.fileSize && imageItem.image.fileSize > 0) 
-                                      ? `${(imageItem.image.fileSize / 1024 / 1024).toFixed(1)}MB`
-                                      : 'N/A'
-                                    }
-                                  </span>
+                                  </div>
+                                  {imageItem.image.fileSize && (
+                                    <span className="text-xs text-gray-500">
+                                      {(imageItem.image.fileSize / 1024 / 1024).toFixed(1)}MB
+                                    </span>
+                                  )}
                                 </div>
                                 
-                                {/* Sort Order Controls */}
-                                <div className="flex items-center justify-between mb-3">
+                                {/* Image Type Controls */}
+                                <div className="flex space-x-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => changeExistingImageType(imageItem.image.imageId, 'main')}
+                                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all duration-200 ${
+                                      imageItem.imageType === 'main'
+                                        ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-400/30' 
+                                        : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+                                    }`}
+                                  >
+                                    ⭐ Ana
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => changeExistingImageType(imageItem.image.imageId, 'gallery')}
+                                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all duration-200 ${
+                                      imageItem.imageType === 'gallery'
+                                        ? 'bg-blue-500/20 text-blue-300 border border-blue-400/30' 
+                                        : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+                                    }`}
+                                  >
+                                    📸 Galeri
+                                  </button>
+                                </div>
+                                
+                                {/* Modern Sort Controls */}
+                                <div className="flex items-center justify-between">
                                   <div className="flex items-center space-x-1">
                                     <button
                                       type="button"
                                       onClick={() => moveExistingImageUp(imageItem.image.imageId)}
                                       disabled={currentOrder <= 1}
-                                      className="p-1.5 text-white/70 hover:text-white hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed rounded transition-all duration-200"
+                                      className="p-2 rounded-lg bg-gray-600 hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                       title="Yukarı taşı"
                                     >
-                                      <UpIcon />
+                                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                      </svg>
                                     </button>
                                     <button
                                       type="button"
                                       onClick={() => moveExistingImageDown(imageItem.image.imageId)}
                                       disabled={currentOrder >= totalImages}
-                                      className="p-1.5 text-white/70 hover:text-white hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed rounded transition-all duration-200"
+                                      className="p-2 rounded-lg bg-gray-600 hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                       title="Aşağı taşı"
                                     >
-                                      <DownIcon />
+                                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                      </svg>
                                     </button>
                                   </div>
                                   
-                                  <div className="flex items-center space-x-2">
-                                    <span className="text-xs text-white/60">Sıra:</span>
-                                    <input
-                                      type="number"
-                                      min="1"
-                                      max={totalImages}
-                                      value={currentOrder}
-                                      onChange={(e) => updateExistingImageOrder(imageItem.image.imageId, parseInt(e.target.value) || 1)}
-                                      className="w-16 px-2 py-1 text-xs bg-white/10 border border-white/30 rounded text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                    />
-                                  </div>
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    max={totalImages}
+                                    value={currentOrder}
+                                    onChange={(e) => updateExistingImageOrder(imageItem.image.imageId, parseInt(e.target.value) || 1)}
+                                    className="w-16 px-2 py-1 text-sm border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-600 text-white text-center"
+                                  />
                                 </div>
-                                
-                                {/* Image Type & Main Toggle */}
-                                <div className="flex items-center justify-between">
-                                  <div className="flex space-x-2">
-                                    <button
-                                      type="button"
-                                      onClick={() => changeExistingImageType(imageItem.image.imageId, 'main')}
-                                      className={`flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                                        imageItem.imageType === 'main'
-                                          ? 'bg-yellow-500/30 text-yellow-200 border border-yellow-400/50'
-                                          : 'bg-white/10 text-white/70 hover:bg-white/20 border border-white/30'
-                                      }`}
-                                    >
-                                      <StarIcon />
-                                      <span>Ana Görsel</span>
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => changeExistingImageType(imageItem.image.imageId, 'gallery')}
-                                      className={`flex items-center space-x-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                                        imageItem.imageType === 'gallery'
-                                          ? 'bg-blue-500/30 text-blue-200 border border-blue-400/50'
-                                          : 'bg-white/10 text-white/70 hover:bg-white/20 border border-white/30'
-                                      }`}
-                                    >
-                                      <GalleryIcon />
-                                      <span>Galeri</span>
-                                    </button>
-                                  </div>
-                                  
-                                  {/* Quick Main Toggle */}
-                                  {imageItem.imageType !== 'main' && (
-                                    <button
-                                      type="button"
-                                      onClick={() => changeExistingImageType(imageItem.image.imageId, 'main')}
-                                      className="text-xs bg-yellow-600/20 text-yellow-300 px-3 py-1 rounded-lg hover:bg-yellow-600/30 transition-colors border border-yellow-500/30"
-                                      title="Ana görsel yap"
-                                    >
-                                      ⭐ Ana Yap
-                                    </button>
-                                  )}
-                                </div>
-                                
-                                {/* Warning for Main Image */}
-                                {imageItem.imageType === 'main' && (
-                                  <div className="mt-2 text-xs text-yellow-300 bg-yellow-600/20 border border-yellow-500/30 rounded-lg p-2">
-                                    🌟 Bu ana görseldir. Değiştirirseniz diğer ana görsel galeri olur.
-                                  </div>
-                                )}
                               </div>
                             </div>
                           )
