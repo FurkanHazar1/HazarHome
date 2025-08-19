@@ -1,7 +1,7 @@
 {
   "name": "hazar-home-app",
   "version": "0.1.0",
-    "private": true,
+  "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -40,6 +40,14 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/sharp": "^0.31.1",
+    "autoprefixer": "^10.4.21",
+    "cssnano": "^7.1.0",
+    "postcss-custom-properties": "^14.0.6",
+    "postcss-import": "^16.1.1",
+    "postcss-js": "^4.0.1",
+    "postcss-nested": "^7.0.2",
+    "postcss-scss": "^4.0.9",
+    "postcss-url": "^10.1.3",
     "prisma": "^6.11.0",
     "tailwindcss": "^4",
     "tsx": "^4.20.3",
