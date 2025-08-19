@@ -1,4 +1,4 @@
-import "../../public/scss/main.scss";
+
 
 export const metadata = {
   title: 'Hazar Home - Giriş',

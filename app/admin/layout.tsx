@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
 import { AuthWrapper } from '@/components/auth/auth-wrapper'
-import "../../public/scss/main.scss"
+
 
 interface NavItem {
   name: string
