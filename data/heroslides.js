@@ -254,24 +254,24 @@ export const slideshowSlides = [
 
 export const sliderData2 = [
   {
-    imgSrc: "/images/slider/009furniture-slideshow-01.jpg",
+    imgSrc: "/images/slider/oturma_odasi_slider.jpg",
     altText: "fashion-slideshow",
-    heading: "Modern Dining\nFurniture.",
-    description: "Special Offers You Can't Miss",
+    heading: "Modern Oturma Odası\nTakımları.",
+    description: "Kaçırılmayacak Fırsatlar",
     backgroundColor: "bg_light-grey-3",
   },
   {
-    imgSrc: "/images/slider/009furniture-slideshow-02.jpg",
+    imgSrc: "/images/slider/yemek_odasi_slider.jpg",
     altText: "fashion-slideshow",
-    heading: "Relaxing\nroom",
-    description: "Special Offers You Can't Miss",
+    heading: "Lüx Yemek Odası\nTakımları",
+    description: "Kaçırılmayacak Fırsatlar",
     backgroundColor: "bg_light-blue-1",
   },
   {
-    imgSrc: "/images/slider/009furniture-slideshow-03.jpg",
+    imgSrc: "/images/slider/yatak_odasi_slider.jpg",
     altText: "fashion-slideshow",
-    heading: "Luxurious\nliving room",
-    description: "Special Offers You Can't Miss",
+    heading: "Konforlu Yatak Odası\nTakımları",
+    description: "Kaçırılmayacak Fırsatlar",
     backgroundColor: "bg_light-purple",
   },
 ];

@@ -1,416 +1,112 @@
-export const allHomepages = [
+// Oturma Odası Kategorileri
+export const oturmaOdasiCategories = [
   {
-    href: "/",
-    imgSrc: "/images/demo/home-01.jpg",
-    alt: "home-01",
-
-    labels: ["New", "Trend"],
-    name: "Home Fashion 01",
-  },
-  {
-    href: "/home-multi-brand",
-    imgSrc: "/images/demo/home-multi-brand.jpg",
-    alt: "home-multi-brand",
-
-    labels: ["New", "Hot"],
-    name: "Home Multi Brand",
-  },
-  {
-    href: "/home-02",
-    imgSrc: "/images/demo/home-02.jpg",
-    alt: "home-02",
-
-    labels: ["Hot"],
-    name: "Home Fashion 02",
-  },
-  {
-    href: "/home-03",
-    imgSrc: "/images/demo/home-03.jpg",
-    alt: "home-03",
-
-    name: "Home Fashion 03",
-  },
-  {
-    href: "/home-04",
-    imgSrc: "/images/demo/home-04.jpg",
-    alt: "home-04",
-
-    name: "Home Fashion 04",
-  },
-  {
-    href: "/home-05",
-    imgSrc: "/images/demo/home-05.jpg",
-    alt: "home-05",
-
-    name: "Home Fashion 05",
-  },
-  {
-    href: "/home-06",
-    imgSrc: "/images/demo/home-06.jpg",
-    alt: "home-06",
-
-    labels: ["New"],
-    name: "Home Fashion 06",
-  },
-  {
-    href: "/home-personalized-pod",
-    imgSrc: "/images/demo/home-personalized-pod.jpg",
-    alt: "home-personalized-pod",
-
-    labels: ["New"],
-    name: "Home Personalized Pod",
-  },
-  {
-    href: "/home-pickleball",
-    imgSrc: "/images/demo/home-pickleball.png",
-    alt: "home-pickleball",
-
-    labels: ["New"],
-    name: "Home Pickleball",
-  },
-  {
-    href: "/home-ceramic",
-    imgSrc: "/images/demo/home-ceramic.png",
-    alt: "home-ceramic",
-
-    labels: ["New"],
-    name: "Home Ceramic",
-  },
-  {
-    href: "/home-food",
-    imgSrc: "/images/demo/home-food.png",
-    alt: "home-food",
-
-    labels: ["New"],
-    name: "Home Food",
-  },
-  {
-    href: "/home-camp-and-hike",
-    imgSrc: "/images/demo/home-camp-and-hike.png",
-    alt: "home-camp-and-hike",
-
-    labels: ["New"],
-    name: "Home Camp And Hike",
-  },
-  {
-    href: "/home-07",
-    imgSrc: "/images/demo/home-07.jpg",
-    alt: "home-07",
-
-    name: "Home Fashion 07",
-  },
-  {
-    href: "/home-08",
-    imgSrc: "/images/demo/home-08.jpg",
-    alt: "home-08",
-
-    name: "Home Fashion 08",
-  },
-  {
-    href: "/home-skincare",
-    imgSrc: "/images/demo/home-skincare.jpg",
-    alt: "home-skincare",
-
-    name: "Home Skincare",
-  },
-  {
-    href: "/home-headphone",
-    imgSrc: "/images/demo/home-headphone.jpg",
-    alt: "home-headphone",
-
-    name: "Home Headphone",
-  },
-  {
-    href: "/home-giftcard",
-    imgSrc: "/images/demo/home-giftcard.jpg",
-    alt: "home-gift-card",
-
-    name: "Home Gift Card",
-  },
-  {
-    href: "/home-furniture",
-    imgSrc: "/images/demo/home-furniture.jpg",
-    alt: "home-furniture",
-
-    name: "Home Furniture",
-  },
-  {
-    href: "/home-furniture-02",
-    imgSrc: "/images/demo/home-furniture2.jpg",
-    alt: "home-furniture-2",
-
-    name: "Home Furniture 2",
-  },
-  {
-    href: "/home-skateboard",
-    imgSrc: "/images/demo/home-skateboard.jpg",
-    alt: "home-skateboard",
-
-    name: "Home Skateboard",
-  },
-  {
-    href: "/home-stroller",
-    imgSrc: "/images/demo/home-stroller.jpg",
-    alt: "home-stroller",
-
-    name: "Home Stroller",
-  },
-  {
-    href: "/home-decor",
-    imgSrc: "/images/demo/home-decor.jpg",
-    alt: "home-decor",
-
-    name: "Home Decor",
-  },
-  {
-    href: "/home-electronic",
-    imgSrc: "/images/demo/home-electronic.jpg",
-    alt: "home-electronic",
-
-    name: "Home Electronic",
-  },
-  {
-    href: "/home-setup-gear",
-    imgSrc: "/images/demo/home-setup-gear.jpg",
-    alt: "home-setup-gear",
-
-    name: "Home Setup Gear",
-  },
-  {
-    href: "/home-dog-accessories",
-    imgSrc: "/images/demo/home-dog-accessories.jpg",
-    alt: "home-dog-accessories",
-    name: "Home Dog Accessories",
-  },
-  {
-    href: "/home-kitchen-wear",
-    imgSrc: "/images/demo/home-kitchen.jpg",
-    alt: "home-kitchen-wear",
-    name: "Home Kitchen Wear",
-  },
-  {
-    href: "/home-phonecase",
-    imgSrc: "/images/demo/home-phonecase.jpg",
-    alt: "home-phonecase",
-    name: "Home Phonecase",
-  },
-  {
-    href: "/home-paddle-boards",
-    imgSrc: "/images/demo/home_paddle_board.jpg",
-    alt: "home-paddle_board",
-    name: "Home Paddle Boards",
-  },
-  {
-    href: "/home-glasses",
-    imgSrc: "/images/demo/home-glasses.jpg",
-    alt: "home-glasses",
-    name: "Home Glasses",
-  },
-  {
-    href: "/home-pod-store",
-    imgSrc: "/images/demo/home-pod-store.jpg",
-    alt: "home-pod-store",
-    name: "Home POD Store",
-  },
-  {
-    href: "/home-activewear",
-    imgSrc: "/images/demo/home-activewear.jpg",
-    alt: "home-activewear",
-    name: "Activewear",
-  },
-  {
-    href: "/home-handbag",
-    imgSrc: "/images/demo/home-handbag.jpg",
-    alt: "home-handbag",
-    name: "Home Handbag",
-  },
-  {
-    href: "/home-tee",
-    imgSrc: "/images/demo/home-tee.jpg",
-    alt: "home-tee",
-    name: "Home Tee",
-  },
-  {
-    href: "/home-sock",
-    imgSrc: "/images/demo/home-socks.jpg",
-    alt: "home-sock",
-    name: "Home Sock",
-  },
-  {
-    href: "/home-jewerly",
-    imgSrc: "/images/demo/home-jewelry.jpg",
-    alt: "home-jewelry",
-    name: "Home Jewelry",
-  },
-  {
-    href: "/home-sneaker",
-    imgSrc: "/images/demo/home-sneaker.jpg",
-    alt: "home-sneaker",
-    name: "Home Sneaker",
-  },
-  {
-    href: "/home-accessories",
-    imgSrc: "/images/demo/home-accessories.jpg",
-    alt: "home-accessories",
-    name: "Home Accessories",
-  },
-  {
-    href: "/home-grocery",
-    imgSrc: "/images/demo/home-gocery.jpg",
-    alt: "home-grocery",
-    name: "Home Grocery",
-  },
-  {
-    href: "/home-baby",
-    imgSrc: "/images/demo/home-baby.jpg",
-    alt: "home-baby",
-    name: "Home Baby",
-  },
-  {
-    href: "/home-cosmetic",
-    imgSrc: "/images/demo/home-cosmetic.png",
-    alt: "home-cosmetic",
-    name: "Home Cosmetic",
-    width: 300,
-    height: 331,
-    labels: ["New"],
-  },
-  {
-    href: "/home-plant",
-    imgSrc: "/images/demo/home-plant.png",
-    alt: "home-plant",
-    name: "Home Plant",
-
-    labels: ["New"],
-  },
-  {
-    href: "/home-swimwear",
-    imgSrc: "/images/demo/home-swimwear.png",
-    alt: "home-swimwear",
-    name: "Home Swimwear",
-
-    labels: ["New"],
-  },
-  {
-    href: "/home-electric-bike",
-    imgSrc: "/images/demo/home-electric-bike.png",
-    alt: "home-electric-bike",
-    name: "Home Electric Bike",
-
-    labels: ["New"],
-  },
-  {
-    href: "/home-footwear",
-    imgSrc: "/images/demo/home-footwear.jpg",
-    alt: "home-footwear",
-    name: "Home Footwear",
-
-    labels: ["New"],
-  },
-  {
-    href: "/home-bookstore",
-    imgSrc: "/images/demo/home-bookstore.png",
-    alt: "home-bookstore",
-    name: "Home Bookstore",
-
-    labels: ["New"],
-  },
-  {
-    href: "/home-gaming-accessories",
-    imgSrc: "/images/demo/home-gaming-accessories.png",
-    alt: "home-gaming-accessories",
-    name: "Home Gaming Accessories",
-
-    labels: ["New"],
-  },
-];
-
-export const demoItems = [
-  {
-    href: "/",
-    src: "/images/demo/home-01.jpg",
-    alt: "home-01",
-    name: "Home Fashion 01",
+    href: "/Oturma-odasi-takimlari",
+    src: "/images/menu/oturma_odasi/oturma_odasi_main.jpg",
+    alt: "Living-Room-Sets",
+    name: "Oturma Odası Takımları",
     labels: [{ className: "demo-new", text: "New" }, { text: "Trend" }],
   },
   {
-    href: "/home-multi-brand",
-    src: "/images/demo/home-multi-brand.jpg",
-    alt: "home-multi-brand",
-    name: "Home Multi Brand",
-    labels: [
-      { className: "demo-new", text: "New" },
-      { className: "demo-hot", text: "Hot" },
-    ],
+    href: "/uclu-koltuklar",
+    src: "/images/menu/oturma_odasi/uclu_koltuk.jpg",
+    alt: "Three-Seater-Sofa",
+    name: "Üçlü Koltuklar",
+    labels: [{ text: "Hot" }],
   },
   {
-    href: "/home-02",
-    src: "/images/demo/home-02.jpg",
-    alt: "home-02",
-    name: "Home Fashion 02",
-    labels: [{ className: "demo-hot", text: "Hot" }],
+    href: "/kose-koltuklar",
+    src: "/images/menu/oturma_odasi/kose_koltuk.jpg",
+    alt: "Corner-Sofa",
+    name: "Köşe Koltuklar",
+    labels: [{ text: "Popular" }],
   },
   {
-    href: "/home-03",
-    src: "/images/demo/home-03.jpg",
-    alt: "home-03",
-    name: "Home Fashion 03",
+    href: "/berjerler",
+    src: "/images/menu/oturma_odasi/berjer.jpg",
+    alt: "Armchair",
+    name: "Berjerler",
   },
   {
-    href: "/home-04",
-    src: "/images/demo/home-04.jpg",
-    alt: "home-04",
-    name: "Home Fashion 04",
+    href: "/tv-uniteleri",
+    src: "/images/menu/oturma_odasi/tv_unitesi.jpg",
+    alt: "TV-Unit",
+    name: "TV Üniteleri",
   },
   {
-    href: "/home-05",
-    src: "/images/demo/home-05.jpg",
-    alt: "home-05",
-    name: "Home Fashion 05",
-  },
-  {
-    href: "/home-06",
-    src: "/images/demo/home-06.jpg",
-    alt: "home-06",
-    name: "Home Fashion 06",
-    labels: [{ className: "demo-new", text: "New" }],
-  },
-  {
-    href: "/home-personalized-pod",
-    src: "/images/demo/home-personalized-pod.jpg",
-    alt: "home-06",
-    name: "Home Personalized Pod",
-    labels: [{ className: "demo-new", text: "New" }],
-  },
-  {
-    href: "/home-pickleball",
-    src: "/images/demo/home-pickleball.png",
-    alt: "home-pickleball",
-    name: "Home Pickleball",
-    labels: [{ className: "demo-new", text: "New" }],
-  },
-  {
-    href: "/home-ceramic",
-    src: "/images/demo/home-ceramic.png",
-    alt: "home-ceramic",
-    name: "Home Ceramic",
-    labels: [{ className: "demo-new", text: "New" }],
-  },
-  {
-    href: "/home-food",
-    src: "/images/demo/home-food.png",
-    alt: "home-food",
-    name: "Home Food",
-    labels: [{ className: "demo-new", text: "New" }],
-  },
-  {
-    href: "/home-camp-and-hike",
-    src: "/images/demo/home-camp-and-hike.png",
-    alt: "home-camp-and-hike",
-    name: "Home Camp And Hike",
-    labels: [{ className: "demo-new", text: "New" }],
+    href: "/sehpalar",
+    src: "/images/menu/oturma_odasi/sehpa.jpg",
+    alt: "Coffee-Table",
+    name: "Sehpalar",
   },
 ];
+
+// Yemek Odası Kategorileri
+export const yemekOdasiCategories = [
+  {
+    href: "/yemek-odasi-takimlari",
+    src: "/images/menu/yemek_odasi/yemek-odasi-main.jpg",
+    alt: "Dining-Room-Sets",
+    name: "Yemek Odası Takımları",
+    labels: [{ className: "demo-new", text: "New" }, { text: "Hot" }],
+  },
+  {
+    href: "/yemek-masalari",
+    src: "/images/menu/yemek_odasi/yemek_masasi.jpg",
+    alt: "Dining-Table",
+    name: "Yemek Masaları",
+  },
+
+  {
+    href: "/konsol-vitrin",
+    src: "/images/menu/yemek_odasi/konsol_vitrin.jpg",
+    alt: "Console-Table",
+    name: "Konsol  ve Vitrinler",
+  },
+];
+
+// Yatak Odası Kategorileri
+export const yatakOdasiCategories = [
+  {
+    href: "/yatak-odasi-takimlari",
+    src: "/images/menu/yatak_odasi/yatak-odasi-main.jpg",
+    alt: "Bedroom-Sets",
+    name: "Yatak Odası Takımları",
+    labels: [{ className: "demo-new", text: "New" }, { text: "Hot" }],
+  },
+  {
+    href: "/yataklar",
+    src: "/images/menu/yatak_odasi/yatak.jpg",
+    alt: "Bed",
+    name: "Yataklar",
+  },
+  {
+    href: "/gardıroplar",
+    src: "/images/menu/yatak_odasi/gardirop.jpg",
+    alt: "Wardrobe",
+    name: "Gardıroplar",
+  },
+  {
+    href: "/komodinler",
+    src: "/images/menu/yatak_odasi/komodin.jpg",
+    alt: "Nightstand",
+    name: "Komodinler",
+  },
+  {
+    href: "/makyaj-masalari",
+    src: "/images/menu/yatak_odasi/makyaj_masasi.jpg",
+    alt: "Vanity-Table",
+    name: "Makyaj Masaları",
+  },
+  {
+    href: "/sifonyer",
+    src: "/images/menu/yatak_odasi/sifonyer.jpg",
+    alt: "Dresser",
+    name: "Şifonyer",
+  },
+];
+
+
 
 export const productsPages = [
   {

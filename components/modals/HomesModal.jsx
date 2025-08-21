@@ -2,16 +2,28 @@
 import Link from "next/link";
 import React from "react";
 import Image from "next/image";
-import { allHomepages } from "@/data/menu";
+import {
+  oturmaOdasiCategories,
+  yemekOdasiCategories,
+  yatakOdasiCategories
+} from "@/data/menu";
 import { usePathname } from "next/navigation";
 export default function HomesModal() {
   const pathname = usePathname();
+  
+  // Tüm kategorileri birleştir
+  const allCategories = [
+    ...oturmaOdasiCategories,
+    ...yemekOdasiCategories,
+    ...yatakOdasiCategories
+  ];
+
   return (
     <div className="modal fade modalDemo" id="modalDemo">
       <div className="modal-dialog modal-dialog-centered">
         <div className="modal-content">
           <div className="header">
-            <h5 className="demo-title">Ultimate Nextjs Template</h5>
+            <h5 className="demo-title">Mobilya Kategorileri</h5>
             <span
               className="icon-close icon-close-popup"
               data-bs-dismiss="modal"
@@ -19,15 +31,15 @@ export default function HomesModal() {
           </div>
           <div className="mega-menu">
             <div className="row-demo">
-              {allHomepages.map((item, index) => (
+              {allCategories.map((item, index) => (
                 <div key={index} className="demo-item">
                   <Link href={item.href}>
                     <div className="demo-image position-relative">
                       <Image
                         className="lazyload"
-                        data-src={item.imgSrc}
+                        data-src={item.src}
                         alt={item.alt}
-                        src={item.imgSrc}
+                        src={item.src}
                         width={300}
                         height={329}
                       />
@@ -36,9 +48,9 @@ export default function HomesModal() {
                           {item.labels.map((label, labelIndex) => (
                             <span
                               key={labelIndex}
-                              className={`demo-${label.toLowerCase()}`}
+                              className={label.className || `demo-${label.text?.toLowerCase()}`}
                             >
-                              {label}
+                              {label.text || label}
                             </span>
                           ))}
                         </div>

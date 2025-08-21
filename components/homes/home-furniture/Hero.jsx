@@ -37,7 +37,7 @@ export default function Hero() {
                             index + 3
                           } tf-btn btn-light-icon animate-hover-btn btn-xl radius-3`}
                         >
-                          <span>Shop collection</span>
+                          <span>Mobilyaları İncele</span>
                           <i className="icon icon-arrow-right" />
                         </Link>
                       </div>
@@ -45,15 +45,27 @@ export default function Hero() {
                   </div>
                 </div>
               </div>
-              <div className="img-slider">
+              <div className="img-slider" style={{
+                height: '500px',
+                overflow: 'hidden',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
                 <Image
-                  className="lazyload"
+                  className="lazyload hero-image-fixed"
                   data-src={slide.imgSrc}
                   alt={slide.altText}
                   src={slide.imgSrc}
                   width={1890}
                   height={1580}
                   priority
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    objectPosition: 'center'
+                  }}
                 />
               </div>
             </div>

@@ -8,12 +8,13 @@ import { products1 } from "@/data/products";
 import { ProductCard } from "../shopCards/ProductCard";
 import { Navigation } from "swiper/modules";
 import {
-  allHomepages,
   blogLinks,
-  demoItems,
   pages,
   productDetailPages,
   productsPages,
+  oturmaOdasiCategories,
+  yemekOdasiCategories,
+  yatakOdasiCategories,
 } from "@/data/menu";
 import { usePathname } from "next/navigation";
 
@@ -66,16 +67,16 @@ export default function Nav({ isArrow = true, textColor = "", Linkfs = "" }) {
         <a
           href="#"
           className={`item-link ${Linkfs} ${textColor} ${
-            isMenuActive(allHomepages) ? "activeMenu" : ""
+            isMenuActive(oturmaOdasiCategories) ? "activeMenu" : ""
           } `}
         >
-          Home
+          Oturma Odası
           {isArrow ? <i className="icon icon-arrow-down" /> : ""}
         </a>
         <div className="sub-menu mega-menu">
           <div className="container">
             <div className="row-demo">
-              {demoItems.map((item, index) => (
+              {oturmaOdasiCategories.map((item, index) => (
                 <div
                   className={`demo-item ${
                     isMenuActive(item) ? "activeMenu" : ""
@@ -110,15 +111,56 @@ export default function Nav({ isArrow = true, textColor = "", Linkfs = "" }) {
                 </div>
               ))}
             </div>
-            <div className="text-center view-all-demo">
-              <a
-                href="#modalDemo"
-                data-bs-toggle="modal"
-                className="tf-btn btn-xl btn-fill radius-3 animate-hover-btn fw-6"
-              >
-                <span>View all demos (46+)</span>
-                <i className="icon icon-arrow-right" />
-              </a>
+          </div>
+        </div>
+      </li>
+      <li className="menu-item">
+        <a
+          href="#"
+          className={`item-link ${Linkfs} ${textColor} ${
+            isMenuActive(yemekOdasiCategories) ? "activeMenu" : ""
+          } `}
+        >
+          Yemek Odası
+          {isArrow ? <i className="icon icon-arrow-down" /> : ""}
+        </a>
+        <div className="sub-menu mega-menu">
+          <div className="container">
+            <div className="row-demo">
+              {yemekOdasiCategories.map((item, index) => (
+                <div
+                  className={`demo-item ${
+                    isMenuActive(item) ? "activeMenu" : ""
+                  } `}
+                  key={index}
+                >
+                  <Link href={item.href}>
+                    <div className="demo-image position-relative">
+                      <Image
+                        className="lazyload"
+                        data-src={item.src}
+                        alt={item.alt}
+                        src={item.src}
+                        width="300"
+                        height="329"
+                      />
+                      {item.labels && (
+                        <div className="demo-label">
+                          {item.labels.map((label, labelIndex) => (
+                            <span
+                              key={labelIndex}
+                              className={label.className || undefined}
+                            >
+                              {label.text}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <span className="demo-name">{item.name}</span>
+                  </Link>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -127,162 +169,49 @@ export default function Nav({ isArrow = true, textColor = "", Linkfs = "" }) {
         <a
           href="#"
           className={`item-link ${Linkfs} ${textColor} ${
-            isMenuActive(productsPages) ? "activeMenu" : ""
+            isMenuActive(yatakOdasiCategories) ? "activeMenu" : ""
           } `}
         >
-          Shop
+          Yatak Odası
           {isArrow ? <i className="icon icon-arrow-down" /> : ""}
         </a>
         <div className="sub-menu mega-menu">
           <div className="container">
-            <div className="row">
-              {productsPages.map((menu, index) => (
-                <div className="col-lg-2" key={index}>
-                  <div className="mega-menu-item">
-                    <div className="menu-heading">{menu.heading}</div>
-                    <ul className="menu-list">
-                      {menu.links.map((link, linkIndex) => (
-                        <li key={linkIndex}>
-                          <Link
-                            href={link.href}
-                            className={`menu-link-text link ${
-                              isMenuActive(link) ? "activeMenu" : ""
-                            }`}
-                          >
-                            {link.text}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              ))}
-              <div className="col-lg-3">
-                <div className="collection-item hover-img">
-                  <div className="collection-inner">
-                    <Link
-                      href={`/home-men`}
-                      className="collection-image img-style"
-                    >
+            <div className="row-demo">
+              {yatakOdasiCategories.map((item, index) => (
+                <div
+                  className={`demo-item ${
+                    isMenuActive(item) ? "activeMenu" : ""
+                  } `}
+                  key={index}
+                >
+                  <Link href={item.href}>
+                    <div className="demo-image position-relative">
                       <Image
                         className="lazyload"
-                        data-src="/images/collections/collection-1.jpg"
-                        alt="collection-demo-1"
-                        src="/images/collections/collection-1.jpg"
-                        width="1000"
-                        height="1215"
+                        data-src={item.src}
+                        alt={item.alt}
+                        src={item.src}
+                        width="300"
+                        height="329"
                       />
-                    </Link>
-                    <div className="collection-content">
-                      <Link
-                        href={`/home-men`}
-                        className="tf-btn hover-icon btn-xl collection-title fs-16"
-                      >
-                        <span>Men</span>
-                        <i className="icon icon-arrow1-top-left" />
-                      </Link>
+                      {item.labels && (
+                        <div className="demo-label">
+                          {item.labels.map((label, labelIndex) => (
+                            <span
+                              key={labelIndex}
+                              className={label.className || undefined}
+                            >
+                              {label.text}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                </div>
-              </div>
-              <div className="col-lg-3">
-                <div className="collection-item hover-img">
-                  <div className="collection-inner">
-                    <Link
-                      href={`/shop-women`}
-                      className="collection-image img-style"
-                    >
-                      <Image
-                        className="lazyload"
-                        data-src="/images/collections/collection-2.jpg"
-                        alt="collection-demo-1"
-                        src="/images/collections/collection-2.jpg"
-                        width="500"
-                        height="607"
-                      />
-                    </Link>
-                    <div className="collection-content">
-                      <Link
-                        href={`/shop-women`}
-                        className="tf-btn btn-xl collection-title fs-16 hover-icon"
-                      >
-                        <span>Women</span>
-                        <i className="icon icon-arrow1-top-left" />
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </li>
-      <li className="menu-item">
-        <a
-          href="#"
-          className={`item-link ${Linkfs} ${textColor}  ${
-            isMenuActive(productDetailPages) ? "activeMenu" : ""
-          }`}
-        >
-          Products
-          {isArrow ? <i className="icon icon-arrow-down" /> : ""}
-        </a>
-        <div className="sub-menu mega-menu">
-          <div className="container">
-            <div className="row">
-              {productDetailPages.map((menuItem, index) => (
-                <div key={index} className="col-lg-2">
-                  <div className="mega-menu-item">
-                    <div className="menu-heading">{menuItem.heading}</div>
-                    <ul className="menu-list">
-                      {menuItem.links.map((linkItem, linkIndex) => (
-                        <li key={linkIndex}>
-                          <Link
-                            href={linkItem.href}
-                            className={`menu-link-text link position-relative  ${
-                              isMenuActive(linkItem) ? "activeMenu" : ""
-                            }`}
-                          >
-                            {linkItem.text}
-                            {linkItem.extra}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                    <span className="demo-name">{item.name}</span>
+                  </Link>
                 </div>
               ))}
-              <div className="col-lg-4">
-                <div className="menu-heading">Best seller</div>
-                <div className="hover-sw-nav hover-sw-2">
-                  <Swiper
-                    dir="ltr"
-                    modules={[Navigation]}
-                    navigation={{
-                      prevEl: ".snmpn1",
-                      nextEl: ".snmnn1",
-                    }}
-                    slidesPerView={2}
-                    spaceBetween={30}
-                    className="swiper tf-product-header wrap-sw-over"
-                  >
-                    {[...products1]
-                      .slice(0, 4)
-
-                      .map((elm, i) => (
-                        <SwiperSlide key={i} className="swiper-slide">
-                          <ProductCard product={elm} />
-                        </SwiperSlide>
-                      ))}
-                  </Swiper>
-                  <div className="nav-sw nav-next-slider nav-next-product-header box-icon w_46 round snmpn1">
-                    <span className="icon icon-arrow-left" />
-                  </div>
-                  <div className="nav-sw nav-prev-slider nav-prev-product-header box-icon w_46 round snmnn1">
-                    <span className="icon icon-arrow-right" />
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -294,7 +223,7 @@ export default function Nav({ isArrow = true, textColor = "", Linkfs = "" }) {
             isMenuActive(pages) ? "activeMenu" : ""
           }`}
         >
-          Pages
+          Hakkımızda
           <i className="icon icon-arrow-down" />
         </a>
         <div className="sub-menu submenu-default">

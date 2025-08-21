@@ -52,7 +52,7 @@ export default function Header4() {
                 <Image
                   alt="logo"
                   className="logo"
-                  src="/images/logo/logo@2x.png"
+                  src="/images/logo/logo.svg"
                   width={273}
                   height={42}
                 />
