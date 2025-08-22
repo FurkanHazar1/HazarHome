@@ -1,7 +1,7 @@
-// Oturma Odası Kategorileri
+// Oturma Odası Kategorileri (Alt kategoriler)
 export const oturmaOdasiCategories = [
   {
-    href: "/Oturma-odasi-takimlari",
+    href: "/oturma-odasi-takimlari",
     src: "/images/menu/oturma_odasi/oturma_odasi_main.jpg",
     alt: "Living-Room-Sets",
     name: "Oturma Odası Takımları",
@@ -41,7 +41,7 @@ export const oturmaOdasiCategories = [
   },
 ];
 
-// Yemek Odası Kategorileri
+// Yemek Odası Kategorileri (Alt kategoriler)
 export const yemekOdasiCategories = [
   {
     href: "/yemek-odasi-takimlari",
@@ -65,7 +65,7 @@ export const yemekOdasiCategories = [
   },
 ];
 
-// Yatak Odası Kategorileri
+// Yatak Odası Kategorileri (Alt kategoriler)
 export const yatakOdasiCategories = [
   {
     href: "/yatak-odasi-takimlari",
@@ -104,6 +104,34 @@ export const yatakOdasiCategories = [
     alt: "Dresser",
     name: "Şifonyer",
   },
+];
+
+// Ana kategoriler (Menu için)
+export const mainCategories = [
+  {
+    href: "/oturma-odasi",
+    src: "/images/menu/oturma_odasi/oturma_odasi_main.jpg",
+    alt: "Living-Room",
+    name: "Oturma Odası Takımları",
+    labels: [{ className: "demo-new", text: "New" }, { text: "Trend" }],
+    subCategories: oturmaOdasiCategories
+  },
+  {
+    href: "/yemek-odasi",
+    src: "/images/menu/yemek_odasi/yemek-odasi-main.jpg",
+    alt: "Dining-Room",
+    name: "Yemek Odası Takımları",
+    labels: [{ className: "demo-new", text: "New" }, { text: "Hot" }],
+    subCategories: yemekOdasiCategories
+  },
+  {
+    href: "/yatak-odasi",
+    src: "/images/menu/yatak_odasi/yatak-odasi-main.jpg",
+    alt: "Bedroom",
+    name: "Yatak Odası Takımları",
+    labels: [{ className: "demo-new", text: "New" }, { text: "Hot" }],
+    subCategories: yatakOdasiCategories
+  }
 ];
 
 
@@ -503,42 +531,44 @@ export const navItems = [
     links: [
       {
         id: "sub-shop-one",
-        label: "Shop layouts",
+        label: "Ana Kategoriler",
         links: [
-          { href: "/shop-default", label: "Default" },
-          { href: "/shop-left-sidebar", label: "Left sidebar" },
-          { href: "/shop-right-sidebar", label: "Right sidebar" },
-          { href: "/shop-fullwidth", label: "Fullwidth" },
-          { href: "/shop-collection-sub", label: "Sub collection" },
-          { href: "/shop-collection-list", label: "Collections list" },
+          { href: "/oturma-odasi", label: "Oturma Odası Takımları" },
+          { href: "/yemek-odasi", label: "Yemek Odası Takımları" },
+          { href: "/yatak-odasi", label: "Yatak Odası Takımları" },
         ],
       },
       {
         id: "sub-shop-two",
-        label: "Features",
+        label: "Oturma Odası",
         links: [
-          { href: "/shop-link", label: "Pagination links" },
-          { href: "/shop-loadmore", label: "Pagination loadmore" },
-          {
-            href: "/shop-infinite-scrolling",
-            label: "Pagination infinite scrolling",
-          },
-          { href: "/shop-filter-sidebar", label: "Filter sidebar" },
-          { href: "/shop-filter-hidden", label: "Filter hidden" },
+          { href: "/oturma-odasi-takimlari", label: "Oturma Odası Takımları" },
+          { href: "/uclu-koltuklar", label: "Üçlü Koltuklar" },
+          { href: "/kose-koltuklar", label: "Köşe Koltuklar" },
+          { href: "/berjerler", label: "Berjerler" },
+          { href: "/tv-uniteleri", label: "TV Üniteleri" },
+          { href: "/sehpalar", label: "Sehpalar" },
         ],
       },
       {
         id: "sub-shop-three",
-        label: "Product styles",
+        label: "Yemek Odası",
         links: [
-          // { href: "/product-style-list", label: "Product style list" },
-          { href: "/product-style-01", label: "Product style 01" },
-          { href: "/product-style-02", label: "Product style 02" },
-          { href: "/product-style-03", label: "Product style 03" },
-          { href: "/product-style-04", label: "Product style 04" },
-          { href: "/product-style-05", label: "Product style 05" },
-          { href: "/product-style-06", label: "Product style 06" },
-          { href: "/product-style-07", label: "Product style 07" },
+          { href: "/yemek-odasi-takimlari", label: "Yemek Odası Takımları" },
+          { href: "/yemek-masalari", label: "Yemek Masaları" },
+          { href: "/konsol-vitrin", label: "Konsol ve Vitrinler" },
+        ],
+      },
+      {
+        id: "sub-shop-four",
+        label: "Yatak Odası",
+        links: [
+          { href: "/yatak-odasi-takimlari", label: "Yatak Odası Takımları" },
+          { href: "/yataklar", label: "Yataklar" },
+          { href: "/gardıroplar", label: "Gardıroplar" },
+          { href: "/komodinler", label: "Komodinler" },
+          { href: "/makyaj-masalari", label: "Makyaj Masaları" },
+          { href: "/sifonyer", label: "Şifonyer" },
         ],
       },
     ],

@@ -1,7 +1,9 @@
 "use client";
 import { layouts } from "@/data/shop";
+import { testFurnitureProducts } from "@/data/products";
+import { getProductsByCategory, getProductsBySubCategory, getProductsByMainCategory } from "@/utils/categoryHelpers";
 import ProductGrid from "./ProductGrid";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Pagination from "../common/Pagination";
 import ShopFilter from "./ShopFilter";
 import Sorting from "./Sorting";
@@ -11,6 +13,27 @@ export default function ShopDefault({ category = null, subCategory = null, categ
   const [gridItems, setGridItems] = useState(4);
   const [products, setProducts] = useState([]);
   const [finalSorted, setFinalSorted] = useState([]);
+
+  // Kategori veya alt kategoriye göre ürünleri filtrele
+  useEffect(() => {
+    let filteredProducts = [];
+
+    if (subCategory) {
+      // Alt kategori varsa o kategoriye ait ürünleri getir
+      filteredProducts = getProductsBySubCategory(subCategory);
+    } else if (category) {
+      // Ana kategori varsa sadece o ana kategoriye ait ürünleri getir (alt kategorilerden ürünler dahil olmasın)
+      filteredProducts = getProductsByCategory(category);
+    } else {
+      // Hiçbiri yoksa tüm mobilya ürünlerini göster
+      filteredProducts = testFurnitureProducts;
+    }
+
+    console.log('Filtered products for category:', category, 'subCategory:', subCategory, 'products:', filteredProducts.length);
+    setProducts(filteredProducts);
+    setFinalSorted(filteredProducts);
+  }, [category, subCategory]);
+
   return (
     <>
       {/* Eğer categories prop'u varsa Subcollections'ı göster */}
@@ -60,12 +83,14 @@ export default function ShopDefault({ category = null, subCategory = null, categ
                 <Pagination />
               </ul>
             ) : (
-              ""
+              <div className="text-center py-5">
+                <p>Bu kategoride henüz ürün bulunmamaktadır.</p>
+              </div>
             )}
           </div>
         </div>
       </section>
-      <ShopFilter setProducts={setProducts} />
+      <ShopFilter setProducts={setProducts} initialProducts={products} />
     </>
   );
 }

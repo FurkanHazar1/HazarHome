@@ -14,19 +14,19 @@ import { notFound } from "next/navigation";
 // Kategori mapping'i
 const categoryMappings = {
   'oturma-odasi': {
-    title: 'Oturma Odası Ürünleri',
+    title: 'Oturma Odası Takımları',
     description: 'Oturma odası için en yeni ve şık mobilyalar',
     categories: oturmaOdasiCategories,
     mainCategory: 'oturma-odasi'
   },
   'yemek-odasi': {
-    title: 'Yemek Odası Ürünleri',
+    title: 'Yemek Odası Takımları',
     description: 'Yemek odası için en yeni ve şık mobilyalar',
     categories: yemekOdasiCategories,
     mainCategory: 'yemek-odasi'
   },
   'yatak-odasi': {
-    title: 'Yatak Odası Ürünleri',
+    title: 'Yatak Odası Takımları',
     description: 'Yatak odası için en yeni ve şık mobilyalar',
     categories: yatakOdasiCategories,
     mainCategory: 'yatak-odasi'

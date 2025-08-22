@@ -64,15 +64,15 @@ export default function Nav({ isArrow = true, textColor = "", Linkfs = "" }) {
     <>
       {" "}
       <li className="menu-item">
-        <a
-          href="#"
+        <Link
+          href="/oturma-odasi"
           className={`item-link ${Linkfs} ${textColor} ${
             isMenuActive(oturmaOdasiCategories) ? "activeMenu" : ""
           } `}
         >
-          Oturma Odası
+          Oturma Odası Takımları
           {isArrow ? <i className="icon icon-arrow-down" /> : ""}
-        </a>
+        </Link>
         <div className="sub-menu mega-menu">
           <div className="container">
             <div className="row-demo">
@@ -115,15 +115,15 @@ export default function Nav({ isArrow = true, textColor = "", Linkfs = "" }) {
         </div>
       </li>
       <li className="menu-item">
-        <a
-          href="#"
+        <Link
+          href="/yemek-odasi"
           className={`item-link ${Linkfs} ${textColor} ${
             isMenuActive(yemekOdasiCategories) ? "activeMenu" : ""
           } `}
         >
-          Yemek Odası
+          Yemek Odası Takımları
           {isArrow ? <i className="icon icon-arrow-down" /> : ""}
-        </a>
+        </Link>
         <div className="sub-menu mega-menu">
           <div className="container">
             <div className="row-demo">
@@ -166,15 +166,15 @@ export default function Nav({ isArrow = true, textColor = "", Linkfs = "" }) {
         </div>
       </li>
       <li className="menu-item">
-        <a
-          href="#"
+        <Link
+          href="/yatak-odasi"
           className={`item-link ${Linkfs} ${textColor} ${
             isMenuActive(yatakOdasiCategories) ? "activeMenu" : ""
           } `}
         >
-          Yatak Odası
+          Yatak Odası Takımları
           {isArrow ? <i className="icon icon-arrow-down" /> : ""}
-        </a>
+        </Link>
         <div className="sub-menu mega-menu">
           <div className="container">
             <div className="row-demo">

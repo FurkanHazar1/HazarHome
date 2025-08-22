@@ -1,4 +1,200 @@
+// Test ürünleri - Yeni kategori sistemi için
+export const testFurnitureProducts = [
+  // Oturma Odası Takımları (Ana kategori ürünleri)
+  {
+    id: 10001,
+    imgSrc: "/images/products/furniture-1.jpg",
+    imgHoverSrc: "/images/products/furniture-2.jpg",
+    title: "Modern Oturma Odası Takımı",
+    price: 25000,
+    category: "oturma-odasi-takimlari",
+    colors: [
+      {
+        name: "Gri",
+        colorClass: "bg-gray-400",
+        imgSrc: "/images/products/furniture-1.jpg",
+      },
+      {
+        name: "Bej",
+        colorClass: "bg-yellow-100",
+        imgSrc: "/images/products/furniture-2.jpg",
+      },
+    ],
+    sizes: ["3+2+1", "3+1+1"],
+    filterCategories: ["oturma-odasi-takimlari"],
+    brand: "HazarHome",
+    isAvailable: true,
+  },
+  {
+    id: 10002,
+    imgSrc: "/images/products/furniture-3.jpg",
+    imgHoverSrc: "/images/products/furniture-4.jpg",
+    title: "Lüks Oturma Odası Takımı",
+    price: 35000,
+    category: "oturma-odasi-takimlari",
+    colors: [
+      {
+        name: "Kahverengi",
+        colorClass: "bg-yellow-800",
+        imgSrc: "/images/products/furniture-3.jpg",
+      },
+    ],
+    sizes: ["3+2+1"],
+    filterCategories: ["oturma-odasi-takimlari"],
+    brand: "HazarHome",
+    isAvailable: true,
+  },
+
+  // Üçlü Koltuklar (Alt kategori)
+  {
+    id: 10003,
+    imgSrc: "/images/products/furniture-5.jpg",
+    imgHoverSrc: "/images/products/furniture-6.jpg",
+    title: "Rahat Üçlü Koltuk",
+    price: 12000,
+    category: "uclu-koltuklar",
+    colors: [
+      {
+        name: "Mavi",
+        colorClass: "bg-blue-500",
+        imgSrc: "/images/products/furniture-5.jpg",
+      },
+    ],
+    sizes: ["Standart"],
+    filterCategories: ["uclu-koltuklar"],
+    brand: "HazarHome",
+    isAvailable: true,
+  },
+
+  // Köşe Koltuklar (Alt kategori)
+  {
+    id: 10004,
+    imgSrc: "/images/products/furniture-7.jpg",
+    imgHoverSrc: "/images/products/furniture-8.jpg",
+    title: "L Şeklinde Köşe Koltuk",
+    price: 18000,
+    category: "kose-koltuklar",
+    colors: [
+      {
+        name: "Siyah",
+        colorClass: "bg-black",
+        imgSrc: "/images/products/furniture-7.jpg",
+      },
+    ],
+    sizes: ["L-Şekli", "U-Şekli"],
+    filterCategories: ["kose-koltuklar"],
+    brand: "HazarHome",
+    isAvailable: true,
+  },
+
+  // Yemek Odası Takımları (Ana kategori)
+  {
+    id: 10005,
+    imgSrc: "/images/products/furniture-9.jpg",
+    imgHoverSrc: "/images/products/furniture-10.jpg",
+    title: "Klasik Yemek Odası Takımı",
+    price: 20000,
+    category: "yemek-odasi-takimlari",
+    colors: [
+      {
+        name: "Ceviz",
+        colorClass: "bg-yellow-900",
+        imgSrc: "/images/products/furniture-9.jpg",
+      },
+    ],
+    sizes: ["6 Kişilik", "8 Kişilik"],
+    filterCategories: ["yemek-odasi-takimlari"],
+    brand: "HazarHome",
+    isAvailable: true,
+  },
+
+  // Yemek Masaları (Alt kategori)
+  {
+    id: 10006,
+    imgSrc: "/images/products/furniture-11.jpg",
+    imgHoverSrc: "/images/products/furniture-12.jpg",
+    title: "Modern Yemek Masası",
+    price: 8000,
+    category: "yemek-masalari",
+    colors: [
+      {
+        name: "Beyaz",
+        colorClass: "bg-white",
+        imgSrc: "/images/products/furniture-11.jpg",
+      },
+    ],
+    sizes: ["4 Kişilik", "6 Kişilik"],
+    filterCategories: ["yemek-masalari"],
+    brand: "HazarHome",
+    isAvailable: true,
+  },
+
+  // Yatak Odası Takımları (Ana kategori)
+  {
+    id: 10007,
+    imgSrc: "/images/products/furniture-13.jpg",
+    imgHoverSrc: "/images/products/furniture-1.jpg",
+    title: "Şık Yatak Odası Takımı",
+    price: 28000,
+    category: "yatak-odasi-takimlari",
+    colors: [
+      {
+        name: "Lake",
+        colorClass: "bg-red-900",
+        imgSrc: "/images/products/furniture-13.jpg",
+      },
+    ],
+    sizes: ["Çift Kişilik"],
+    filterCategories: ["yatak-odasi-takimlari"],
+    brand: "HazarHome",
+    isAvailable: true,
+  },
+
+  // Yataklar (Alt kategori)
+  {
+    id: 10008,
+    imgSrc: "/images/products/furniture-2.jpg",
+    imgHoverSrc: "/images/products/furniture-3.jpg",
+    title: "Ortopedik Yatak",
+    price: 8500,
+    category: "yataklar",
+    colors: [
+      {
+        name: "Bej",
+        colorClass: "bg-yellow-100",
+        imgSrc: "/images/products/furniture-2.jpg",
+      },
+    ],
+    sizes: ["Tek Kişilik", "Çift Kişilik"],
+    filterCategories: ["yataklar"],
+    brand: "HazarHome",
+    isAvailable: true,
+  },
+
+  // Gardıroplar (Alt kategori)
+  {
+    id: 10009,
+    imgSrc: "/images/products/furniture-4.jpg",
+    imgHoverSrc: "/images/products/furniture-5.jpg",
+    title: "6 Kapılı Gardırop",
+    price: 15000,
+    category: "gardıroplar",
+    colors: [
+      {
+        name: "Beyaz",
+        colorClass: "bg-white",
+        imgSrc: "/images/products/furniture-4.jpg",
+      },
+    ],
+    sizes: ["4 Kapılı", "6 Kapılı"],
+    filterCategories: ["gardıroplar"],
+    brand: "HazarHome",
+    isAvailable: true,
+  },
+];
+
 export const products1 = [
+  ...testFurnitureProducts,
   {
     id: 1,
     imgSrc: "/images/products/orange-1.jpg",

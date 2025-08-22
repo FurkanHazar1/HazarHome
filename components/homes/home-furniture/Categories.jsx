@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { collectionData5 } from "@/data/categories";
+import { mainCategories } from "@/data/menu";
 import { Swiper, SwiperSlide } from "swiper/react";
 import Image from "next/image";
 import { Pagination } from "swiper/modules";
@@ -43,29 +43,29 @@ export default function Categories() {
           pagination={{ clickable: true, el: ".spd163" }}
         >
           <div className="swiper-wrapper">
-            {collectionData5.map((item, index) => (
+            {mainCategories.map((item, index) => (
               <SwiperSlide key={index}>
                 <div className="collection-item large hover-img">
                   <div className="collection-inner">
                     <Link
-                      href={`/shop-collection-list`} // Direct link added here
-                      className={`collection-image img-style ${item.backgroundColor}`}
+                      href={item.href}
+                      className="collection-image img-style"
                     >
                       <Image
                         className="lazyload"
-                        data-src={item.imgSrc}
-                        alt={item.altText}
-                        src={item.imgSrc}
+                        data-src={item.src}
+                        alt={item.alt}
+                        src={item.src}
                         width={674}
                         height={942}
                       />
                     </Link>
                     <div className="collection-content">
                       <Link
-                        href={`/shop-collection-list`} // Direct link added here
+                        href={item.href}
                         className="tf-btn collection-title hover-icon"
                       >
-                        <span>{item.title}</span>
+                        <span>{item.name}</span>
                         <i className="icon icon-arrow1-top-left" />
                       </Link>
                     </div>
