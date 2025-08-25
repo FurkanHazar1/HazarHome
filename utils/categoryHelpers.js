@@ -1,4 +1,4 @@
-import { products1 } from "@/data/products";
+import { testFurnitureProducts, products1 } from "@/data/products";
 
 // Ana kategoriler ve alt kategoriler mapping'i
 export const categoryMapping = {
@@ -6,20 +6,20 @@ export const categoryMapping = {
   'oturma-odasi': {
     name: 'Oturma Odası Takımları',
     type: 'main',
-    subCategories: ['oturma-odasi-takimlari', 'uclu-koltuklar', 'kose-koltuklar', 'berjerler', 'tv-uniteleri', 'sehpalar']
+    subCategories: ['oturma-odasi-takimlari', 'uclu-koltuklar', 'ikili-koltuklar', 'kose-koltuklar', 'berjer-koltuklar', 'tv-uniteleri', 'sehpalar']
   },
   'yemek-odasi': {
     name: 'Yemek Odası Takımları',
     type: 'main',
-    subCategories: ['yemek-odasi-takimlari', 'yemek-masalari', 'konsol-vitrin']
+    subCategories: ['yemek-odasi-takimlari', 'yemek-masalari', 'yemek-sandalyeleri', 'konsol-vitrin']
   },
   'yatak-odasi': {
     name: 'Yatak Odası Takımları',
     type: 'main',
-    subCategories: ['yatak-odasi-takimlari', 'yataklar', 'gardıroplar', 'komodinler', 'makyaj-masalari', 'sifonyer']
+    subCategories: ['yatak-odasi-takimlari', 'yataklar', 'gardiroplar', 'komodinler', 'makyaj-masalari', 'sifonyerler']
   },
   
-  // Alt kategoriler
+  // Alt kategoriler - Oturma Odası
   'oturma-odasi-takimlari': {
     name: 'Oturma Odası Takımları',
     type: 'sub',
@@ -30,13 +30,18 @@ export const categoryMapping = {
     type: 'sub',
     parent: 'oturma-odasi'
   },
+  'ikili-koltuklar': {
+    name: 'İkili Koltuklar',
+    type: 'sub',
+    parent: 'oturma-odasi'
+  },
   'kose-koltuklar': {
     name: 'Köşe Koltuklar',
     type: 'sub',
     parent: 'oturma-odasi'
   },
-  'berjerler': {
-    name: 'Berjerler',
+  'berjer-koltuklar': {
+    name: 'Berjer Koltuklar',
     type: 'sub',
     parent: 'oturma-odasi'
   },
@@ -51,6 +56,7 @@ export const categoryMapping = {
     parent: 'oturma-odasi'
   },
   
+  // Alt kategoriler - Yemek Odası
   'yemek-odasi-takimlari': {
     name: 'Yemek Odası Takımları',
     type: 'sub',
@@ -61,12 +67,18 @@ export const categoryMapping = {
     type: 'sub',
     parent: 'yemek-odasi'
   },
+  'yemek-sandalyeleri': {
+    name: 'Yemek Sandalyeleri',
+    type: 'sub',
+    parent: 'yemek-odasi'
+  },
   'konsol-vitrin': {
     name: 'Konsol ve Vitrinler',
     type: 'sub',
     parent: 'yemek-odasi'
   },
   
+  // Alt kategoriler - Yatak Odası
   'yatak-odasi-takimlari': {
     name: 'Yatak Odası Takımları',
     type: 'sub',
@@ -77,7 +89,7 @@ export const categoryMapping = {
     type: 'sub',
     parent: 'yatak-odasi'
   },
-  'gardıroplar': {
+  'gardiroplar': {
     name: 'Gardıroplar',
     type: 'sub',
     parent: 'yatak-odasi'
@@ -92,8 +104,8 @@ export const categoryMapping = {
     type: 'sub',
     parent: 'yatak-odasi'
   },
-  'sifonyer': {
-    name: 'Şifonyer',
+  'sifonyerler': {
+    name: 'Şifonyerler',
     type: 'sub',
     parent: 'yatak-odasi'
   }
@@ -109,22 +121,21 @@ export function getProductsByCategory(category) {
     return [];
   }
 
+  // Yeni sistemde testFurnitureProducts'tan filtrele
   if (categoryInfo.type === 'main') {
-    // Ana kategori ise, sadece o kategorinin "takımlar" alt kategorisindeki ürünleri getir
-    const mainSubCategory = categoryInfo.subCategories.find(sub => sub.includes('takimlari'));
-    if (mainSubCategory) {
-      const filteredProducts = products1.filter(product => {
-        const productCategory = product.category || product.filterCategories?.[0] || 'other';
-        return productCategory === mainSubCategory;
-      });
-      console.log(`Found ${filteredProducts.length} products for main category ${category} (${mainSubCategory})`);
-      return filteredProducts;
-    }
+    // Ana kategori ise, o kategoriye ait tüm ürünleri getir
+    const filteredProducts = testFurnitureProducts.filter(product => {
+      const productCategory = product.category;
+      // Ana kategori slug'ı ile başlayan kategoriler
+      return productCategory && productCategory.includes(category);
+    });
+    console.log(`Found ${filteredProducts.length} products for main category ${category}`);
+    return filteredProducts;
   }
 
   // Alt kategori ise direkt o kategorideki ürünleri getir
-  const filteredProducts = products1.filter(product => {
-    const productCategory = product.category || product.filterCategories?.[0] || 'other';
+  const filteredProducts = testFurnitureProducts.filter(product => {
+    const productCategory = product.category;
     return productCategory === category;
   });
   
@@ -136,8 +147,9 @@ export function getProductsByCategory(category) {
 export function getProductsBySubCategory(subCategory) {
   console.log('Getting products by subcategory:', subCategory);
   
-  const filteredProducts = products1.filter(product => {
-    const productCategory = product.category || product.filterCategories?.[0] || 'other';
+  // Yeni sistemde testFurnitureProducts'tan filtrele
+  const filteredProducts = testFurnitureProducts.filter(product => {
+    const productCategory = product.category;
     return productCategory === subCategory;
   });
   
@@ -155,18 +167,14 @@ export function getProductsByMainCategory(mainCategory) {
     return [];
   }
 
-  // Sadece ana kategoriyi temsil eden "takımlar" alt kategorisindeki ürünleri getir
-  const mainSubCategory = categoryInfo.subCategories.find(sub => sub.includes('takimlari'));
-  if (mainSubCategory) {
-    const filteredProducts = products1.filter(product => {
-      const productCategory = product.category || product.filterCategories?.[0] || 'other';
-      return productCategory === mainSubCategory;
-    });
-    console.log(`Found ${filteredProducts.length} products for main category ${mainCategory}`);
-    return filteredProducts;
-  }
-
-  return [];
+  // Yeni sistemde ana kategoriye ait tüm ürünleri getir
+  const filteredProducts = testFurnitureProducts.filter(product => {
+    const productCategory = product.category;
+    // Ana kategori slug'ı ile başlayan kategoriler
+    return productCategory && productCategory.includes(mainCategory);
+  });
+  console.log(`Found ${filteredProducts.length} products for main category ${mainCategory}`);
+  return filteredProducts;
 }
 
 // Kategori bilgisi getir

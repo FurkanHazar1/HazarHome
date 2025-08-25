@@ -15,6 +15,13 @@ export const oturmaOdasiCategories = [
     labels: [{ text: "Hot" }],
   },
   {
+    href: "/ikili-koltuklar",
+    src: "/images/menu/oturma_odasi/ikili_koltuk.jpg",
+    alt: "Two-Seater-Sofa",
+    name: "İkili Koltuklar",
+    labels: [{ text: "Popular" }],
+  },
+  {
     href: "/kose-koltuklar",
     src: "/images/menu/oturma_odasi/kose_koltuk.jpg",
     alt: "Corner-Sofa",
@@ -22,10 +29,10 @@ export const oturmaOdasiCategories = [
     labels: [{ text: "Popular" }],
   },
   {
-    href: "/berjerler",
+    href: "/berjer-koltuklar",
     src: "/images/menu/oturma_odasi/berjer.jpg",
     alt: "Armchair",
-    name: "Berjerler",
+    name: "Berjer Koltuklar",
   },
   {
     href: "/tv-uniteleri",
@@ -56,12 +63,17 @@ export const yemekOdasiCategories = [
     alt: "Dining-Table",
     name: "Yemek Masaları",
   },
-
+  {
+    href: "/yemek-sandalyeleri",
+    src: "/images/menu/yemek_odasi/yemek_sandalyesi.jpg",
+    alt: "Dining-Chair",
+    name: "Yemek Sandalyeleri",
+  },
   {
     href: "/konsol-vitrin",
     src: "/images/menu/yemek_odasi/konsol_vitrin.jpg",
     alt: "Console-Table",
-    name: "Konsol  ve Vitrinler",
+    name: "Konsol ve Vitrinler",
   },
 ];
 
@@ -99,10 +111,10 @@ export const yatakOdasiCategories = [
     name: "Makyaj Masaları",
   },
   {
-    href: "/sifonyer",
+    href: "/sifonyerler",
     src: "/images/menu/yatak_odasi/sifonyer.jpg",
     alt: "Dresser",
-    name: "Şifonyer",
+    name: "Şifonyerler",
   },
 ];
 

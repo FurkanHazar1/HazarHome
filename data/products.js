@@ -246,44 +246,7 @@ export const testFurnitureProducts = [
         sortOrder: 2
       }
     ],
-    setItems: [
-      {
-        name: "3'lü Deri Koltuk",
-        quantity: 1,
-        description: "Premium deri kaplı 3 kişilik koltuk",
-        price: 18000,
-        image: "/images/products/furniture/leather-sofa-3.jpg",
-        individualLink: "/product-detail-furniture/10104",
-        properties: [
-          { name: "Boyut", value: "220x95x85 cm" },
-          { name: "Malzeme", value: "Deri + Ahşap" }
-        ]
-      },
-      {
-        name: "2'li Deri Koltuk", 
-        quantity: 1,
-        description: "Premium deri kaplı 2 kişilik koltuk",
-        price: 14000,
-        image: "/images/products/furniture/leather-sofa-2.jpg",
-        individualLink: "/product-detail-furniture/10105",
-        properties: [
-          { name: "Boyut", value: "150x95x85 cm" },
-          { name: "Malzeme", value: "Deri + Ahşap" }
-        ]
-      },
-      {
-        name: "Deri Berjer",
-        quantity: 1, 
-        description: "Lüks deri berjer koltuk",
-        price: 8500,
-        image: "/images/products/furniture/leather-chair.jpg",
-        individualLink: "/product-detail-furniture/10106",
-        properties: [
-          { name: "Boyut", value: "85x95x85 cm" },
-          { name: "Malzeme", value: "Deri + Ahşap" }
-        ]
-      }
-    ],
+   
     sizes: ["3+2+1"],
     filterCategories: ["oturma-odasi-takimlari"],
     brand: "HazarHome",
