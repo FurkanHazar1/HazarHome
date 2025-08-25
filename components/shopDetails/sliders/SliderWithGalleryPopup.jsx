@@ -10,8 +10,9 @@ export default function SliderWithGalleryPopup({
   currentColor = "Beige",
   handleColor = () => {},
   firstImage,
+  images: propImages = [],
 }) {
-  const images = [
+  const defaultImages = [
     {
       id: 1,
       src: firstImage || "/images/shop/products/p-d1.png",
@@ -157,15 +158,35 @@ export default function SliderWithGalleryPopup({
       dataValue: "white",
     },
   ];
+
+  // Convert propImages to the expected format with id and dataValue
+  const processedPropImages = propImages && propImages.length > 0 
+    ? propImages.map((img, index) => ({
+        id: index + 1,
+        src: img.src || img.imgSrc || firstImage,
+        alt: img.alt || "",
+        width: 770,
+        height: 1075,
+        dataValue: (currentColor && typeof currentColor === 'string' ? currentColor.toLowerCase() : "beige"),
+      }))
+    : [];
+
+  // Use processed prop images if available, otherwise use default images
+  const images = processedPropImages.length > 0 ? processedPropImages : defaultImages;
+
   const [thumbsSwiper, setThumbsSwiper] = useState(null);
   const swiperRef = useRef(null);
   useEffect(() => {
-    const slideIndex =
-      images.filter(
-        (elm) => elm.dataValue.toLowerCase() == currentColor.toLowerCase()
-      )[0].id - 1;
-    swiperRef.current.slideTo(slideIndex);
-  }, [currentColor]);
+    if (currentColor && typeof currentColor === 'string' && images && images.length > 0) {
+      const colorImage = images.find(
+        (elm) => elm.dataValue && elm.dataValue.toLowerCase() === currentColor.toLowerCase()
+      );
+      if (colorImage && colorImage.id !== undefined && swiperRef.current) {
+        const slideIndex = Math.max(0, colorImage.id - 1); // Ensure slideIndex is not negative
+        swiperRef.current.slideTo(slideIndex);
+      }
+    }
+  }, [currentColor, images]);
 
   return (
     <>
@@ -216,7 +237,9 @@ export default function SliderWithGalleryPopup({
           modules={[Thumbs, Navigation]}
           onSwiper={(swiper) => (swiperRef.current = swiper)}
           onSlideChange={(swiper) => {
-            handleColor(images[swiper.activeIndex].dataValue);
+            if (images && images[swiper.activeIndex] && images[swiper.activeIndex].dataValue) {
+              handleColor(images[swiper.activeIndex].dataValue);
+            }
           }}
         >
           {images.map((slide, index) => (

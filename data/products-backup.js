@@ -1,4 +1,4 @@
-// Test ürünleri - Prisma Schema uyumlu güncellenmiş veriler
+// Test ürünleri - Yeni kategori sistemi için (Prisma Schema uyumlu)
 export const testFurnitureProducts = [
   // Oturma Odası Takımları (Ana kategori ürünleri)
   {
@@ -29,13 +29,20 @@ export const testFurnitureProducts = [
     ],
     dimensions: "Toplam: 380x200 cm, 3'lü koltuk: 220x95x85 cm",
     warranty: "3 Yıl Üretici Garantisi",
+    properties: [
+      { name: "Stil", value: "Modern" },
+      { name: "Malzeme Tipi", value: "Kumaş" },
+      { name: "İskelet", value: "Masif Ahşap" },
+      { name: "Minder Tipi", value: "Çıkarılabilir" },
+      { name: "Montaj", value: "Uzman Kurulum" }
+    ],
     colors: [
       {
         id: "gray-10001",
         name: "Gri",
         value: "Gri",
         code: "#6B7280",
-        colorClass: "bg-gray-400",
+        className: "bg-gray-400",
         imgSrc: "/images/products/furniture-1.jpg",
         isAvailable: true
       },
@@ -44,41 +51,24 @@ export const testFurnitureProducts = [
         name: "Bej",
         value: "Bej",
         code: "#F5F5DC",
-        colorClass: "bg-yellow-100",
+        className: "bg-yellow-100",
         imgSrc: "/images/products/furniture-2.jpg",
         isAvailable: true
       },
-      {
-        id: "navy-10001", 
-        name: "Lacivert",
-        value: "Lacivert",
-        code: "#1E3A8A",
-        colorClass: "bg-blue-800",
-        imgSrc: "/images/products/furniture-3.jpg",
-        isAvailable: true
-      }
     ],
     sizes: [
       {
         id: "standard-10001",
-        value: "3+2+1 Standart",
-        isAvailable: true
-      },
-      {
-        id: "compact-10001",
-        value: "3+1+1 Kompakt",
+        value: "Standart",
         isAvailable: true
       }
     ],
     properties: [
-      { name: "Stil", value: "Modern" },
-      { name: "Malzeme Tipi", value: "Kumaş" },
-      { name: "İskelet Malzemesi", value: "Masif Ahşap" },
-      { name: "Minder Tipi", value: "Çıkarılabilir" },
-      { name: "Montaj Gerekliliği", value: "Uzman Kurulum" },
+      { name: "Malzeme", value: "Kumaş + Ahşap" },
+      { name: "Boyutlar", value: "3+2+1" },
+      { name: "Garanti", value: "2 Yıl" },
       { name: "Üretim Yeri", value: "Türkiye" },
-      { name: "Garanti Süresi", value: "3 Yıl" },
-      { name: "Ağırlık Kapasitesi", value: "150 kg/koltuk" }
+      { name: "Stil", value: "Modern" }
     ],
     images: [
       {
@@ -96,67 +86,39 @@ export const testFurnitureProducts = [
     ],
     setItems: [
       {
-        furnitureId: 10101,
         name: "3'lü Koltuk",
         quantity: 1,
-        description: "Konforlu 3 kişilik ana koltuk, yüksek kaliteli kumaş döşeme",
+        description: "Konforlu 3 kişilik ana koltuk",
         price: 12000,
         image: "/images/products/furniture/sofa-3.jpg",
         individualLink: "/product-detail-furniture/10101",
-        sortOrder: 1,
         properties: [
-          { name: "Boyutlar", value: "220x95x85 cm" },
-          { name: "Malzeme", value: "Kumaş + Masif Ahşap" },
-          { name: "Oturma Yüksekliği", value: "45 cm" },
-          { name: "Ağırlık", value: "65 kg" }
+          { name: "Boyut", value: "220x95x85 cm" },
+          { name: "Malzeme", value: "Kumaş + Ahşap" }
         ]
       },
       {
-        furnitureId: 10102,
         name: "2'li Koltuk", 
         quantity: 1,
-        description: "Şık 2 kişilik yan koltuk, ergonomik tasarım",
+        description: "Şık 2 kişilik yan koltuk",
         price: 8500,
         image: "/images/products/furniture/sofa-2.jpg",
         individualLink: "/product-detail-furniture/10102",
-        sortOrder: 2,
         properties: [
-          { name: "Boyutlar", value: "150x95x85 cm" },
-          { name: "Malzeme", value: "Kumaş + Masif Ahşap" },
-          { name: "Oturma Yüksekliği", value: "45 cm" },
-          { name: "Ağırlık", value: "45 kg" }
+          { name: "Boyut", value: "150x95x85 cm" },
+          { name: "Malzeme", value: "Kumaş + Ahşap" }
         ]
       },
       {
-        furnitureId: 10103,
         name: "Berjer Koltuk",
         quantity: 1, 
-        description: "Rahat tekli berjer koltuk, döner mekanizmalı",
+        description: "Rahat tekli berjer koltuk",
         price: 6500,
         image: "/images/products/furniture/chair-1.jpg",
         individualLink: "/product-detail-furniture/10103",
-        sortOrder: 3,
         properties: [
-          { name: "Boyutlar", value: "85x95x85 cm" },
-          { name: "Malzeme", value: "Kumaş + Masif Ahşap" },
-          { name: "Döner Mekanizma", value: "360° Döner" },
-          { name: "Ağırlık", value: "28 kg" }
-        ]
-      },
-      {
-        furnitureId: 10104,
-        name: "Orta Sehpa",
-        quantity: 1, 
-        description: "Modern tasarımlı orta sehpa, cam tabla",
-        price: 1500,
-        image: "/images/products/furniture/coffee-table.jpg",
-        individualLink: "/product-detail-furniture/10104",
-        sortOrder: 4,
-        properties: [
-          { name: "Boyutlar", value: "120x60x40 cm" },
-          { name: "Malzeme", value: "Temperli Cam + Metal Ayak" },
-          { name: "Cam Kalınlığı", value: "12 mm" },
-          { name: "Ağırlık", value: "25 kg" }
+          { name: "Boyut", value: "85x95x85 cm" },
+          { name: "Malzeme", value: "Kumaş + Ahşap" }
         ]
       }
     ],
@@ -702,148 +664,6 @@ export const testFurnitureProducts = [
     isAvailable: true,
   },
 
-  // Yemek Odası Takımları (20000-20099)
-  {
-    id: 20001,
-    imgSrc: "/images/products/dining-set-1.jpg",
-    imgHoverSrc: "/images/products/dining-set-2.jpg",
-    title: "Klasik Yemek Odası Takımı",
-    price: 15000,
-    oldPrice: 18000,
-    category: "yemek-odasi-takimlari",
-    type: "furniture_set",
-    brand: "HazarHome Classic",
-    description: "Zamansız tasarımı ve üstün kalitesiyle öne çıkan klasik yemek odası takımı. Masif ahşap yapısı ve zarif detaylarıyla evinizin dekorayonuna değer katar. 6 kişilik kullanım için ideal boyutlarda tasarlanmış, hem günlük kullanım hem de özel davetler için mükemmel bir seçim.",
-    features: [
-      "Masif ahşap yapı",
-      "Klasik tasarım",
-      "6 kişilik kullanım",
-      "Dayanıklı vernik",
-      "Ergonomik sandalye tasarımı"
-    ],
-    material: "Masif meşe ahşabı, vernikli yüzey",
-    care: "Ahşap bakım yağı ile yılda 2 kez bakım yapınız",
-    careInstructions: [
-      "Kuru bez ile düzenli silme yapınız",
-      "Ahşap bakım yağı kullanınız",
-      "Doğrudan güneş ışığından koruyunuz",
-      "Sıcak nesneleri altlık kullanarak koyunuz"
-    ],
-    dimensions: "Masa: 160x90x75 cm, Sandalye: 45x50x95 cm",
-    warranty: "3 Yıl Üretici Garantisi",
-    colors: [
-      {
-        id: "walnut-20001",
-        name: "Ceviz",
-        value: "Ceviz",
-        code: "#8B4513",
-        colorClass: "bg-yellow-800",
-        imgSrc: "/images/products/dining-set-1.jpg",
-        isAvailable: true
-      },
-      {
-        id: "oak-20001",
-        name: "Meşe",
-        value: "Meşe",
-        code: "#DEB887",
-        colorClass: "bg-yellow-200",
-        imgSrc: "/images/products/dining-set-2.jpg",
-        isAvailable: true
-      }
-    ],
-    sizes: [
-      {
-        id: "6person-20001",
-        value: "6 Kişilik",
-        isAvailable: true
-      },
-      {
-        id: "8person-20001",
-        value: "8 Kişilik",
-        isAvailable: false
-      }
-    ],
-    properties: [
-      { name: "Stil", value: "Klasik" },
-      { name: "Malzeme Tipi", value: "Masif Ahşap" },
-      { name: "Kişi Kapasitesi", value: "6 Kişi" },
-      { name: "Masa Şekli", value: "Dikdörtgen" },
-      { name: "Sandalye Tipi", value: "Döşemeli" },
-      { name: "Montaj Gerekliliği", value: "Uzman Kurulum" },
-      { name: "Üretim Yeri", value: "Türkiye" },
-      { name: "Toplam Ağırlık", value: "120 kg" },
-      { name: "Vernik Tipi", value: "Su Bazlı Vernik" },
-      { name: "Çevre Dostu", value: "FSC Sertifikalı" }
-    ],
-    images: [
-      {
-        src: "/images/products/dining-set-1.jpg",
-        alt: "Klasik Yemek Odası Takımı - Ana görsel",
-        type: "main_image",
-        sortOrder: 1
-      },
-      {
-        src: "/images/products/dining-set-2.jpg",
-        alt: "Klasik Yemek Odası Takımı - Alternatif renk",
-        type: "gallery",
-        sortOrder: 2
-      }
-    ],
-    setItems: [
-      {
-        furnitureId: 20101,
-        name: "Yemek Masası",
-        quantity: 1,
-        description: "Masif meşe ahşabından üretilmiş 6 kişilik yemek masası",
-        price: 8000,
-        image: "/images/products/dining-table.jpg",
-        individualLink: "/product-detail-furniture/20101",
-        sortOrder: 1,
-        properties: [
-          { name: "Boyutlar", value: "160x90x75 cm" },
-          { name: "Malzeme", value: "Masif Meşe" },
-          { name: "Kişi Kapasitesi", value: "6 Kişi" },
-          { name: "Ağırlık", value: "45 kg" }
-        ]
-      },
-      {
-        furnitureId: 20102,
-        name: "Yemek Sandalyesi",
-        quantity: 6,
-        description: "Döşemeli klasik yemek sandalyesi, ergonomik tasarım",
-        price: 650,
-        image: "/images/products/dining-chair.jpg",
-        individualLink: "/product-detail-furniture/20102",
-        sortOrder: 2,
-        properties: [
-          { name: "Boyutlar", value: "45x50x95 cm" },
-          { name: "Malzeme", value: "Masif Ahşap + Kumaş" },
-          { name: "Döşeme", value: "Yüksek Yoğunluk Sünger" },
-          { name: "Ağırlık", value: "8 kg" }
-        ]
-      },
-      {
-        furnitureId: 20103,
-        name: "Yemek Odası Dolabı",
-        quantity: 1,
-        description: "Klasik tasarımlı yemek odası dolabı, cam vitrinli",
-        price: 4500,
-        image: "/images/products/dining-cabinet.jpg",
-        individualLink: "/product-detail-furniture/20103",
-        sortOrder: 3,
-        properties: [
-          { name: "Boyutlar", value: "120x45x180 cm" },
-          { name: "Malzeme", value: "Masif Ahşap + Cam" },
-          { name: "Raf Sayısı", value: "4 Adet" },
-          { name: "Ağırlık", value: "55 kg" }
-        ]
-      }
-    ],
-    filterCategories: ["yemek-odasi-takimlari"],
-    brand: "HazarHome",
-    isAvailable: true,
-  },
-
   // YEMEK ODASI ALT KATEGORİLERİ (20100-20999)
   
   // Yemek Masaları (20100-20199)
@@ -853,110 +673,38 @@ export const testFurnitureProducts = [
     imgHoverSrc: "/images/products/furniture-12.jpg",
     title: "Modern Yemek Masası",
     price: 8000,
-    oldPrice: 9000,
     category: "yemek-masalari",
     type: "furniture",
-    brand: "HazarHome Modern",
-    description: "Minimalist tasarımı ve dayanıklı yapısıyla modern evlerin vazgeçilmezi olan yemek masası. Geniş kullanım alanı ve şık görünümü ile hem günlük kullanım hem de özel davetler için idealdir. Kaliteli MDF üzerine laminant kaplama ve sağlam metal ayakları ile uzun yıllar kullanım imkanı sunar.",
-    features: [
-      "Laminant kaplı MDF tabla",
-      "Sağlam metal ayak yapısı",
-      "Geniş kullanım alanı",
-      "Kolay temizlenir yüzey",
-      "Modern minimalist tasarım"
-    ],
-    material: "MDF + Laminant Kaplama, Metal Ayak",
-    care: "Nemli bez ile silinebilir, kimyasal temizleyici kullanmayınız",
-    careInstructions: [
-      "Yumuşak nemli bez ile düzenli temizlik yapınız",
-      "Kimyasal temizleyici kullanmayınız",
-      "Sıcak nesneleri direkt üzerine koymayınız",
-      "Suya uzun süre maruz bırakmayınız"
-    ],
-    dimensions: "140x80x75 cm (4-6 kişilik)",
-    warranty: "2 Yıl Üretici Garantisi",
+    description: "Minimalist tasarımı ve dayanıklı yapısıyla modern evlerin vazgeçilmezi olan yemek masası.",
     colors: [
       {
-        id: "white-20101",
         name: "Beyaz",
-        value: "Beyaz",
-        code: "#FFFFFF",
-        colorClass: "bg-white border",
+        value: "beyaz",
+        colorClass: "bg-white",
         imgSrc: "/images/products/furniture-11.jpg",
-        isAvailable: true
+        isAvailable: true,
+        oldPrice: 9000
       },
-      {
-        id: "oak-20101",
-        name: "Meşe",
-        value: "Meşe",
-        code: "#DEB887",
-        colorClass: "bg-yellow-200",
-        imgSrc: "/images/products/furniture-12.jpg",
-        isAvailable: true
-      },
-      {
-        id: "walnut-20101",
-        name: "Ceviz",
-        value: "Ceviz",
-        code: "#8B4513",
-        colorClass: "bg-yellow-800",
-        imgSrc: "/images/products/furniture-13.jpg",
-        isAvailable: true
-      }
-    ],
-    sizes: [
-      {
-        id: "4person-20101",
-        value: "4 Kişilik (120x80 cm)",
-        isAvailable: true
-      },
-      {
-        id: "6person-20101",
-        value: "6 Kişilik (140x80 cm)",
-        isAvailable: true
-      },
-      {
-        id: "8person-20101",
-        value: "8 Kişilik (180x90 cm)",
-        isAvailable: false
-      }
     ],
     properties: [
-      { name: "Stil", value: "Modern" },
-      { name: "Malzeme Tipi", value: "MDF + Laminant" },
-      { name: "Ayak Malzemesi", value: "Metal" },
-      { name: "Kişi Kapasitesi", value: "4-6 Kişi" },
-      { name: "Masa Yüksekliği", value: "75 cm" },
-      { name: "Montaj Gerekliliği", value: "Kolay Montaj" },
+      { name: "Malzeme", value: "MDF + Metal Ayak" },
+      { name: "Boyutlar", value: "140x80x75 cm" },
+      { name: "Garanti", value: "2 Yıl" },
       { name: "Üretim Yeri", value: "Türkiye" },
-      { name: "Ağırlık", value: "35 kg" },
-      { name: "Maksimum Yük", value: "80 kg" },
-      { name: "Su Geçirmezlik", value: "Yüzey Koruyucu" }
+      { name: "Stil", value: "Modern" }
     ],
     images: [
       {
         src: "/images/products/furniture-11.jpg",
-        alt: "Modern Yemek Masası - Beyaz renk ana görsel",
+        alt: "Modern Yemek Masası - Ana görsel",
         type: "main_image",
         sortOrder: 1
       },
       {
         src: "/images/products/furniture-12.jpg",
-        alt: "Modern Yemek Masası - Meşe renk",
+        alt: "Modern Yemek Masası - Farklı açı",
         type: "gallery",
         sortOrder: 2
-      },
-      {
-        src: "/images/products/furniture-13.jpg",
-        alt: "Modern Yemek Masası - Ceviz renk",
-        type: "gallery",
-        sortOrder: 3
-      },
-      {
-        src: "/images/products/furniture-11-detail.jpg",
-        alt: "Modern Yemek Masası - Detay görünüm",
-        type: "detail",
-        sortOrder: 4
       }
     ],
     sizes: ["4 Kişilik", "6 Kişilik"],

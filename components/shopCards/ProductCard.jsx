@@ -21,7 +21,14 @@ export const ProductCard = ({ product }) => {
   return (
     <div className="card-product fl-item" key={product.id}>
       <div className="card-product-wrapper">
-        <Link href={`/product-detail/${product.id}`} className="product-img">
+        <Link 
+          href={
+            product.type === "furniture_set" 
+              ? `/product-detail-furniture-set/${product.id}` 
+              : `/product-detail-furniture/${product.id}`
+          } 
+          className="product-img"
+        >
           <Image
             className="lazyload img-product"
             data-src={product.imgSrc}
@@ -112,8 +119,10 @@ export const ProductCard = ({ product }) => {
             )}
             {product.sizes && (
               <div className="size-list">
-                {product.sizes.map((size) => (
-                  <span key={size}>{size}</span>
+                {product.sizes.map((size, index) => (
+                  <span key={size.id || size.value || size || index}>
+                    {size.value || size}
+                  </span>
                 ))}
               </div>
             )}
@@ -121,7 +130,14 @@ export const ProductCard = ({ product }) => {
         )}
       </div>
       <div className="card-product-info">
-        <Link href={`/product-detail/${product.id}`} className="title link">
+        <Link 
+          href={
+            product.type === "furniture_set" 
+              ? `/product-detail-furniture-set/${product.id}` 
+              : `/product-detail-furniture/${product.id}`
+          } 
+          className="title link"
+        >
           {product.title}
         </Link>
         <span className="price">${product.price.toFixed(2)}</span>
@@ -132,7 +148,7 @@ export const ProductCard = ({ product }) => {
                 className={`list-color-item color-swatch ${
                   currentImage == color.imgSrc ? "active" : ""
                 } `}
-                key={i}
+                key={color.id || color.value || i}
                 onMouseOver={() => setCurrentImage(color.imgSrc)}
               >
                 <span className="tooltip">{color.name}</span>
