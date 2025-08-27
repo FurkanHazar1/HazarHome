@@ -143,7 +143,7 @@ export default function FurnitureDetailsTab({ product }) {
                         <tr className="tf-attr-pa-category">
                           <th className="tf-attr-label">Kategori</th>
                           <td className="tf-attr-value">
-                            <p>{product.category}</p>
+                            <p>{product.category?.categoryName || product.categorySlug || 'Kategori Belirtilmemiş'}</p>
                           </td>
                         </tr>
                         

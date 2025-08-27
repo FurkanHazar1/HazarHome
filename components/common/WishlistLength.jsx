@@ -3,6 +3,7 @@
 import { useContextElement } from "@/context/Context";
 
 export default function WishlistLength() {
-  const { wishList } = useContextElement();
+  const context = useContextElement();
+  const wishList = context?.wishList || [];
   return <>{wishList.length}</>;
 }

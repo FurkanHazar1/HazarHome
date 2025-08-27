@@ -51,11 +51,18 @@ export async function middleware(request: NextRequest) {
 // Public routes that don't need authentication
 function isPublicRoute(pathname: string): boolean {
   const publicRoutes = [
-    '/auth',              // Auth pages
+    '/auth',                           // Auth pages
+    '/product-detail-furniture',       // Furniture product pages
+    '/product-detail-furniture-set',   // Furniture set product pages
   ]
   
   // Ana sayfa ayrı kontrol
   if (pathname === '/') {
+    return true
+  }
+  
+  // Kategori sayfaları public (menu kategorileri)
+  if (pathname.match(/^\/(uclu-koltuklar|kose-koltuklar|berjerler|tv-uniteleri|sehpalar|yataklar|komodinler|gardiroplar|sifonyer|makyaj-masalari|yemek-masalari|konsol-ve-vitrinler|oturma-odasi-takimlari|yemek-odasi-takimlari|yatak-odasi-takimlari)$/)) {
     return true
   }
   

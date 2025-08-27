@@ -60,16 +60,11 @@ export default async function page({ params }) {
                 Home
               </Link>
               <i className="icon icon-arrow-right" />
-              {product.breadcrumb && product.breadcrumb.length > 0 && (
+              {product.category?.categoryName && (
                 <>
-                  {product.breadcrumb.map((crumb, index) => (
-                    <React.Fragment key={crumb.categoryId}>
-                      <Link href={`/${crumb.categoryPath || crumb.categoryName.toLowerCase()}`} className="text">
-                        {crumb.categoryName}
-                      </Link>
-                      {index < product.breadcrumb.length - 1 && <i className="icon icon-arrow-right" />}
-                    </React.Fragment>
-                  ))}
+                  <Link href={`/${product.categorySlug || 'category'}`} className="text">
+                    {product.category.categoryName}
+                  </Link>
                   <i className="icon icon-arrow-right" />
                 </>
               )}
