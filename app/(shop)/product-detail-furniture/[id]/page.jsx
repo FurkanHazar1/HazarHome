@@ -6,16 +6,49 @@ import FurnitureDetailsTab from "@/components/shopDetails/FurnitureDetailsTab";
 import React from "react";
 import Link from "next/link";
 import FurnitureDetailsPopup from "@/components/shopDetails/FurnitureDetailsPopup";
+import { getCategoryById } from "@/lib/category-mapping";
+import { notFound } from "next/navigation";
+
 export const metadata = {
   title:
     "Furniture Detail || HazarHome - Mobilya ve Ev Dekorasyonu",
   description: "HazarHome - Kaliteli Mobilya ve Ev Dekorasyonu Ürünleri",
 };
-import { testFurnitureProducts } from "@/data/products";
+
 import ProductSinglePrevNext from "@/components/common/ProductSinglePrevNext";
-export default async function page({ params }) {const { id } = await params
-  const product =
-    testFurnitureProducts.filter((elm) => elm.id == id)[0] || testFurnitureProducts[0];
+
+// API'den ürün verisini çek
+async function getProduct(id) {
+  try {
+    const response = await fetch(`http://localhost:3000/api/products/${id}?type=furniture&includeInactive=false&groupImagesByType=true`, {
+      cache: 'no-store'
+    });
+    
+    if (!response.ok) {
+      return null;
+    }
+    
+    const result = await response.json();
+    return result.success ? result.data : null;
+  } catch (error) {
+    console.error('Error fetching product:', error);
+    return null;
+  }
+}
+
+export default async function page({ params }) {
+  const { id } = await params;
+  const product = await getProduct(id);
+  
+  if (!product) {
+    notFound();
+  }
+  
+  // Kategori bilgisini kontrol et - sub category olmalı (level 2)
+  const category = getCategoryById(product.category?.categoryId);
+  if (!category || category.level !== 2) {
+    notFound();
+  }
   return (
     <>
       <Header2 />
@@ -27,11 +60,20 @@ export default async function page({ params }) {const { id } = await params
                 Home
               </Link>
               <i className="icon icon-arrow-right" />
-              <Link href={`/${product.category}`} className="text">
-                {product.category}
-              </Link>
-              <i className="icon icon-arrow-right" />
-              <span className="text">{product.title}</span>
+              {product.breadcrumb && product.breadcrumb.length > 0 && (
+                <>
+                  {product.breadcrumb.map((crumb, index) => (
+                    <React.Fragment key={crumb.categoryId}>
+                      <Link href={`/${crumb.categoryPath || crumb.categoryName.toLowerCase()}`} className="text">
+                        {crumb.categoryName}
+                      </Link>
+                      {index < product.breadcrumb.length - 1 && <i className="icon icon-arrow-right" />}
+                    </React.Fragment>
+                  ))}
+                  <i className="icon icon-arrow-right" />
+                </>
+              )}
+              <span className="text">{product.title || product.furnitureName}</span>
             </div>
             <ProductSinglePrevNext currentId={product.id} />
           </div>

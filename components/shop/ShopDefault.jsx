@@ -1,7 +1,6 @@
 "use client";
 import { layouts } from "@/data/shop";
-import { testFurnitureProducts } from "@/data/products";
-import { getProductsByCategory, getProductsBySubCategory, getProductsByMainCategory } from "@/utils/categoryHelpers";
+import { categorySlugToId, getCategoryBySlug } from "@/lib/category-mapping";
 import ProductGrid from "./ProductGrid";
 import { useState, useEffect } from "react";
 import Pagination from "../common/Pagination";
@@ -9,29 +8,62 @@ import ShopFilter from "./ShopFilter";
 import Sorting from "./Sorting";
 import Subcollections from "./Subcollections";
 
+// API'den ürünleri çek
+async function fetchProducts(categorySlug = null, subCategorySlug = null) {
+  try {
+    const params = new URLSearchParams();
+    
+    if (subCategorySlug) {
+      const subCategoryId = categorySlugToId(subCategorySlug);
+      if (subCategoryId) {
+        params.append('subCategory', subCategoryId.toString());
+      }
+    } else if (categorySlug) {
+      const categoryId = categorySlugToId(categorySlug);
+      if (categoryId) {
+        params.append('category', categoryId.toString());
+      }
+    }
+    
+    params.append('active', 'true');
+    params.append('limit', '100');
+    params.append('includeDetails', 'true');
+    
+    const response = await fetch(`/api/products?${params.toString()}`);
+    
+    if (!response.ok) {
+      console.error('API response not OK:', response.status);
+      return [];
+    }
+    
+    const result = await response.json();
+    return result.success ? result.data : [];
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    return [];
+  }
+}
+
 export default function ShopDefault({ category = null, subCategory = null, categories = null }) {
   const [gridItems, setGridItems] = useState(4);
   const [products, setProducts] = useState([]);
   const [finalSorted, setFinalSorted] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Kategori veya alt kategoriye göre ürünleri filtrele
+  // Kategori veya alt kategoriye göre ürünleri API'den çek
   useEffect(() => {
-    let filteredProducts = [];
-
-    if (subCategory) {
-      // Alt kategori varsa o kategoriye ait ürünleri getir
-      filteredProducts = getProductsBySubCategory(subCategory);
-    } else if (category) {
-      // Ana kategori varsa sadece o ana kategoriye ait ürünleri getir (alt kategorilerden ürünler dahil olmasın)
-      filteredProducts = getProductsByCategory(category);
-    } else {
-      // Hiçbiri yoksa tüm mobilya ürünlerini göster
-      filteredProducts = testFurnitureProducts;
+    async function loadProducts() {
+      setLoading(true);
+      
+      const fetchedProducts = await fetchProducts(category, subCategory);
+      
+      console.log('Fetched products for category:', category, 'subCategory:', subCategory, 'products:', fetchedProducts.length);
+      setProducts(fetchedProducts);
+      setFinalSorted(fetchedProducts);
+      setLoading(false);
     }
 
-    console.log('Filtered products for category:', category, 'subCategory:', subCategory, 'products:', filteredProducts.length);
-    setProducts(filteredProducts);
-    setFinalSorted(filteredProducts);
+    loadProducts();
   }, [category, subCategory]);
 
   return (
@@ -76,13 +108,19 @@ export default function ShopDefault({ category = null, subCategory = null, categ
           </div>
           <div className="wrapper-control-shop">
             <div className="meta-filter-shop" />
-            <ProductGrid allproducts={finalSorted} gridItems={gridItems} />
+            {loading ? (
+              <div className="text-center py-5">
+                <p>Ürünler yükleniyor...</p>
+              </div>
+            ) : (
+              <ProductGrid allproducts={finalSorted} gridItems={gridItems} />
+            )}
             {/* pagination */}
-            {finalSorted.length ? (
+            {!loading && finalSorted.length ? (
               <ul className="tf-pagination-wrap tf-pagination-list tf-pagination-btn">
                 <Pagination />
               </ul>
-            ) : (
+            ) : !loading && (
               <div className="text-center py-5">
                 <p>Bu kategoride henüz ürün bulunmamaktadır.</p>
               </div>

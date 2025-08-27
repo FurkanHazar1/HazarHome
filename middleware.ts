@@ -68,6 +68,7 @@ function isPublicApiRoute(pathname: string): boolean {
     '/api/auth',           // NextAuth.js routes
     '/api/images/serve',   // Public image serving
     '/api/test-db',        // Database test route
+    '/api/products',       // Products API - public for testing
   ]
   
   return publicRoutes.some(route => pathname.startsWith(route))
