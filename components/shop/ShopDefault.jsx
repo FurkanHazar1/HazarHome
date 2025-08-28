@@ -14,15 +14,11 @@ async function fetchProducts(categorySlug = null, subCategorySlug = null) {
     const params = new URLSearchParams();
     
     if (subCategorySlug) {
-      const subCategoryId = categorySlugToId(subCategorySlug);
-      if (subCategoryId) {
-        params.append('subCategory', subCategoryId.toString());
-      }
+      // Alt kategori slug'ını direk kullan
+      params.append('subCategory', subCategorySlug);
     } else if (categorySlug) {
-      const categoryId = categorySlugToId(categorySlug);
-      if (categoryId) {
-        params.append('category', categoryId.toString());
-      }
+      // Ana kategori slug'ını direk kullan
+      params.append('category', categorySlug);
     }
     
     params.append('active', 'true');
@@ -57,7 +53,6 @@ export default function ShopDefault({ category = null, subCategory = null, categ
       
       const fetchedProducts = await fetchProducts(category, subCategory);
       
-      console.log('Fetched products for category:', category, 'subCategory:', subCategory, 'products:', fetchedProducts.length);
       setProducts(fetchedProducts);
       setFinalSorted(fetchedProducts);
       setLoading(false);

@@ -14,22 +14,22 @@ export interface CategoryMapping {
 export const MAIN_CATEGORIES: CategoryMapping[] = [
   {
     id: 1,
-    name: "Oturma Odası Takımları",
-    slug: "oturma-odasi-takimlari", 
+    name: "Oturma Odası",
+    slug: "oturma-odasi", 
     level: 1,
     parentId: null
   },
   {
     id: 2,
-    name: "Yemek Odası Takımları",
-    slug: "yemek-odasi-takimlari",
+    name: "Yemek Odası",
+    slug: "yemek-odasi",
     level: 1, 
     parentId: null
   },
   {
     id: 3,
-    name: "Yatak Odası Takımları", 
-    slug: "yatak-odasi-takimlari",
+    name: "Yatak Odası", 
+    slug: "yatak-odasi",
     level: 1,
     parentId: null
   }
@@ -46,85 +46,99 @@ export const SUB_CATEGORIES: CategoryMapping[] = [
     parentId: 1
   },
   {
-    id: 5, 
+    id: 5,
+    name: "İkili Koltuklar",
+    slug: "ikili-koltuklar",
+    level: 2,
+    parentId: 1
+  },
+  {
+    id: 6, 
     name: "Köşe Koltuklar",
     slug: "kose-koltuklar",
     level: 2,
     parentId: 1
   },
   {
-    id: 6,
-    name: "Berjerler", 
-    slug: "berjerler",
-    level: 2,
-    parentId: 1
-  },
-  {
     id: 7,
-    name: "Tv Üniteleri",
-    slug: "tv-uniteleri", 
+    name: "Berjer Koltuklar", 
+    slug: "berjer-koltuklar",
     level: 2,
     parentId: 1
   },
   {
     id: 8,
+    name: "TV Üniteleri",
+    slug: "tv-uniteleri", 
+    level: 2,
+    parentId: 1
+  },
+  {
+    id: 9,
     name: "Sehpalar",
     slug: "sehpalar",
     level: 2, 
     parentId: 1
   },
   
-  // Yatak Odası Alt Kategorileri (Parent ID: 3)
-  {
-    id: 9,
-    name: "Yataklar",
-    slug: "yataklar",
-    level: 2,
-    parentId: 3
-  },
-  {
-    id: 10,
-    name: "Komodinler", 
-    slug: "komodinler",
-    level: 2,
-    parentId: 3
-  },
-  {
-    id: 11,
-    name: "Gardıroplar",
-    slug: "gardiroplar",
-    level: 2,
-    parentId: 3
-  },
-  {
-    id: 12,
-    name: "Şifonyer",
-    slug: "sifonyer",
-    level: 2,
-    parentId: 3
-  },
-  {
-    id: 13,
-    name: "Makyaj Masaları",
-    slug: "makyaj-masalari",
-    level: 2,
-    parentId: 3
-  },
-  
   // Yemek Odası Alt Kategorileri (Parent ID: 2)
   {
-    id: 14,
+    id: 10,
     name: "Yemek Masaları",
     slug: "yemek-masalari", 
     level: 2,
     parentId: 2
   },
   {
-    id: 15,
-    name: "Konsol ve Vitrinler",
-    slug: "konsol-ve-vitrinler",
+    id: 11,
+    name: "Yemek Sandalyeleri",
+    slug: "yemek-sandalyeleri",
     level: 2,
     parentId: 2
+  },
+  {
+    id: 12,
+    name: "Konsol ve Vitrinler",
+    slug: "konsol-vitrin",
+    level: 2,
+    parentId: 2
+  },
+  
+  // Yatak Odası Alt Kategorileri (Parent ID: 3)
+  {
+    id: 13,
+    name: "Yataklar",
+    slug: "yataklar",
+    level: 2,
+    parentId: 3
+  },
+  {
+    id: 14,
+    name: "Gardıroplar",
+    slug: "gardiroplar",
+    level: 2,
+    parentId: 3
+  },
+  {
+    id: 15,
+    name: "Komodinler", 
+    slug: "komodinler",
+    level: 2,
+    parentId: 3
+  },
+  {
+    id: 16,
+    name: "Makyaj Masaları",
+    slug: "makyaj-masalari",
+    level: 2,
+    parentId: 3
+  },
+  {
+    id: 17,
+    name: "Şifonyerler",
+    slug: "sifonyerler",
+    level: 2,
+    parentId: 3
   }
 ]
 
@@ -239,12 +253,12 @@ export function getMainCategories(): CategoryMapping[] {
 export function convertLegacyCategorySlug(legacySlug: string): string | null {
   // Eski slug formatlarını yeni sisteme çevir
   const legacyMappings: { [key: string]: string } = {
-    'oturma-odasi': 'oturma-odasi-takimlari',
-    'yatak-odasi': 'yatak-odasi-takimlari', 
-    'yemek-odasi': 'yemek-odasi-takimlari',
-    'koltuk': 'uclu-koltuklar',
-    'tv-unitesi': 'tv-uniteleri',
-    'sehpa': 'sehpalar'
+    'oturma-odasi-takimlari': 'oturma-odasi',
+    'yatak-odasi-takimlari': 'yatak-odasi', 
+    'yemek-odasi-takimlari': 'yemek-odasi',
+    'berjerler': 'berjer-koltuklar',
+    'konsol-ve-vitrinler': 'konsol-vitrin',
+    'sifonyer': 'sifonyerler'
   }
   
   return legacyMappings[legacySlug] || legacySlug

@@ -4,27 +4,22 @@ import { testFurnitureProducts, products1 } from "@/data/products";
 export const categoryMapping = {
   // Ana kategoriler
   'oturma-odasi': {
-    name: 'Oturma Odası Takımları',
+    name: 'Oturma Odası',
     type: 'main',
-    subCategories: ['oturma-odasi-takimlari', 'uclu-koltuklar', 'ikili-koltuklar', 'kose-koltuklar', 'berjer-koltuklar', 'tv-uniteleri', 'sehpalar']
+    subCategories: ['uclu-koltuklar', 'ikili-koltuklar', 'kose-koltuklar', 'berjer-koltuklar', 'tv-uniteleri', 'sehpalar']
   },
   'yemek-odasi': {
-    name: 'Yemek Odası Takımları',
+    name: 'Yemek Odası',
     type: 'main',
-    subCategories: ['yemek-odasi-takimlari', 'yemek-masalari', 'yemek-sandalyeleri', 'konsol-vitrin']
+    subCategories: ['yemek-masalari', 'yemek-sandalyeleri', 'konsol-vitrin']
   },
   'yatak-odasi': {
-    name: 'Yatak Odası Takımları',
+    name: 'Yatak Odası',
     type: 'main',
-    subCategories: ['yatak-odasi-takimlari', 'yataklar', 'gardiroplar', 'komodinler', 'makyaj-masalari', 'sifonyerler']
+    subCategories: ['yataklar', 'gardiroplar', 'komodinler', 'makyaj-masalari', 'sifonyerler']
   },
   
   // Alt kategoriler - Oturma Odası
-  'oturma-odasi-takimlari': {
-    name: 'Oturma Odası Takımları',
-    type: 'sub',
-    parent: 'oturma-odasi'
-  },
   'uclu-koltuklar': {
     name: 'Üçlü Koltuklar',
     type: 'sub',
@@ -57,11 +52,6 @@ export const categoryMapping = {
   },
   
   // Alt kategoriler - Yemek Odası
-  'yemek-odasi-takimlari': {
-    name: 'Yemek Odası Takımları',
-    type: 'sub',
-    parent: 'yemek-odasi'
-  },
   'yemek-masalari': {
     name: 'Yemek Masaları',
     type: 'sub',
@@ -79,11 +69,6 @@ export const categoryMapping = {
   },
   
   // Alt kategoriler - Yatak Odası
-  'yatak-odasi-takimlari': {
-    name: 'Yatak Odası Takımları',
-    type: 'sub',
-    parent: 'yatak-odasi'
-  },
   'yataklar': {
     name: 'Yataklar',
     type: 'sub',

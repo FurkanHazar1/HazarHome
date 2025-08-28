@@ -44,9 +44,9 @@ export default async function page({ params }) {
     notFound();
   }
   
-  // Kategori bilgisini kontrol et - main category olmalı (level 1)
+  // Kategori bilgisini kontrol et - hem ana kategori (level 1) hem alt kategori (level 2) kabul et
   const category = getCategoryById(product.category?.categoryId);
-  if (!category || category.level !== 1) {
+  if (!category || (category.level !== 1 && category.level !== 2)) {
     notFound();
   }
   return (

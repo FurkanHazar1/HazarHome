@@ -36,10 +36,42 @@ export async function GET(request: NextRequest) {
       if (!isNaN(parseInt(categoryParam))) {
         categoryId = parseInt(categoryParam)
       } else {
-        // Slug ise ID'ye çevir
-        const category = getCategoryBySlug(convertLegacyCategorySlug(categoryParam) || categoryParam)
-        if (category) {
-          categoryId = category.id
+        // Slug ise veritabanından kategori ara
+        try {
+          let searchCategory = categoryParam;
+          
+          // Slug'ı kategori adına çevir
+          const slugToName: { [key: string]: string } = {
+            'oturma-odasi': 'Oturma Odası',
+            'yemek-odasi': 'Yemek Odası',
+            'yatak-odasi': 'Yatak Odası',
+            'uclu-koltuklar': 'Üçlü Koltuklar',
+            'ikili-koltuklar': 'İkili Koltuklar',
+            'kose-koltuklar': 'Köşe Koltuklar',
+            'berjer-koltuklar': 'Berjer Koltuklar',
+            'tv-uniteleri': 'TV Üniteleri',
+            'sehpalar': 'Sehpalar',
+            'yemek-masalari': 'Yemek Masaları',
+            'yemek-sandalyeleri': 'Yemek Sandalyeleri',
+            'konsol-vitrin': 'Konsol ve Vitrinler',
+            'yataklar': 'Yataklar',
+            'gardiroplar': 'Gardıroplar',
+            'komodinler': 'Komodinler',
+            'makyaj-masalari': 'Makyaj Masaları',
+            'sifonyerler': 'Şifonyerler'
+          };
+          
+          const categoryName = slugToName[searchCategory];
+          if (categoryName) {
+            const category = await prisma.category.findFirst({
+              where: { categoryName: categoryName }
+            });
+            if (category) {
+              categoryId = category.categoryId;
+            }
+          }
+        } catch (error) {
+          console.error('Error finding category by slug:', error);
         }
       }
     }
@@ -50,9 +82,36 @@ export async function GET(request: NextRequest) {
       if (!isNaN(parseInt(subCategoryParam))) {
         subCategoryId = parseInt(subCategoryParam)
       } else {
-        const subCategory = getCategoryBySlug(subCategoryParam)
-        if (subCategory) {
-          subCategoryId = subCategory.id
+        // Slug ise veritabanından kategori ara
+        try {
+          const slugToName: { [key: string]: string } = {
+            'uclu-koltuklar': 'Üçlü Koltuklar',
+            'ikili-koltuklar': 'İkili Koltuklar',
+            'kose-koltuklar': 'Köşe Koltuklar',
+            'berjer-koltuklar': 'Berjer Koltuklar',
+            'tv-uniteleri': 'TV Üniteleri',
+            'sehpalar': 'Sehpalar',
+            'yemek-masalari': 'Yemek Masaları',
+            'yemek-sandalyeleri': 'Yemek Sandalyeleri',
+            'konsol-vitrin': 'Konsol ve Vitrinler',
+            'yataklar': 'Yataklar',
+            'gardiroplar': 'Gardıroplar',
+            'komodinler': 'Komodinler',
+            'makyaj-masalari': 'Makyaj Masaları',
+            'sifonyerler': 'Şifonyerler'
+          };
+          
+          const categoryName = slugToName[subCategoryParam];
+          if (categoryName) {
+            const category = await prisma.category.findFirst({
+              where: { categoryName: categoryName }
+            });
+            if (category) {
+              subCategoryId = category.categoryId;
+            }
+          }
+        } catch (error) {
+          console.error('Error finding subcategory by slug:', error);
         }
       }
     }

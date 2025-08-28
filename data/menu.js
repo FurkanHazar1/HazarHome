@@ -1,7 +1,7 @@
 // Oturma Odası Kategorileri (Alt kategoriler)
 export const oturmaOdasiCategories = [
   {
-    href: "/oturma-odasi-takimlari",
+    href: "/oturma-odasi",
     src: "/images/menu/oturma_odasi/oturma_odasi_main.jpg",
     alt: "Living-Room-Sets",
     name: "Oturma Odası Takımları",
@@ -51,7 +51,7 @@ export const oturmaOdasiCategories = [
 // Yemek Odası Kategorileri (Alt kategoriler)
 export const yemekOdasiCategories = [
   {
-    href: "/yemek-odasi-takimlari",
+    href: "/yemek-odasi",
     src: "/images/menu/yemek_odasi/yemek-odasi-main.jpg",
     alt: "Dining-Room-Sets",
     name: "Yemek Odası Takımları",
@@ -80,7 +80,7 @@ export const yemekOdasiCategories = [
 // Yatak Odası Kategorileri (Alt kategoriler)
 export const yatakOdasiCategories = [
   {
-    href: "/yatak-odasi-takimlari",
+    href: "/yatak-odasi",
     src: "/images/menu/yatak_odasi/yatak-odasi-main.jpg",
     alt: "Bedroom-Sets",
     name: "Yatak Odası Takımları",
@@ -121,7 +121,7 @@ export const yatakOdasiCategories = [
 // Ana kategoriler (Menu için)
 export const mainCategories = [
   {
-    href: "/oturma-odasi",
+    href: "/oturma-odasi-takimlari",
     src: "/images/menu/oturma_odasi/oturma_odasi_main.jpg",
     alt: "Living-Room",
     name: "Oturma Odası Takımları",
@@ -129,7 +129,7 @@ export const mainCategories = [
     subCategories: oturmaOdasiCategories
   },
   {
-    href: "/yemek-odasi",
+    href: "/yemek-odasi-takimlari",
     src: "/images/menu/yemek_odasi/yemek-odasi-main.jpg",
     alt: "Dining-Room",
     name: "Yemek Odası Takımları",
@@ -137,7 +137,7 @@ export const mainCategories = [
     subCategories: yemekOdasiCategories
   },
   {
-    href: "/yatak-odasi",
+    href: "/yatak-odasi-takimlari",
     src: "/images/menu/yatak_odasi/yatak-odasi-main.jpg",
     alt: "Bedroom",
     name: "Yatak Odası Takımları",
