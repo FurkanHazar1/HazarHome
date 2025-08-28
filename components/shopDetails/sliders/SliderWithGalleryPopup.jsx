@@ -159,14 +159,18 @@ export default function SliderWithGalleryPopup({
     },
   ];
 
+  // Daha büyük ve sabit boyutlar tanımlayalım
+  const IMAGE_WIDTH = 900;  // Genişlik 900px
+  const IMAGE_HEIGHT = 1200; // Yükseklik 1200px
+
   // Convert propImages to the expected format with id and dataValue
   const processedPropImages = propImages && propImages.length > 0 
     ? propImages.map((img, index) => ({
         id: index + 1,
-        src: img.src || img.imgSrc || firstImage,
-        alt: img.alt || "",
-        width: 770,
-        height: 1075,
+        src: img.url || img.src || img.imgSrc || img.filePath || firstImage,
+        alt: img.altText || img.alt || `Görsel ${index + 1}`,
+        width: IMAGE_WIDTH,
+        height: IMAGE_HEIGHT,
         dataValue: (currentColor && typeof currentColor === 'string' ? currentColor.toLowerCase() : "beige"),
       }))
     : [];
@@ -213,10 +217,16 @@ export default function SliderWithGalleryPopup({
               <Image
                 className="lazyload"
                 data-src={slide.src}
-                alt={""}
+                alt={slide.alt || "Ürün görseli"}
                 src={slide.src} // Optional fallback for non-lazy loading
                 width={slide.width}
                 height={slide.height}
+                style={{
+                  objectFit: "cover",
+                  objectPosition: "center",
+                  width: "100%",
+                  height: "auto"
+                }}
               />
             </div>
           </SwiperSlide>
@@ -262,10 +272,17 @@ export default function SliderWithGalleryPopup({
                       data-zoom={slide.src}
                       data-src={slide.src}
                       ref={ref}
-                      alt="image"
+                      alt={slide.alt || "Ürün görseli"}
                       width={slide.width}
                       height={slide.height}
                       src={slide.src} // Optional fallback for non-lazy loading
+                      style={{
+                        objectFit: "contain",
+                        objectPosition: "center",
+                        width: "100%",
+                        height: "auto",
+                        maxHeight: "700px" // Ana görüntü için maksimum yükseklik
+                      }}
                     />
                   </a>
                 )}

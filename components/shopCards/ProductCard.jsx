@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useContextElement } from "@/context/Context";
 import CountdownComponent from "../common/Countdown";
 export const ProductCard = ({ product }) => {
-  const [currentImage, setCurrentImage] = useState(product.imgSrc);
+  const imgSrc = product.imgSrc || '/images/products/placeholder.jpg';
+  const [currentImage, setCurrentImage] = useState(imgSrc);
   const { setQuickViewItem } = useContextElement();
   const {
     setQuickAddItem,
@@ -14,9 +15,10 @@ export const ProductCard = ({ product }) => {
     addToCompareItem,
     isAddedtoCompareItem,
   } = useContextElement();
+  
   useEffect(() => {
-    setCurrentImage(product.imgSrc);
-  }, [product]);
+    setCurrentImage(imgSrc);
+  }, [product, imgSrc]);
 
   return (
     <div className="card-product fl-item" key={product.id}>
@@ -31,19 +33,19 @@ export const ProductCard = ({ product }) => {
         >
           <Image
             className="lazyload img-product"
-            data-src={product.imgSrc}
+            data-src={currentImage}
             src={currentImage}
-            alt="image-product"
+            alt={product.title || "Ürün Görseli"}
             width={720}
             height={1005}
           />
           <Image
             className="lazyload img-hover"
             data-src={
-              product.imgHoverSrc ? product.imgHoverSrc : product.imgSrc
+              product.imgHoverSrc ? product.imgHoverSrc : currentImage
             }
-            src={product.imgHoverSrc ? product.imgHoverSrc : product.imgSrc}
-            alt="image-product"
+            src={product.imgHoverSrc ? product.imgHoverSrc : currentImage}
+            alt={product.title || "Ürün Görseli"}
             width={720}
             height={1005}
           />
@@ -140,7 +142,7 @@ export const ProductCard = ({ product }) => {
         >
           {product.title}
         </Link>
-        <span className="price">${product.price.toFixed(2)}</span>
+        <span className="price">₺{typeof product.price === 'number' ? product.price.toFixed(2) : '0.00'}</span>
         {product.colors && (
           <ul className="list-color-product">
             {product.colors.map((color, i) => (

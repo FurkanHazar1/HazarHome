@@ -49,6 +49,28 @@ export default async function page({ params }) {
   if (!category || (category.level !== 1 && category.level !== 2)) {
     notFound();
   }
+
+  // imageGallery'den images formatına dönüştür
+  if (product.imageGallery) {
+    const allImages = [
+      ...(product.imageGallery.main || []),
+      ...(product.imageGallery.gallery || []),
+      ...(product.imageGallery.thumbnails || [])
+    ];
+    
+    product.images = allImages.map((imageItem, index) => ({
+      id: imageItem.image.imageId,
+      fileName: imageItem.image.fileName,
+      filePath: imageItem.image.filePath,
+      // Doğrudan public klasöründeki dosyalara erişim için URL formatı değiştirildi
+      url: `/${imageItem.image.filePath}`,
+      src: `/${imageItem.image.filePath}`, // Alternative src property
+      imgSrc: `/${imageItem.image.filePath}`, // Alternative imgSrc property
+      imageType: imageItem.imageType,
+      sortOrder: imageItem.sortOrder || index + 1,
+      altText: imageItem.image.altText
+    }));
+  }
   return (
     <>
       <Header2 />
@@ -76,7 +98,11 @@ export default async function page({ params }) {
       </div>
       <FurnitureSetDetailsPopup product={product} />
       <FurnitureDetailsTab product={product} />
-      <Products />
+      <Products 
+        categoryId={product.category?.categoryId} 
+        productId={product.id} 
+        productType="furniture_set"
+      />
       <RecentProducts />
       <Footer1 />
     </>
