@@ -159,20 +159,49 @@ export default function SliderWithGalleryPopup({
     },
   ];
 
+  // Sabit görsel boyutları tanımlayalım - 4:3 oranında
+  const MAIN_IMAGE_WIDTH = 800;
+  const MAIN_IMAGE_HEIGHT = 600; // 4:3 oranı için (800 * 3/4 = 600)
+  const THUMB_IMAGE_WIDTH = 120;
+  const THUMB_IMAGE_HEIGHT = 90; // 4:3 oranı için (120 * 3/4 = 90)
+  
   // Convert propImages to the expected format with id and dataValue
   const processedPropImages = propImages && propImages.length > 0 
-    ? propImages.map((img, index) => ({
-        id: index + 1,
-        src: img.src || img.imgSrc || firstImage,
-        alt: img.alt || "",
-        width: 770,
-        height: 1075,
-        dataValue: (currentColor && typeof currentColor === 'string' ? currentColor.toLowerCase() : "beige"),
-      }))
+    ? propImages.map((img, index) => {
+        // API veri yapısı desteklenmesi - görsel bilgileri farklı formatlarda olabilir
+        const imageSrc = img.image?.filePath 
+          ? (img.image.filePath.startsWith('/') ? img.image.filePath : `/${img.image.filePath}`)
+          : img.src || img.imgSrc || firstImage;
+          
+        return {
+          id: index + 1,
+          src: imageSrc,
+          alt: img.image?.altText || img.alt || "",
+          // Artık dinamik boyutlar yerine sabit boyutlar kullanıyoruz
+          width: MAIN_IMAGE_WIDTH,
+          height: MAIN_IMAGE_HEIGHT,
+          originalWidth: img.image?.width || 770,
+          originalHeight: img.image?.height || 1075,
+          dataValue: (currentColor && typeof currentColor === 'string' ? currentColor.toLowerCase() : "beige"),
+        };
+      })
     : [];
 
   // Use processed prop images if available, otherwise use default images
-  const images = processedPropImages.length > 0 ? processedPropImages : defaultImages;
+  const images = processedPropImages.length > 0 ? processedPropImages : (firstImage ? [{
+    id: 1,
+    src: firstImage,
+    alt: "",
+    width: MAIN_IMAGE_WIDTH,
+    height: MAIN_IMAGE_HEIGHT,
+    dataValue: (currentColor && typeof currentColor === 'string' ? currentColor.toLowerCase() : "beige"),
+  }] : defaultImages.map(img => ({
+    ...img,
+    width: MAIN_IMAGE_WIDTH,
+    height: MAIN_IMAGE_HEIGHT,
+    originalWidth: img.width,
+    originalHeight: img.height,
+  })));
 
   const [thumbsSwiper, setThumbsSwiper] = useState(null);
   const swiperRef = useRef(null);
@@ -209,14 +238,20 @@ export default function SliderWithGalleryPopup({
       >
         {images.map((slide, index) => (
           <SwiperSlide key={index} className="stagger-item">
-            <div className="item">
+            <div className="item" style={{ width: THUMB_IMAGE_WIDTH, height: THUMB_IMAGE_HEIGHT, overflow: 'hidden', aspectRatio: '4/3' }}>
               <Image
                 className="lazyload"
                 data-src={slide.src}
-                alt={""}
-                src={slide.src} // Optional fallback for non-lazy loading
-                width={slide.width}
-                height={slide.height}
+                alt={slide.alt || ""}
+                src={slide.src}
+                width={THUMB_IMAGE_WIDTH}
+                height={THUMB_IMAGE_HEIGHT}
+                style={{ 
+                  width: '100%', 
+                  height: '100%', 
+                  objectFit: 'cover',
+                  objectPosition: 'center'
+                }}
               />
             </div>
           </SwiperSlide>
@@ -247,26 +282,44 @@ export default function SliderWithGalleryPopup({
               <Item
                 original={slide.src}
                 thumbnail={slide.src}
-                width={slide.width}
-                height={slide.height}
+                width={slide.originalWidth || slide.width}
+                height={slide.originalHeight || slide.height}
               >
                 {({ ref, open }) => (
                   <a
                     className="item"
-                    data-pswp-width={slide.width}
-                    data-pswp-height={slide.height}
+                    data-pswp-width={slide.originalWidth || slide.width}
+                    data-pswp-height={slide.originalHeight || slide.height}
                     onClick={open}
+                    style={{ 
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      height: '100%',
+                      width: '100%'
+                    }}
                   >
-                    <Image
-                      className="tf-image-zoom-magnifier ls-is-cached lazyloaded"
-                      data-zoom={slide.src}
-                      data-src={slide.src}
-                      ref={ref}
-                      alt="image"
-                      width={slide.width}
-                      height={slide.height}
-                      src={slide.src} // Optional fallback for non-lazy loading
-                    />
+                    <div style={{ 
+                      width: MAIN_IMAGE_WIDTH, 
+                      height: MAIN_IMAGE_HEIGHT, 
+                      position: 'relative',
+                      overflow: 'hidden',
+                      aspectRatio: '4/3' // Açıkça 4:3 oranını belirtelim
+                    }}>
+                      <Image
+                        className="tf-image-zoom-magnifier ls-is-cached lazyloaded"
+                        data-zoom={slide.src}
+                        data-src={slide.src}
+                        ref={ref}
+                        alt={slide.alt || "image"}
+                        src={slide.src}
+                        fill={true}
+                        style={{ 
+                          objectFit: 'cover',
+                          objectPosition: 'center'
+                        }}
+                      />
+                    </div>
                   </a>
                 )}
               </Item>
