@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
     const sortBy = searchParams.get('sortBy') || 'createdAt'
     const sortOrder = searchParams.get('sortOrder') || 'desc'
     const includeDetails = searchParams.get('includeDetails') === 'true'
+    const random = searchParams.get('random') === 'true'
 
     // Kategori ID'sini çözümle
     let categoryId: number | null = null
@@ -169,6 +170,21 @@ export async function GET(request: NextRequest) {
     const sortField = validSortFields.includes(sortBy) ? sortBy : 'createdAt'
     const orderDirection = sortOrder === 'asc' ? 'asc' : 'desc'
 
+    // Rastgele sıralama için özel sorgu ayarı
+    let furnitureOrderBy: any
+    let furnitureSetOrderBy: any
+
+    if (random) {
+      // PostgreSQL için RANDOM(), MySQL için RAND(), SQLite için RANDOM() kullanır
+      furnitureOrderBy = { furnitureId: 'asc' } // Fallback için
+      furnitureSetOrderBy = { setId: 'asc' } // Fallback için
+    } else {
+      furnitureOrderBy = sortField === 'setName' ? { furnitureName: orderDirection } : { [sortField]: orderDirection }
+      furnitureSetOrderBy = sortField === 'furnitureName' ? { setName: orderDirection } : 
+                           sortField === 'setName' ? { setName: orderDirection } : 
+                           { [sortField]: orderDirection }
+    }
+
     // Paralel sorgular
     let furniturePromise: Promise<any[]> = Promise.resolve([])
     let furnitureSetPromise: Promise<any[]> = Promise.resolve([])
@@ -204,7 +220,7 @@ export async function GET(request: NextRequest) {
             }
           }
         },
-        orderBy: sortField === 'setName' ? { furnitureName: orderDirection } : { [sortField]: orderDirection },
+        orderBy: furnitureOrderBy,
         take: limit,
         skip: (page - 1) * limit
       })
@@ -243,9 +259,7 @@ export async function GET(request: NextRequest) {
             }
           }
         },
-        orderBy: sortField === 'furnitureName' ? { setName: orderDirection } : 
-                 sortField === 'setName' ? { setName: orderDirection } : 
-                 { [sortField]: orderDirection },
+        orderBy: furnitureSetOrderBy,
         take: limit,
         skip: (page - 1) * limit
       })
@@ -260,17 +274,26 @@ export async function GET(request: NextRequest) {
     // Birleştir ve sırala
     const allProducts = [...transformedFurnitures, ...transformedSets]
     
-    // CreatedAt'e göre tekrar sırala (birleşik sonuç için)
-    if (sortField === 'createdAt') {
-      allProducts.sort((a, b) => {
-        const dateA = new Date(a.createdAt || 0).getTime()
-        const dateB = new Date(b.createdAt || 0).getTime()
-        return orderDirection === 'asc' ? dateA - dateB : dateB - dateA
-      })
-    } else if (sortField === 'price') {
-      allProducts.sort((a, b) => {
-        return orderDirection === 'asc' ? a.price - b.price : b.price - a.price
-      })
+    // Rastgele sıralama için
+    if (random) {
+      // Fisher-Yates shuffle algoritması
+      for (let i = allProducts.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [allProducts[i], allProducts[j]] = [allProducts[j], allProducts[i]];
+      }
+    } else {
+      // Normal sıralama (birleşik sonuç için)
+      if (sortField === 'createdAt') {
+        allProducts.sort((a, b) => {
+          const dateA = new Date(a.createdAt || 0).getTime()
+          const dateB = new Date(b.createdAt || 0).getTime()
+          return orderDirection === 'asc' ? dateA - dateB : dateB - dateA
+        })
+      } else if (sortField === 'price') {
+        allProducts.sort((a, b) => {
+          return orderDirection === 'asc' ? a.price - b.price : b.price - a.price
+        })
+      }
     }
 
     // Sayfalama için toplam sayıları al

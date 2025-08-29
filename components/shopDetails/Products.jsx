@@ -1,16 +1,75 @@
 "use client";
 
-import { products1 } from "@/data/products";
+import { useState, useEffect } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { ProductCard } from "../shopCards/ProductCard";
 import { Navigation, Pagination } from "swiper/modules";
 
+// API'den rastgele ürünleri çek
+async function fetchRandomProducts() {
+  try {
+    const response = await fetch('/api/products?random=true&limit=8&active=true&includeDetails=true');
+    if (!response.ok) {
+      console.error('API response not OK:', response.status);
+      return [];
+    }
+    const result = await response.json();
+    return result.success ? result.data : [];
+  } catch (error) {
+    console.error('Error fetching random products:', error);
+    return [];
+  }
+}
+
 export default function Products() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadProducts() {
+      setLoading(true);
+      const randomProducts = await fetchRandomProducts();
+      setProducts(randomProducts);
+      setLoading(false);
+    }
+
+    loadProducts();
+  }, []);
+
+  if (loading) {
+    return (
+      <section className="flat-spacing-1 pt_0">
+        <div className="container">
+          <div className="flat-title">
+            <span className="title">İnsanlar Bunları da Satın Aldı</span>
+          </div>
+          <div className="text-center py-5">
+            <p>Ürünler yükleniyor...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (products.length === 0) {
+    return (
+      <section className="flat-spacing-1 pt_0">
+        <div className="container">
+          <div className="flat-title">
+            <span className="title">İnsanlar Bunları da Satın Aldı</span>
+          </div>
+          <div className="text-center py-5">
+            <p>Şu anda gösterilecek ürün bulunmuyor.</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
   return (
     <section className="flat-spacing-1 pt_0">
       <div className="container">
         <div className="flat-title">
-          <span className="title">People Also Bought</span>
+          <span className="title">İnsanlar Bunları da Satın Aldı</span>
         </div>
         <div className="hover-sw-nav hover-sw-2">
           <Swiper
@@ -37,8 +96,8 @@ export default function Products() {
             }}
             pagination={{ clickable: true, el: ".spd307" }}
           >
-            {products1.slice(0, 8).map((product, i) => (
-              <SwiperSlide key={i} className="swiper-slide">
+            {products.map((product, i) => (
+              <SwiperSlide key={product.id || i} className="swiper-slide">
                 <ProductCard product={product} />
               </SwiperSlide>
             ))}
