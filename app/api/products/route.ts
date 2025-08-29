@@ -134,7 +134,7 @@ export async function GET(request: NextRequest) {
     if (subCategoryId) {
       // Alt kategori seçildiyse onu kullan
       furnitureWhere.categoryId = subCategoryId
-      // Furniture sets sadece ana kategorilerde olduğu için alt kategori filtresi uygulanmaz
+      // Furniture sets sadece ana kategorilerde gösterilir
     } else if (categoryId) {
       furnitureWhere.categoryId = categoryId
       furnitureSetWhere.categoryId = categoryId
@@ -210,7 +210,8 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    if (!type || type === 'furniture_set') {
+    // Alt kategori seçildiyse furniture sets'leri getirme
+    if ((!type || type === 'furniture_set') && !subCategoryId) {
       furnitureSetPromise = prisma.furnitureSet.findMany({
         where: furnitureSetWhere,
         include: {
@@ -275,7 +276,7 @@ export async function GET(request: NextRequest) {
     // Sayfalama için toplam sayıları al
     const totalFurnitures = !type || type === 'furniture' ? 
       await prisma.furniture.count({ where: furnitureWhere }) : 0
-    const totalSets = !type || type === 'furniture_set' ? 
+    const totalSets = (!type || type === 'furniture_set') && !subCategoryId ? 
       await prisma.furnitureSet.count({ where: furnitureSetWhere }) : 0
     const total = totalFurnitures + totalSets
 

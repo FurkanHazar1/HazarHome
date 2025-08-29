@@ -23,7 +23,7 @@ export const ProductCard = ({ product }) => {
       <div className="card-product-wrapper">
         <Link 
           href={
-            product.type === "furniture_set" 
+            product.type === "furniture_set" || product.furnitureType === "Takım"
               ? `/product-detail-furniture-set/${product.id}` 
               : `/product-detail-furniture/${product.id}`
           } 
@@ -132,7 +132,7 @@ export const ProductCard = ({ product }) => {
       <div className="card-product-info">
         <Link 
           href={
-            product.type === "furniture_set" 
+            product.type === "furniture_set" || product.furnitureType === "Takım"
               ? `/product-detail-furniture-set/${product.id}` 
               : `/product-detail-furniture/${product.id}`
           } 

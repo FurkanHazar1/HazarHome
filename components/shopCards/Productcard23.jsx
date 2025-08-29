@@ -2,6 +2,7 @@
 import { useState } from "react";
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useContextElement } from "@/context/Context";
 export default function Productcard23({ product }) {
   const [currentImage, setCurrentImage] = useState(product.imgSrc);
@@ -16,7 +17,14 @@ export default function Productcard23({ product }) {
   return (
     <div className="card-product list-layout">
       <div className="card-product-wrapper">
-        <a href="#" className="product-img">
+        <Link 
+          href={
+            product.type === "furniture_set" || product.furnitureType === "Takım"
+              ? `/product-detail-furniture-set/${product.id}` 
+              : `/product-detail-furniture/${product.id}`
+          } 
+          className="product-img"
+        >
           <Image
             className="lazyload img-product"
             alt="image-product"
@@ -31,12 +39,19 @@ export default function Productcard23({ product }) {
             width={720}
             height={1005}
           />
-        </a>
+        </Link>
       </div>
       <div className="card-product-info">
-        <a href="#" className="title link">
+        <Link 
+          href={
+            product.type === "furniture_set" || product.furnitureType === "Takım"
+              ? `/product-detail-furniture-set/${product.id}` 
+              : `/product-detail-furniture/${product.id}`
+          } 
+          className="title link"
+        >
           {product.title}
-        </a>
+        </Link>
         <span className="price">${product.price.toFixed(2)}</span>
         <p className="description">
           Button-up shirt sleeves and a relaxed silhouette. It’s tailored with
