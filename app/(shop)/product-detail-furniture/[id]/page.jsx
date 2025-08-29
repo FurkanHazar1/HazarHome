@@ -77,7 +77,6 @@ export default async function page({ params }) {
       <FurnitureDetailsPopup product={product} />
       <FurnitureDetailsTab product={product} />
       <Products />
-      <RecentProducts />
       <Footer1 />
     </>
   );

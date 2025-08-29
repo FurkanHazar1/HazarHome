@@ -207,12 +207,36 @@ export async function GET(
           furnitureSetItems: {
             include: {
               furniture: {
-                select: {
-                  furnitureId: true,
-                  furnitureName: true,
-                  furnitureType: true,
-                  price: true,
-                  isActive: true
+                include: {
+                  images: {
+                    where: { 
+                      isActive: true,
+                      imageType: 'main'
+                    },
+                    include: {
+                      image: {
+                        select: {
+                          filePath: true,
+                          altText: true,
+                          fileName: true
+                        }
+                      }
+                    },
+                    take: 1,
+                    orderBy: { sortOrder: 'asc' }
+                  },
+                  properties: {
+                    where: { isActive: true },
+                    include: {
+                      property: {
+                        select: {
+                          propertyName: true,
+                          propertyType: true
+                        }
+                      }
+                    },
+                    take: 5 // Sınırlı sayıda property
+                  }
                 }
               }
             },
@@ -450,7 +474,20 @@ function transformFurnitureSetToProduct(set: any, groupImagesByType: boolean = f
       furnitureId: item.furnitureId,
       quantity: item.quantity,
       sortOrder: item.sortOrder,
-      furniture: item.furniture
+      furniture: item.furniture,
+      // Enhanced fields for frontend
+      name: item.furniture?.furnitureName || 'Bilinmeyen Ürün',
+      price: item.furniture?.price ? Number(item.furniture.price) : 0,
+      description: item.furniture?.description || '',
+      image: item.furniture?.images?.[0]?.image?.filePath ? 
+        buildImageUrl(item.furniture.images[0].image.filePath) : 
+        '/images/products/placeholder.jpg',
+      properties: item.furniture?.properties?.map((prop: any) => ({
+        name: prop.property.propertyName,
+        value: prop.propertyValue,
+        type: prop.property.propertyType
+      })) || [],
+      individualLink: `/product-detail-furniture/${item.furnitureId}`
     })) || [],
     stats: {
       totalColors: set._count.furnitureSetColors,
@@ -494,6 +531,30 @@ function transformFurnitureSetToProduct(set: any, groupImagesByType: boolean = f
         buildImageUrl(set.furnitureSetImages.find((img: any) => img.imageType === 'main').image.filePath) : 
         '/images/products/placeholder.jpg',
       isAvailable: colorRel.isAvailable
+    })) || [],
+    // setItems alias for frontend compatibility
+    setItems: set.furnitureSetItems?.map((item: any) => ({
+      id: item.id,
+      furnitureId: item.furnitureId,
+      quantity: item.quantity,
+      sortOrder: item.sortOrder,
+      name: item.furniture?.furnitureName || 'Bilinmeyen Ürün',
+      price: item.furniture?.price ? Number(item.furniture.price) : 0,
+      description: item.furniture?.description || '',
+      image: item.furniture?.images?.[0]?.image?.filePath ? 
+        buildImageUrl(item.furniture.images[0].image.filePath) : 
+        '/images/products/placeholder.jpg',
+      properties: item.furniture?.properties?.map((prop: any) => ({
+        name: prop.property.propertyName,
+        value: prop.propertyValue,
+        type: prop.property.propertyType
+      })) || [],
+      individualLink: `/product-detail-furniture/${item.furnitureId}`
+    })) || [],
+    properties: set.furnitureSetProperties?.map((prop: any) => ({
+      name: prop.property.propertyName,
+      value: prop.propertyValue,
+      type: prop.property.propertyType
     })) || []
   }
 }
