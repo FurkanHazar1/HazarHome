@@ -6,7 +6,7 @@ import axios from "axios";
 import LanguageSelect from "../common/LanguageSelect";
 import CurrencySelect from "../common/CurrencySelect";
 
-import { aboutLinks, footerLinks, paymentImages } from "@/data/footerLinks";
+import { aboutLinks, footerLinks, furnitureCategories, paymentImages } from "@/data/footerLinks";
 export default function Footer1({ bgColor = "" }) {
   useEffect(() => {
     const headings = document.querySelectorAll(".footer-heading-moblie");
@@ -76,21 +76,11 @@ export default function Footer1({ bgColor = "" }) {
             <div className="row">
               <div className="col-xl-3 col-md-6 col-12">
                 <div className="footer-infor">
-                  <div className="footer-logo">
-                    <Link href={`/`}>
-                      <Image
-                        alt="image"
-                        src="/images/logo/logo.svg"
-                        width="136"
-                        height="21"
-                      />
-                    </Link>
-                  </div>
                   <ul>
                     <li>
                       <p>
-                        Address: 1234 Fashion Street, Suite 567, <br />
-                        New York, NY 10001
+                        Adres: Topkapı Maltepe Yolu, Numara 4, Tek Merkez AVM, Stand No: 100-101-102  <br />
+                        Bayrampaşa, Istanbul, Turkey
                       </p>
                     </li>
                     <li>
@@ -100,34 +90,56 @@ export default function Footer1({ bgColor = "" }) {
                     </li>
                     <li>
                       <p>
-                        Phone: <a href="#">+90 533 519 13 29</a>
+                        Telefon: <a href="#">+90 533 519 13 29</a>
                       </p>
                     </li>
                   </ul>
-                  <Link href={`/contact-1`} className="tf-btn btn-line">
-                    Get direction
-                    <i className="icon icon-arrow1-top-left" />
-                  </Link>
-                  <ul className="tf-social-icon d-flex gap-10">
+                  
+                </div>
+              </div>
+              
+              {/* Mobilya Kategorileri */}
+              {furnitureCategories.map((category, categoryIndex) => (
+                <div key={categoryIndex} className="col-xl-2 col-md-6 col-12 footer-col-block">
+                  <div className="footer-heading footer-heading-desktop">
+                    <h6>{category.title}</h6>
+                  </div>
+                  <div className="footer-heading footer-heading-moblie">
+                    <h6>{category.title}</h6>
+                  </div>
+                  <ul className="footer-menu-list tf-collapse-content">
+                    {category.links.map((link, linkIndex) => (
+                      <li key={linkIndex}>
+                        <Link href={link.href} className="footer-menu_item">
+                          {link.text}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+              
+              <div className="col-xl-3 col-md-6 col-12">
+                <div className="footer-newsletter footer-col-block">
+                  <div className="footer-heading footer-heading-desktop">
+                    <h6>Bizi Takip Edin</h6>
+                  </div>
+                  <div className="footer-heading footer-heading-moblie">
+                    <h6>Bizi Takip Edin</h6>
+                  </div>
+                <ul className="tf-social-icon d-flex gap-10">
                     <li>
                       <a
-                        href="#"
+                        href="https://www.facebook.com/people/Hazar-Home/61577648638207/"
                         className="box-icon w_34 round social-facebook social-line"
                       >
                         <i className="icon fs-14 icon-fb" />
                       </a>
                     </li>
+                
                     <li>
                       <a
-                        href="#"
-                        className="box-icon w_34 round social-twiter social-line"
-                      >
-                        <i className="icon fs-12 icon-Icon-x" />
-                      </a>
-                    </li>
-                    <li>
-                      <a
-                        href="#"
+                        href="https://www.instagram.com/hazarhometr/"
                         className="box-icon w_34 round social-instagram social-line"
                       >
                         <i className="icon fs-14 icon-instagram" />
@@ -135,125 +147,23 @@ export default function Footer1({ bgColor = "" }) {
                     </li>
                     <li>
                       <a
-                        href="#"
+                        href="https://www.tiktok.com/@hazarhometr"
                         className="box-icon w_34 round social-tiktok social-line"
                       >
                         <i className="icon fs-14 icon-tiktok" />
                       </a>
                     </li>
-                    <li>
-                      <a
-                        href="#"
-                        className="box-icon w_34 round social-pinterest social-line"
-                      >
-                        <i className="icon fs-14 icon-pinterest-1" />
-                      </a>
-                    </li>
+                    
                   </ul>
-                </div>
-              </div>
-              <div className="col-xl-3 col-md-6 col-12 footer-col-block">
-                <div className="footer-heading footer-heading-desktop">
-                  <h6>Help</h6>
-                </div>
-                <div className="footer-heading footer-heading-moblie">
-                  <h6>Help</h6>
-                </div>
-                <ul className="footer-menu-list tf-collapse-content">
-                  {footerLinks.map((link, index) => (
-                    <li key={index}>
-                      <Link href={link.href} className="footer-menu_item">
-                        {link.text}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="col-xl-3 col-md-6 col-12 footer-col-block">
-                <div className="footer-heading footer-heading-desktop">
-                  <h6>About us</h6>
-                </div>
-                <div className="footer-heading footer-heading-moblie">
-                  <h6>About us</h6>
-                </div>
-                <ul className="footer-menu-list tf-collapse-content">
-                  {aboutLinks.slice(0, 4).map((link, index) => (
-                    <li key={index}>
-                      <Link href={link.href} className="footer-menu_item">
-                        {link.text}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="col-xl-3 col-md-6 col-12">
-                <div className="footer-newsletter footer-col-block">
-                  <div className="footer-heading footer-heading-desktop">
-                    <h6>Sign Up for Email</h6>
-                  </div>
-                  <div className="footer-heading footer-heading-moblie">
-                    <h6>Sign Up for Email</h6>
-                  </div>
-                  <div className="tf-collapse-content">
-                    <div className="footer-menu_item">
-                      Sign up to get first dibs on new arrivals, sales,
-                      exclusive content, events and more!
-                    </div>
-                    <div
-                      className={`tfSubscribeMsg ${
-                        showMessage ? "active" : ""
-                      }`}
-                    >
-                      {success ? (
-                        <p style={{ color: "rgb(52, 168, 83)" }}>
-                          You have successfully subscribed.
-                        </p>
-                      ) : (
-                        <p style={{ color: "red" }}>Something went wrong</p>
-                      )}
-                    </div>
-                    <form
-                      ref={formRef}
-                      onSubmit={sendEmail}
-                      className="form-newsletter subscribe-form"
-                      action="#"
-                      method="post"
-                      acceptCharset="utf-8"
-                      data-mailchimp="true"
-                    >
-                      <div className="subscribe-content">
-                        <fieldset className="email">
-                          <input
-                            required
-                            type="email"
-                            name="email"
-                            className="subscribe-email"
-                            placeholder="Enter your email...."
-                            tabIndex={0}
-                            aria-required="true"
-                            autoComplete="abc@xyz.com"
-                          />
-                        </fieldset>
-                        <div className="button-submit">
-                          <button
-                            className="subscribe-button tf-btn btn-sm radius-3 btn-fill btn-icon animate-hover-btn"
-                            type="submit"
-                          >
-                            Subscribe
-                            <i className="icon icon-arrow1-top-left" />
-                          </button>
-                        </div>
-                      </div>
-                      <div className="subscribe-msg" />
-                    </form>
-                    <div className="tf-cur">
-                      <div className="tf-currencies">
-                        <CurrencySelect />
-                      </div>
-                      <div className="tf-languages">
-                        <LanguageSelect />
-                      </div>
-                    </div>
+                  <div className="footer-logo mt-3">
+                    <Link href={`/`}>
+                      <Image
+                        alt="image"
+                        src="/images/logo/logo.svg"
+                        width="136"
+                        height="21"
+                      />
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -266,8 +176,7 @@ export default function Footer1({ bgColor = "" }) {
               <div className="col-12">
                 <div className="footer-bottom-wrap d-flex gap-20 flex-wrap justify-content-between align-items-center">
                   <div className="footer-menu_item">
-                    © {new Date().getFullYear()} Ecomus Store. All Rights
-                    Reserved
+                    © {new Date().getFullYear()} Hazar Home. Tüm Hakları Saklıdır.
                   </div>
                   <div className="tf-payment">
                     {paymentImages.map((image, index) => (

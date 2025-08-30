@@ -3,15 +3,9 @@ import Link from "next/link";
 import React from "react";
 
 import Image from "next/image";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { products1 } from "@/data/products";
-import { ProductCard } from "../shopCards/ProductCard";
-import { Navigation } from "swiper/modules";
+
 import {
-  blogLinks,
-  pages,
-  productDetailPages,
-  productsPages,
+
   oturmaOdasiCategories,
   yemekOdasiCategories,
   yatakOdasiCategories,
@@ -70,7 +64,7 @@ export default function Nav({ isArrow = true, textColor = "", Linkfs = "" }) {
             isMenuActive(oturmaOdasiCategories) ? "activeMenu" : ""
           } `}
         >
-          Oturma Odası Takımları
+          Oturma Odası
           {isArrow ? <i className="icon icon-arrow-down" /> : ""}
         </Link>
         <div className="sub-menu mega-menu">
@@ -126,7 +120,7 @@ export default function Nav({ isArrow = true, textColor = "", Linkfs = "" }) {
             isMenuActive(yemekOdasiCategories) ? "activeMenu" : ""
           } `}
         >
-          Yemek Odası Takımları
+          Yemek Odası
           {isArrow ? <i className="icon icon-arrow-down" /> : ""}
         </Link>
         <div className="sub-menu mega-menu">
@@ -182,7 +176,7 @@ export default function Nav({ isArrow = true, textColor = "", Linkfs = "" }) {
             isMenuActive(yatakOdasiCategories) ? "activeMenu" : ""
           } `}
         >
-          Yatak Odası Takımları
+          Yatak Odaları
           {isArrow ? <i className="icon icon-arrow-down" /> : ""}
         </Link>
         <div className="sub-menu mega-menu">
@@ -234,100 +228,14 @@ export default function Nav({ isArrow = true, textColor = "", Linkfs = "" }) {
       <li className="menu-item position-relative">
         <a
           href="#"
-          className={`item-link ${Linkfs} ${textColor}  ${
-            isMenuActive(pages) ? "activeMenu" : ""
-          }`}
+          className="item-link"
         >
           Hakkımızda
-          <i className="icon icon-arrow-down" />
+          
         </a>
-        <div className="sub-menu submenu-default">
-          <ul className="menu-list">
-            {pages.map((item, index) => (
-              <li key={index} className={item.links ? "menu-item-2 " : ""}>
-                {item.href.includes("#") ? (
-                  <a
-                    href={item.href}
-                    className={`${item.className} ${
-                      isMenuActive(item.links) ? "activeMenu" : ""
-                    }`}
-                  >
-                    {item.text}
-                  </a>
-                ) : (
-                  <Link
-                    href={item.href}
-                    className={`${item.className}  ${
-                      isMenuActive(item) ? "activeMenu" : ""
-                    }`}
-                    style={{ position: "relative" }}
-                  >
-                    {item.text}{" "}
-                    {item.label && (
-                      <div className="demo-label">
-                        <span className="demo-new">{item.label}</span>
-                      </div>
-                    )}
-                  </Link>
-                )}
-
-                {item.links && (
-                  <div className="sub-menu submenu-default">
-                    <ul className="menu-list">
-                      {item.links.map((subItem, subIndex) => (
-                        <li key={subIndex}>
-                          <Link
-                            href={subItem.href}
-                            className={`${subItem.className} ${
-                              isMenuActive(subItem) ? "activeMenu" : ""
-                            }`}
-                          >
-                            {subItem.text}
-                            {subItem.label && (
-                              <div className="demo-label">
-                                <span className="demo-new">
-                                  {subItem.label}
-                                </span>
-                              </div>
-                            )}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
+   
       </li>
-      <li className="menu-item position-relative">
-        <a
-          href="#"
-          className={`item-link ${Linkfs} ${textColor}  ${
-            isMenuActive(blogLinks) ? "activeMenu" : ""
-          }`}
-        >
-          Blog
-          {isArrow ? <i className="icon icon-arrow-down" /> : ""}
-        </a>
-        <div className="sub-menu links-default">
-          <ul className="menu-list">
-            {blogLinks.map((linkItem, index) => (
-              <li key={index}>
-                <Link
-                  href={linkItem.href}
-                  className={`menu-link-text link text_black-2  ${
-                    isMenuActive(linkItem) ? "activeMenu" : ""
-                  }`}
-                >
-                  {linkItem.text}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </li>
+      
     </>
   );
 }

@@ -56,12 +56,7 @@ export const yemekOdasiCategories = [
     alt: "Dining-Table",
     name: "Yemek Masaları",
   },
-  {
-    href: "/yemek-sandalyeleri",
-    src: "/images/menu/yemek_odasi/yemek_sandalyesi.jpg",
-    alt: "Dining-Chair",
-    name: "Yemek Sandalyeleri",
-  },
+
   {
     href: "/konsol-vitrin",
     src: "/images/menu/yemek_odasi/konsol_vitrin.jpg",

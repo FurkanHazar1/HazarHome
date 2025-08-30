@@ -8,6 +8,7 @@ import { Navigation } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import Quantity from "../shopDetails/Quantity";
 import React, { useState } from "react";
+import { getColorHex } from "@/utils/colorUtils";
 
 export default function QuickView() {
   const {
@@ -84,47 +85,223 @@ export default function QuickView() {
                   {(() => {
                     const images = [];
                     
-                    // Ana ürün resmi
-                    if (quickViewItem.imgSrc) {
-                      images.push(quickViewItem.imgSrc);
+                    // Debug için QuickViewItem'ı console'a yazdır
+                    console.log('QuickView Debug - quickViewItem:', quickViewItem);
+                    console.log('QuickView Debug - imageGallery:', quickViewItem?.imageGallery);
+                    console.log('QuickView Debug - images:', quickViewItem?.images);
+                    
+                    // Doğrudan images array'i varsa - VERİTABANINDAN GELEN TÜM RESİMLER
+                    if (quickViewItem.images && Array.isArray(quickViewItem.images)) {
+                      console.log('Found direct images array:', quickViewItem.images);
+                      
+                      // Önce main tipindeki resmi bul ve ekle
+                      const mainImage = quickViewItem.images.find(img => img.imageType === 'main');
+                      if (mainImage) {
+                        const imageSrc = mainImage.url || mainImage.filePath || mainImage.src;
+                        if (imageSrc) {
+                          const finalSrc = imageSrc.startsWith('/uploads/') ? imageSrc : 
+                                          imageSrc.startsWith('http') ? imageSrc : `/uploads/${imageSrc}`;
+                          images.push({
+                            src: finalSrc,
+                            alt: mainImage.altText || mainImage.alt || quickViewItem.title || 'Ana Ürün Resmi',
+                            type: 'main'
+                          });
+                        }
+                      }
+                      
+                      // Sonra diğer resimleri ekle (main hariç)
+                      quickViewItem.images.forEach((img, index) => {
+                        if (img.imageType !== 'main') { // Main resmi zaten ekledik
+                          const imageSrc = img.url || img.filePath || img.src;
+                          if (imageSrc) {
+                            const finalSrc = imageSrc.startsWith('/uploads/') ? imageSrc : 
+                                            imageSrc.startsWith('http') ? imageSrc : `/uploads/${imageSrc}`;
+                            if (!images.some(existingImg => existingImg.src === finalSrc)) {
+                              images.push({
+                                src: finalSrc,
+                                alt: img.altText || img.alt || quickViewItem.title || 'Ürün Resmi',
+                                type: img.imageType || img.type || 'gallery'
+                              });
+                            }
+                          }
+                        }
+                      });
+                    } else {
+                      // Fallback: imgSrc ve imgHoverSrc kullan
+                      if (quickViewItem.imgSrc) {
+                        images.push({
+                          src: quickViewItem.imgSrc,
+                          alt: quickViewItem.title || 'Ana Ürün Resmi',
+                          type: 'main'
+                        });
+                      }
+                      
+                      if (quickViewItem.imgHoverSrc && quickViewItem.imgHoverSrc !== quickViewItem.imgSrc) {
+                        images.push({
+                          src: quickViewItem.imgHoverSrc,
+                          alt: quickViewItem.title || 'Ürün Hover Resmi',
+                          type: 'hover'
+                        });
+                      }
                     }
                     
-                    // Hover resmi (eğer farklıysa)
-                    if (quickViewItem.imgHoverSrc && quickViewItem.imgHoverSrc !== quickViewItem.imgSrc) {
-                      images.push(quickViewItem.imgHoverSrc);
+                    // Veritabanından gelen tüm ürün resimleri (alternative structure)
+                    if (quickViewItem.imageGallery) {
+                      console.log('Processing imageGallery...');
+                      
+                      // Eğer imageGallery obje olarak geliyorsa (groupImagesByType = true)
+                      if (quickViewItem.imageGallery.main && Array.isArray(quickViewItem.imageGallery.main)) {
+                        console.log('Found main images:', quickViewItem.imageGallery.main);
+                        quickViewItem.imageGallery.main.forEach((img, index) => {
+                          const imageSrc = img.image?.url || (img.image?.filePath ? `/uploads/${img.image.filePath}` : null);
+                          if (imageSrc && !images.some(existingImg => existingImg.src === imageSrc)) {
+                            images.push({
+                              src: imageSrc,
+                              alt: img.image?.altText || quickViewItem.title || 'Ürün Resmi',
+                              type: 'main-db'
+                            });
+                          }
+                        });
+                      }
+                      
+                      if (quickViewItem.imageGallery.gallery && Array.isArray(quickViewItem.imageGallery.gallery)) {
+                        console.log('Found gallery images:', quickViewItem.imageGallery.gallery);
+                        quickViewItem.imageGallery.gallery.forEach((img, index) => {
+                          const imageSrc = img.image?.url || (img.image?.filePath ? `/uploads/${img.image.filePath}` : null);
+                          if (imageSrc && !images.some(existingImg => existingImg.src === imageSrc)) {
+                            images.push({
+                              src: imageSrc,
+                              alt: img.image?.altText || quickViewItem.title || 'Galeri Resmi',
+                              type: 'gallery'
+                            });
+                          }
+                        });
+                      }
+                      
+                      // Eğer imageGallery.images array olarak geliyorsa (groupImagesByType = false)
+                      if (quickViewItem.imageGallery.images && Array.isArray(quickViewItem.imageGallery.images)) {
+                        console.log('Found images array:', quickViewItem.imageGallery.images);
+                        quickViewItem.imageGallery.images.forEach((img, index) => {
+                          const imageSrc = img.image?.url || (img.image?.filePath ? `/uploads/${img.image.filePath}` : null);
+                          if (imageSrc && !images.some(existingImg => existingImg.src === imageSrc)) {
+                            images.push({
+                              src: imageSrc,
+                              alt: img.image?.altText || quickViewItem.title || 'Ürün Resmi',
+                              type: img.imageType || 'gallery'
+                            });
+                          }
+                        });
+                      }
                     }
                     
-                    // Renk resimleri
-                    if (quickViewItem.colors && quickViewItem.colors.length > 0) {
-                      quickViewItem.colors.forEach(color => {
-                        if (color.imgSrc && !images.includes(color.imgSrc)) {
-                          images.push(color.imgSrc);
+                    // FurnitureImages array'i varsa (direct database structure)
+                    if (quickViewItem.furnitureImages && Array.isArray(quickViewItem.furnitureImages)) {
+                      console.log('Found furnitureImages array:', quickViewItem.furnitureImages);
+                      quickViewItem.furnitureImages.forEach((img, index) => {
+                        const imageSrc = img.image?.filePath ? `/uploads/${img.image.filePath}` : null;
+                        if (imageSrc && !images.some(existingImg => existingImg.src === imageSrc)) {
+                          images.push({
+                            src: imageSrc,
+                            alt: img.image?.altText || quickViewItem.title || 'Mobilya Resmi',
+                            type: img.imageType || 'furniture'
+                          });
                         }
                       });
                     }
                     
-                    // Eğer hiç resim yoksa default
-                    if (images.length === 0) {
-                      images.push('/images/products/default.jpg');
+                    // FurnitureSetImages array'i varsa (furniture set structure)
+                    if (quickViewItem.furnitureSetImages && Array.isArray(quickViewItem.furnitureSetImages)) {
+                      console.log('Found furnitureSetImages array:', quickViewItem.furnitureSetImages);
+                      quickViewItem.furnitureSetImages.forEach((img, index) => {
+                        const imageSrc = img.image?.filePath ? `/uploads/${img.image.filePath}` : null;
+                        if (imageSrc && !images.some(existingImg => existingImg.src === imageSrc)) {
+                          images.push({
+                            src: imageSrc,
+                            alt: img.image?.altText || quickViewItem.title || 'Takım Resmi',
+                            type: img.imageType || 'furniture-set'
+                          });
+                        }
+                      });
                     }
                     
-                    return images.map((imageSrc, index) => (
+                    // Renk resimleri - sadece ana resimlerden farklı olanları ekle
+                    if (quickViewItem.colors && quickViewItem.colors.length > 0) {
+                      console.log('Found colors:', quickViewItem.colors);
+                      quickViewItem.colors.forEach(color => {
+                        if (color.imgSrc && !images.some(existingImg => existingImg.src === color.imgSrc)) {
+                          images.push({
+                            src: color.imgSrc,
+                            alt: `${quickViewItem.title} - ${color.name} Rengi`,
+                            type: 'color',
+                            colorName: color.name
+                          });
+                        }
+                      });
+                    }
+                    
+                    console.log('Final images array:', images);
+                    
+                    // Eğer hiç resim yoksa default
+                    if (images.length === 0) {
+                      images.push({
+                        src: '/images/products/placeholder.jpg',
+                        alt: 'Varsayılan Ürün Resmi',
+                        type: 'default'
+                      });
+                    }
+                    
+                    return images.map((imageData, index) => (
                       <SwiperSlide className="swiper-slide" key={index}>
-                        <div className="item">
+                        <div className="item" style={{
+                          width: '100%',
+                          height: '500px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          overflow: 'hidden',
+                          backgroundColor: '#f8f9fa',
+                          borderRadius: '8px'
+                        }}>
                           <Image
-                            alt={quickViewItem.title || "Product Image"}
-                            src={imageSrc}
+                            alt={imageData.alt}
+                            src={imageData.src}
                             width={720}
                             height={1045}
-                            style={{ objectFit: "contain" }}
+                            style={{ 
+                              maxWidth: '100%',
+                              maxHeight: '100%',
+                              width: 'auto',
+                              height: 'auto',
+                              objectFit: "contain"
+                            }}
+                            onError={(e) => {
+                              console.log('Image load error:', imageData.src);
+                              e.target.src = '/images/products/placeholder.jpg';
+                            }}
                           />
+                          {imageData.type === 'color' && imageData.colorName && (
+                            <div 
+                              style={{
+                                position: 'absolute',
+                                bottom: '10px',
+                                left: '10px',
+                                background: 'rgba(0,0,0,0.7)',
+                                color: 'white',
+                                padding: '4px 8px',
+                                borderRadius: '4px',
+                                fontSize: '12px'
+                              }}
+                            >
+                              {imageData.colorName}
+                            </div>
+                          )}
                         </div>
                       </SwiperSlide>
                     ));
                   })()}
 
-                  <div className="swiper-button-next button-style-arrow single-slide-prev snbqvp" />
-                  <div className="swiper-button-prev button-style-arrow single-slide-next snbqvn" />
+                  <div className="swiper-button-prev button-style-arrow single-slide-prev snbqvp" />
+                  <div className="swiper-button-next button-style-arrow single-slide-next snbqvn" />
                 </Swiper>
               )}
             </div>
@@ -144,15 +321,7 @@ export default function QuickView() {
                     </Link>
                   </h5>
                 </div>
-                <div className="tf-product-info-badges">
-                  <div className="badges text-uppercase">Best seller</div>
-                  <div className="product-status-content">
-                    <i className="icon-lightning" />
-                    <p className="fw-6">
-                      Selling fast! 48 people have this in their carts.
-                    </p>
-                  </div>
-                </div>
+          
                 <div className="tf-product-info-price">
                   <div className="price">${quickViewItem.price.toFixed(2)}</div>
                 </div>
@@ -187,7 +356,7 @@ export default function QuickView() {
                               htmlFor={`qv-color-${color.id || index}`}
                               data-value={color.name || color.value}
                               style={{
-                                backgroundColor: color.hexCode || color.value,
+                                backgroundColor: getColorHex(color),
                                 width: '32px',
                                 height: '32px',
                                 borderRadius: '50%',
@@ -246,10 +415,7 @@ export default function QuickView() {
                     </div>
                   )}
                 </div>
-                <div className="tf-product-info-quantity">
-                  <div className="quantity-title fw-6">Quantity</div>
-                  <Quantity />
-                </div>
+               
                 <div className="tf-product-info-buy-button">
                   <form onSubmit={(e) => e.preventDefault()} className="">
                     <a
@@ -302,20 +468,7 @@ export default function QuickView() {
                       </span>
                       <span className="icon icon-check" />
                     </a>
-                    <div className="w-100">
-                      <a href="#" className="btns-full">
-                        Buy with
-                        <Image
-                          alt="image"
-                          src="/images/payments/paypal.png"
-                          width={64}
-                          height={18}
-                        />
-                      </a>
-                      <a href="#" className="payment-more-option">
-                        More payment options
-                      </a>
-                    </div>
+                
                   </form>
                 </div>
                 <div>

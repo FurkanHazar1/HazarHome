@@ -2,8 +2,7 @@ import React from "react";
 import Nav from "./Nav";
 import Image from "next/image";
 import Link from "next/link";
-import LanguageSelect from "../common/LanguageSelect";
-import CurrencySelect from "../common/CurrencySelect";
+import { socialLinksWithBorder } from "@/data/socials";
 import CartLength from "../common/CartLength";
 import WishlistLength from "../common/WishlistLength";
 export default function Header4() {
@@ -13,19 +12,29 @@ export default function Header4() {
         <div className="container-full px_15 lg-px_40">
           <div className="row wrapper-header align-items-center">
             <div className="col-xl-5 tf-md-hidden">
-              <div className="tf-cur">
-                <div className="tf-currencies">
-                  <CurrencySelect topStart />
-                </div>
-                <div className="tf-languages">
-                  <LanguageSelect
-                    parentClassName={
-                      "image-select center style-default type-languages"
-                    }
-                    topStart
-                  />
-                </div>
-              </div>
+              <ul className="tf-social-icon d-flex gap-20 style-default">
+                {socialLinksWithBorder.map((link, index) => (
+                  <li key={index}>
+                    <a
+                      href={link.href}
+                      className={`box-icon link round ${link.className} ${link.borderClass}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ 
+                        width: '40px', 
+                        height: '40px',
+                        border: '1px solid rgba(0, 0, 0, 0.2)',
+                        borderRadius: '8px',
+                        transition: 'all 0.3s ease'
+                      }}
+                    >
+                      <i
+                        className={`icon fs-18 ${link.iconClass}`}
+                      />
+                    </a>
+                  </li>
+                ))}
+              </ul>
             </div>
             <div className="col-md-4 col-3 tf-lg-hidden">
               <a
@@ -112,10 +121,10 @@ export default function Header4() {
                 <Nav />
                 <li className="menu-item">
                   <a
-                    href="https://themeforest.net/item/ecomus-ultimate-html5-template/53417990?s_rank=3"
+                    href="/contact"
                     className="item-link"
                   >
-                    Buy now
+                    İletişim
                   </a>
                 </li>
               </ul>

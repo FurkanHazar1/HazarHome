@@ -30,6 +30,7 @@ import NewsletterModal from "@/components/modals/NewsletterModal";
 import ShareModal from "@/components/modals/ShareModal";
 import ScrollTop from "@/components/common/ScrollTop";
 import RtlToggle from "@/components/common/RtlToggle";
+import WhatsAppButton from "@/components/common/WhatsAppButton";
 
 export default function ShopLayout({ children }) {
   const pathname = usePathname();
@@ -167,6 +168,7 @@ export default function ShopLayout({ children }) {
       
       <Context>
         <div id="wrapper">{children}</div>
+        <WhatsAppButton />
         <RtlToggle />
         <HomesModal />
         <QuickView />
