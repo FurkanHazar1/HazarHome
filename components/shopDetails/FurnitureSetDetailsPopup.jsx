@@ -42,7 +42,7 @@ export default function FurnitureSetDetailsPopup({ product }) {
         <div className="container">
           <div className="row">
             <div className="col-md-6">
-              <div className="tf-product-media-wrap sticky-top">
+              <div className="tf-product-media-wrap">
                 <div className="thumbs-slider">
                   <SliderWithGalleryPopup
                     handleColor={handleColor}
@@ -59,10 +59,7 @@ export default function FurnitureSetDetailsPopup({ product }) {
                 <div className="tf-product-info-list other-image-zoom">
                   <div className="tf-product-info-title">
                     <h5>{product.title}</h5>
-                    <div className="tf-product-info-badges mt-2">
-                      <div className="badges">Furniture Set</div>
-                      <div className="badges bg-secondary">Komple Takım</div>
-                    </div>
+                   
                   </div>
                   
                   <div className="tf-product-info-price">
@@ -91,100 +88,126 @@ export default function FurnitureSetDetailsPopup({ product }) {
                   {/* Takım İçeriği */}
                   {product.setItems && product.setItems.length > 0 && (
                     <div className="tf-product-info-set-items mb-4">
-                      <h6 className="fw-6 mb-3">Takım İçeriği ({product.setItems.length} Parça)</h6>
-                      <div className="set-items-list">
+                      <div className="set-header d-flex align-items-center justify-content-between mb-4">
+                        <h6 className="fw-6 mb-0 d-flex align-items-center">
+                          <i className="icon-package me-2 text-primary"></i>
+                          Takım İçeriği
+                          <span className="badge bg-primary ms-2">{product.setItems.length} Parça</span>
+                        </h6>
+                      </div>
+                      
+                      <div className="set-items-modern">
                         {product.setItems.map((item, index) => (
-                          <div key={item.furnitureId || item.name || index} className="set-item border rounded p-3 mb-3">
-                            <div className="row align-items-center">
-                              <div className="col-md-2">
-                                {item.image && (
-                                  <Image
-                                    src={item.image}
-                                    alt={item.name}
-                                    width={60}
-                                    height={60}
-                                    className="rounded"
-                                    style={{objectFit: 'cover'}}
-                                  />
-                                )}
-                              </div>
-                              <div className="col-md-6">
-                                <div className="item-info">
-                                  <h6 className="item-name fw-6 mb-1">{item.name}</h6>
-                                  <span className="item-quantity badge bg-primary me-2">x{item.quantity}</span>
-                                  {item.price && (
-                                    <span className="item-price text-success fw-6">${item.price.toLocaleString()}</span>
-                                  )}
-                                  {item.description && (
-                                    <div className="item-description text-muted small mt-1">{item.description}</div>
-                                  )}
-                                  {item.properties && item.properties.length > 0 && (
-                                    <div className="item-properties mt-2">
-                                      {item.properties.slice(0, 2).map((prop, propIndex) => (
-                                        <span key={`${item.furnitureId || item.name}-${prop.name}-${propIndex}`} className="badge bg-light text-dark me-1 small">
-                                          {prop.name}: {prop.value}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  )}
+                          <div key={item.furnitureId || item.name || index} className="set-item-modern mb-3">
+                            <div className="item-card p-3 border-0 rounded-3 shadow-sm bg-white position-relative overflow-hidden">
+                              {/* Gradient Background */}
+                              <div className="gradient-bg position-absolute top-0 start-0 w-100 h-100 opacity-10"></div>
+                              
+                              <div className="row align-items-center position-relative">
+                                <div className="col-auto">
+                                  <div className="item-image-container position-relative">
+                                    {item.image && (
+                                      <div className="image-wrapper rounded-3 overflow-hidden shadow-sm">
+                                        <Image
+                                          src={item.image}
+                                          alt={item.name}
+                                          width={80}
+                                          height={80}
+                                          className="item-image"
+                                          style={{
+                                            objectFit: 'cover',
+                                            width: '80px',
+                                            height: '80px',
+                                            aspectRatio: '1'
+                                          }}
+                                        />
+                                        <div className="image-overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center opacity-0 transition-opacity">
+                                          <i className="icon-eye text-white fs-4"></i>
+                                        </div>
+                                      </div>
+                                    )}
+                                    {item.quantity > 1 && (
+                                      <div className="quantity-indicator position-absolute top-0 end-0 bg-primary text-white rounded-circle d-flex align-items-center justify-content-center">
+                                        <span className="small fw-6">{item.quantity}</span>
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
-                              </div>
-                              <div className="col-md-4 text-end">
-                                <div className="item-actions">
-                                  {item.individualLink && (
-                                    <Link href={item.individualLink} className="btn btn-outline-primary btn-sm mb-2 d-block">
-                                      <i className="icon-eye me-1"></i>
-                                      Detayları Gör
-                                    </Link>
-                                  )}
-                                  <div className="item-status d-flex align-items-center justify-content-end">
-                                    <i className="icon-check text-success me-1" />
-                                    <span className="small text-success">Takımda Dahil</span>
+                                
+                                <div className="col">
+                                  <div className="item-details">
+                                    <div className="d-flex align-items-start justify-content-between mb-2">
+                                      <h6 className="item-name fw-6 mb-0 text-dark">{item.name}</h6>
+                                      {item.price && (
+                                        <div className="price-container text-end">
+                                          <div className="item-price text-success fw-6">${item.price.toFixed(2)}</div>
+                                          {item.quantity > 1 && (
+                                            <div className="total-price small text-muted">
+                                              Toplam: ${(item.price * item.quantity).toFixed(2)}
+                                            </div>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+                                    
+                                    {item.description && (
+                                      <p className="item-description text-muted small mb-2 lh-sm">{item.description}</p>
+                                    )}
+                                    
+                                    <div className="item-meta d-flex align-items-center justify-content-between">
+                                      <div className="item-properties">
+                                        {item.properties && item.properties.length > 0 && (
+                                          <div className="properties-tags">
+                                            {item.properties.slice(0, 2).map((prop, propIndex) => (
+                                              <span key={`${item.furnitureId || item.name}-${prop.name}-${propIndex}`} 
+                                                    className="property-tag badge bg-light text-dark me-1 small border">
+                                                <i className="icon-tag me-1"></i>
+                                                {prop.name}: {prop.value}
+                                              </span>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                      
+                                      <div className="item-actions d-flex align-items-center gap-2">
+                                        {item.individualLink && (
+                                          <Link href={item.individualLink} 
+                                                className="btn btn-outline-primary btn-sm d-flex align-items-center">
+                                            <i className="icon-eye me-1"></i>
+                                            <span className="d-none d-md-inline">Detay</span>
+                                          </Link>
+                                        )}
+                                        <div className="status-indicator d-flex align-items-center">
+                                          <div className="status-dot bg-success rounded-circle me-2"></div>
+                                          <span className="small text-success fw-5">Dahil</span>
+                                        </div>
+                                      </div>
+                                    </div>
                                   </div>
                                 </div>
                               </div>
                             </div>
                           </div>
                         ))}
-                        
-                        {/* Takım Toplamı */}
-                        <div className="set-total bg-light p-3 rounded mt-3">
-                          <div className="row">
-                            <div className="col-md-8">
-                              <strong>Takım Toplam Değeri:</strong>
-                            </div>
-                            <div className="col-md-4 text-end">
-                              <span className="text-decoration-line-through text-muted me-2">
-                                ${product.setItems.reduce((sum, item) => sum + (item.price * item.quantity), 0).toLocaleString()}
-                              </span>
-                              <strong className="text-success">
-                                ${product.price.toLocaleString()}
-                              </strong>
-                            </div>
-                          </div>
-                          <div className="row mt-2">
-                            <div className="col-12 text-center">
-                              <span className="badge bg-success">
-                                Takım Alımında %{Math.round((1 - product.price / product.setItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)) * 100)} İndirim
-                              </span>
-                            </div>
-                          </div>
-                        </div>
                       </div>
                     </div>
                   )}
 
                   {/* Özellikler */}
                   {product.properties && product.properties.length > 0 && (
-                    <div className="tf-product-info-properties">
-                      <h6 className="fw-6 mb-3">Takım Özellikleri</h6>
+                    <div className="tf-product-info-properties mb-3">
+                      <h6 className="fw-6 mb-2">Takım Özellikleri</h6>
                       <div className="properties-list">
-                        {product.properties.map((property, index) => (
-                          <div key={`property-${property.name}-${index}`} className="property-item d-flex justify-content-between mb-2">
-                            <span className="property-name fw-6">{property.name}:</span>
-                            <span className="property-value text_black-2">{property.value}</span>
-                          </div>
-                        ))}
+                        <div className="row">
+                          {product.properties.map((property, index) => (
+                            <div key={`property-${property.name}-${index}`} className="col-6 col-md-4 mb-2">
+                              <div className="property-item">
+                                <span className="property-name small text-muted">{property.name}</span>
+                                <div className="property-value fw-6 text-dark">{property.value}</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -307,190 +330,12 @@ export default function FurnitureSetDetailsPopup({ product }) {
                     </form>
                   </div>
 
-                  {/* Takım Avantajları */}
-                  <div className="tf-product-info-set-advantages bg-light p-3 rounded mt-4">
-                    <h6 className="fw-6 mb-3">
-                      <i className="icon-star text-warning me-2"></i>
-                      Takım Avantajları
-                    </h6>
-                    <ul className="advantages-list list-unstyled">
-                      <li className="mb-2">
-                        <i className="icon-check text-success me-2"></i>
-                        Tek seferde komple mobilya çözümü
-                      </li>
-                      <li className="mb-2">
-                        <i className="icon-check text-success me-2"></i>
-                        Uyumlu renk ve tasarım garantisi
-                      </li>
-                      <li className="mb-2">
-                        <i className="icon-check text-success me-2"></i>
-                        Tekli alıma göre %15-20 tasarruf
-                      </li>
-                      <li className="mb-2">
-                        <i className="icon-check text-success me-2"></i>
-                        Profesyonel montaj hizmeti dahil
-                      </li>
-                    </ul>
-                  </div>
 
-                  {/* Ödeme Bilgileri */}
-                  <div className="tf-product-info-payment">
-                    <div className="payment-methods">
-                      <div className="payment-item">
-                        <i className="icon-truck" />
-                        <span>Ücretsiz Kargo & Montaj</span>
-                      </div>
-                      <div className="payment-item">
-                        <i className="icon-return" />
-                        <span>30 Gün İade Garantisi</span>
-                      </div>
-                      <div className="payment-item">
-                        <i className="icon-shield" />
-                        <span>Güvenli Ödeme</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Marka */}
-                  {product.brand && (
-                    <div className="tf-product-info-extra-link">
-                      <a href="#" className="tf-product-extra-icon">
-                        <div className="icon">
-                          <i className="icon-tags" />
-                        </div>
-                        <div className="text fw-6">Marka: {product.brand}</div>
-                      </a>
-                    </div>
-                  )}
+                 
                 </div>
               </div>
             </div>
           </div>
-
-          {/* İlişkili Mobilyalar Bölümü */}
-          {product.setItems && product.setItems.length > 0 && (
-            <div className="row mt-5">
-              <div className="col-12">
-                <div className="tf-related-items">
-                  <div className="tf-heading text-center mb-4">
-                    <h4 className="fw-7">Takımdaki Mobilyalar</h4>
-                    <p className="text_black-2">Bu takımı oluşturan bireysel mobilyaları inceleyin</p>
-                  </div>
-                  <div className="row">
-                    {product.setItems.map((item, index) => (
-                      <div key={index} className="col-lg-4 col-md-6 mb-4">
-                        <div className="related-item-card h-100 border rounded overflow-hidden shadow-sm">
-                          {item.image && (
-                            <div className="item-image position-relative">
-                              <Image
-                                className="lazyload"
-                                data-src={item.image}
-                                alt={item.name}
-                                src={item.image}
-                                width={300}
-                                height={200}
-                                style={{ objectFit: "cover", width: "100%", height: "200px" }}
-                              />
-                              {item.quantity > 1 && (
-                                <div className="quantity-badge position-absolute top-0 end-0 bg-primary text-white px-2 py-1 m-2 rounded">
-                                  x{item.quantity}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                          <div className="item-content p-3">
-                            <h6 className="item-title fw-6 mb-2">{item.name}</h6>
-                            {item.description && (
-                              <p className="item-description text-muted small mb-3">{item.description}</p>
-                            )}
-                            {item.properties && item.properties.length > 0 && (
-                              <div className="item-properties">
-                                <ul className="list-unstyled small">
-                                  {item.properties.slice(0, 3).map((prop, propIndex) => (
-                                    <li key={propIndex} className="mb-1">
-                                      <strong>{prop.name}:</strong> {prop.value}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                            {item.price && (
-                              <div className="item-price mt-2">
-                                <span className="price fw-6 text-primary">${item.price.toFixed(2)}</span>
-                                {item.quantity > 1 && (
-                                  <span className="total-price text-muted ms-2">
-                                    (Toplam: ${(item.price * item.quantity).toFixed(2)})
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                            {item.individualLink && (
-                              <div className="item-actions mt-3">
-                                <Link 
-                                  href={item.individualLink}
-                                  className="btn btn-outline-primary btn-sm w-100"
-                                >
-                                  Detayını İncele
-                                </Link>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {/* Takım vs Bireysel Karşılaştırma */}
-                  <div className="set-comparison mt-4 p-4 bg-light rounded">
-                    <h6 className="fw-6 mb-3">
-                      <i className="icon-calculator me-2"></i>
-                      Fiyat Karşılaştırması
-                    </h6>
-                    <div className="row">
-                      <div className="col-md-6">
-                        <div className="comparison-item">
-                          <h6 className="text-muted">Bireysel Alım Fiyatı:</h6>
-                          <div className="individual-total">
-                            {product.setItems.reduce((total, item) => {
-                              return total + (item.price ? item.price * item.quantity : 0);
-                            }, 0) > 0 && (
-                              <span className="price-individual text-decoration-line-through text-muted fs-5">
-                                ${product.setItems.reduce((total, item) => {
-                                  return total + (item.price ? item.price * item.quantity : 0);
-                                }, 0).toFixed(2)}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="col-md-6">
-                        <div className="comparison-item">
-                          <h6 className="text-primary">Takım Fiyatı:</h6>
-                          <div className="set-total">
-                            <span className="price-set text-primary fw-6 fs-4">
-                              ${product.price.toFixed(2)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    {product.setItems.reduce((total, item) => {
-                      return total + (item.price ? item.price * item.quantity : 0);
-                    }, 0) > 0 && (
-                      <div className="savings mt-3 text-center">
-                        <div className="savings-amount bg-success text-white px-3 py-2 rounded d-inline-block">
-                          <i className="icon-gift me-2"></i>
-                          Tasarruf: ${(product.setItems.reduce((total, item) => {
-                            return total + (item.price ? item.price * item.quantity : 0);
-                          }, 0) - product.price).toFixed(2)}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
       <StickyItem product={product} />

@@ -45,7 +45,7 @@ export const ProductCard = ({ product }) => {
             src={currentImage}
             alt="image-product"
             width={720}
-            height={1005}
+            height={540}
           />
           <Image
             className="lazyload img-hover"
@@ -55,7 +55,7 @@ export const ProductCard = ({ product }) => {
             src={product.imgHoverSrc ? product.imgHoverSrc : product.imgSrc}
             alt="image-product"
             width={720}
-            height={1005}
+            height={540}
           />
         </Link>
         {product.soldOut ? (

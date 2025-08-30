@@ -160,11 +160,11 @@ export default function SliderWithGalleryPopup({
   ];
 
   // Sabit görsel boyutları tanımlayalım - 4:3 oranında
-  const MAIN_IMAGE_WIDTH = 800;
-  const MAIN_IMAGE_HEIGHT = 600; // 4:3 oranı için (800 * 3/4 = 600)
-  const THUMB_IMAGE_WIDTH = 120;
-  const THUMB_IMAGE_HEIGHT = 90; // 4:3 oranı için (120 * 3/4 = 90)
-  
+  const MAIN_IMAGE_WIDTH = 720;
+  const MAIN_IMAGE_HEIGHT = 540; // 4:3 oranı için (720 * 3/4 = 540)
+  const THUMB_IMAGE_WIDTH = 80;
+  const THUMB_IMAGE_HEIGHT = 75; // 4:3 oranı için (100 * 3/4 = 75)
+
   // Convert propImages to the expected format with id and dataValue
   const processedPropImages = propImages && propImages.length > 0 
     ? propImages.map((img, index) => {

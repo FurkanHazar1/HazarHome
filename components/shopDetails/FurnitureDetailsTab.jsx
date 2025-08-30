@@ -233,6 +233,36 @@ export default function FurnitureDetailsTab({ product }) {
                           </tr>
                         )}
                         
+                        {/* Detaylı Özellikler - Veritabanından */}
+                        {((product.properties && product.properties.length > 0) || 
+                          (product.propertiesByType && Object.keys(product.propertiesByType).length > 0)) && (
+                          <>
+                            {/* Eğer properties array varsa onu kullan */}
+                            {product.properties && product.properties.length > 0 ? (
+                              product.properties.map((property, index) => (
+                                <tr key={`property-${property.name || property.propertyName}-${index}`} className="tf-attr-pa-property">
+                                  <th className="tf-attr-label">{property.name || property.propertyName}</th>
+                                  <td className="tf-attr-value">
+                                    <p>{property.value || property.propertyValue}</p>
+                                  </td>
+                                </tr>
+                              ))
+                            ) : (
+                              /* Eğer propertiesByType varsa onu kullan */
+                              product.propertiesByType && Object.entries(product.propertiesByType).map(([type, properties]) => 
+                                properties.map((property, index) => (
+                                  <tr key={`${type}-${property.propertyName}-${index}`} className="tf-attr-pa-property">
+                                    <th className="tf-attr-label">{property.propertyName}</th>
+                                    <td className="tf-attr-value">
+                                      <p>{property.propertyValue}</p>
+                                    </td>
+                                  </tr>
+                                ))
+                              )
+                            )}
+                          </>
+                        )}
+                        
                         {/* Detaylı Özellikler */}
                         {product.properties && product.properties.length > 0 && (
                           product.properties.map((property, index) => (

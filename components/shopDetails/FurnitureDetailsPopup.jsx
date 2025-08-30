@@ -41,7 +41,7 @@ export default function FurnitureDetailsPopup({ product }) {
         <div className="container">
           <div className="row">
             <div className="col-md-6">
-              <div className="tf-product-media-wrap sticky-top">
+              <div className="tf-product-media-wrap">
                 <div className="thumbs-slider">
                   <SliderWithGalleryPopup
                     handleColor={handleColor}
@@ -60,15 +60,7 @@ export default function FurnitureDetailsPopup({ product }) {
                     <h5>{product.title}</h5>
                   </div>
                   
-                  <div className="tf-product-info-badges">
-                    <div className="badges">Best seller</div>
-                    <div className="product-status-content">
-                      <i className="icon-lightning" />
-                      <p className="fw-6">
-                        Selling fast! 56 people have this in their carts.
-                      </p>
-                    </div>
-                  </div>
+                
                   
                   <div className="tf-product-info-price">
                     <div className="price-on-sale">
@@ -90,21 +82,6 @@ export default function FurnitureDetailsPopup({ product }) {
                   {product.description && (
                     <div className="tf-product-info-description">
                       <p className="fw-6 text_black-2">{product.description}</p>
-                    </div>
-                  )}
-
-                  {/* Özellikler */}
-                  {product.properties && product.properties.length > 0 && (
-                    <div className="tf-product-info-properties">
-                      <h6 className="fw-6 mb-3">Ürün Özellikleri</h6>
-                      <div className="properties-list">
-                        {product.properties.map((property, index) => (
-                          <div key={index} className="property-item d-flex justify-content-between mb-2">
-                            <span className="property-name fw-6">{property.name}:</span>
-                            <span className="property-value text_black-2">{property.value}</span>
-                          </div>
-                        ))}
-                      </div>
                     </div>
                   )}
 
@@ -174,6 +151,43 @@ export default function FurnitureDetailsPopup({ product }) {
                     </div>
                   )}
 
+                  {/* Özellikler */}
+                  {((product.properties && product.properties.length > 0) || 
+                    (product.propertiesByType && Object.keys(product.propertiesByType).length > 0)) && (
+                    <div className="tf-product-info-properties mb-3">
+                      <h6 className="fw-6 mb-2">Ürün Özellikleri</h6>
+                      <div className="properties-list">
+                        {/* Eğer properties array varsa onu kullan */}
+                        {product.properties && product.properties.length > 0 ? (
+                          <div className="row">
+                            {product.properties.map((property, index) => (
+                              <div key={`property-${property.name || property.propertyName}-${index}`} className="col-6 col-md-4 mb-2">
+                                <div className="property-item">
+                                  <span className="property-name small text-muted">{property.name || property.propertyName}</span>
+                                  <div className="property-value fw-6 text-dark">{property.value || property.propertyValue}</div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          /* Eğer propertiesByType varsa onu kullan */
+                          <div className="row">
+                            {product.propertiesByType && Object.entries(product.propertiesByType).map(([type, properties]) => 
+                              properties.map((property, index) => (
+                                <div key={`${type}-${property.propertyName}-${index}`} className="col-6 col-md-4 mb-2">
+                                  <div className="property-item">
+                                    <span className="property-name small text-muted">{property.propertyName}</span>
+                                    <div className="property-value fw-6 text-dark">{property.propertyValue}</div>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Miktar ve Satın Al */}
                   <div className="tf-product-info-quantity">
                     <div className="quantity-title fw-6">Miktar</div>
@@ -226,35 +240,7 @@ export default function FurnitureDetailsPopup({ product }) {
                     </form>
                   </div>
 
-                  {/* Ödeme Bilgileri */}
-                  <div className="tf-product-info-payment">
-                    <div className="payment-methods">
-                      <div className="payment-item">
-                        <i className="icon-truck" />
-                        <span>Ücretsiz Kargo</span>
-                      </div>
-                      <div className="payment-item">
-                        <i className="icon-return" />
-                        <span>30 Gün İade Garantisi</span>
-                      </div>
-                      <div className="payment-item">
-                        <i className="icon-shield" />
-                        <span>Güvenli Ödeme</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Marka */}
-                  {product.brand && (
-                    <div className="tf-product-info-extra-link">
-                      <a href="#" className="tf-product-extra-icon">
-                        <div className="icon">
-                          <i className="icon-tags" />
-                        </div>
-                        <div className="text fw-6">Marka: {product.brand}</div>
-                      </a>
-                    </div>
-                  )}
+                 
                 </div>
               </div>
             </div>
