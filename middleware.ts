@@ -76,6 +76,7 @@ function isPublicApiRoute(pathname: string): boolean {
     '/api/images/serve',   // Public image serving
     '/api/test-db',        // Database test route
     '/api/products',       // Products API - public for testing
+    '/api/search',         // Search API - public for search functionality
   ]
   
   return publicRoutes.some(route => pathname.startsWith(route))
