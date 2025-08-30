@@ -97,7 +97,7 @@ export default function Products() {
             pagination={{ clickable: true, el: ".spd307" }}
           >
             {products.map((product, i) => (
-              <SwiperSlide key={product.id || i} className="swiper-slide">
+              <SwiperSlide key={`${product.type}-${product.id}-${i}`} className="swiper-slide">
                 <ProductCard product={product} />
               </SwiperSlide>
             ))}

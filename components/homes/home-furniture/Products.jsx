@@ -1,12 +1,71 @@
 "use client";
 
-import ProductCard8 from "@/components/shopCards/ProductCard8";
-import { products9 } from "@/data/products";
-import React from "react";
+import { useState, useEffect } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
+import { ProductCard } from "@/components/shopCards/ProductCard";
 import Link from "next/link";
 import { Navigation, Pagination } from "swiper/modules";
+
+// API'den rastgele ürünleri çek
+async function fetchRandomProducts() {
+  try {
+    const response = await fetch('/api/products?random=true&limit=8&active=true&includeDetails=true');
+    if (!response.ok) {
+      console.error('API response not OK:', response.status);
+      return [];
+    }
+    const result = await response.json();
+    return result.success ? result.data : [];
+  } catch (error) {
+    console.error('Error fetching random products:', error);
+    return [];
+  }
+}
+
 export default function Products() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadProducts() {
+      setLoading(true);
+      const randomProducts = await fetchRandomProducts();
+      setProducts(randomProducts);
+      setLoading(false);
+    }
+
+    loadProducts();
+  }, []);
+  if (loading) {
+    return (
+      <section className="flat-spacing-12 has-line-bottom">
+        <div className="container">
+          <div className="flat-title wow fadeInUp" data-wow-delay="0s">
+            <span className="title">Trending now</span>
+          </div>
+          <div className="text-center py-5">
+            <p>Ürünler yükleniyor...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (products.length === 0) {
+    return (
+      <section className="flat-spacing-12 has-line-bottom">
+        <div className="container">
+          <div className="flat-title wow fadeInUp" data-wow-delay="0s">
+            <span className="title">Trending now</span>
+          </div>
+          <div className="text-center py-5">
+            <p>Şu anda gösterilecek ürün bulunmuyor.</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="flat-spacing-12 has-line-bottom">
       <div className="container">
@@ -53,9 +112,9 @@ export default function Products() {
             }}
             pagination={{ clickable: true, el: ".spd166" }}
           >
-            {products9.map((product, index) => (
-              <SwiperSlide className="swiper-slide" key={index}>
-                <ProductCard8 product={product} />
+            {products.map((product, index) => (
+              <SwiperSlide className="swiper-slide" key={`${product.type}-${product.id}-${index}`}>
+                <ProductCard product={product} />
               </SwiperSlide>
             ))}
           </Swiper>

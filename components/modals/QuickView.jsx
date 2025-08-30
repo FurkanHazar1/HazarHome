@@ -7,7 +7,6 @@ import Link from "next/link";
 import { Navigation } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import Quantity from "../shopDetails/Quantity";
-import { colors, sizeOptions } from "@/data/singleProductOptions";
 import React, { useState } from "react";
 
 export default function QuickView() {
@@ -20,8 +19,25 @@ export default function QuickView() {
     addToCompareItem,
     isAddedtoCompareItem,
   } = useContextElement();
-  const [currentColor, setCurrentColor] = useState(colors[0]);
-  const [currentSize, setCurrentSize] = useState(sizeOptions[0]);
+  const [currentColor, setCurrentColor] = useState(null);
+  const [currentSize, setCurrentSize] = useState(null);
+
+  // QuickViewItem değiştiğinde default değerleri ayarla
+  React.useEffect(() => {
+    if (quickViewItem) {
+      if (quickViewItem.colors && quickViewItem.colors.length > 0) {
+        setCurrentColor(quickViewItem.colors[0]);
+      } else {
+        setCurrentColor(null);
+      }
+      
+      if (quickViewItem.sizes && quickViewItem.sizes.length > 0) {
+        setCurrentSize(quickViewItem.sizes[0]);
+      } else {
+        setCurrentSize(null);
+      }
+    }
+  }, [quickViewItem]);
 
   const openModalSizeChoice = () => {
     const bootstrap = require("bootstrap"); // dynamically import bootstrap
@@ -65,28 +81,47 @@ export default function QuickView() {
                   }}
                   className="swiper tf-single-slide"
                 >
-                  {[
-                    quickViewItem.isLookBookProduct
-                      ? "/images/products/orange-1.jpg"
-                      : quickViewItem.imgSrc,
-                    quickViewItem.isLookBookProduct
-                      ? "/images/products/pink-1.jpg"
-                      : quickViewItem.imgHoverSrc
-                      ? quickViewItem.imgHoverSrc
-                      : quickViewItem.imgSrc,
-                  ].map((product, index) => (
-                    <SwiperSlide className="swiper-slide" key={index}>
-                      <div className="item">
-                        <Image
-                          alt={""}
-                          src={product}
-                          width={720}
-                          height={1045}
-                          style={{ objectFit: "contain" }}
-                        />
-                      </div>
-                    </SwiperSlide>
-                  ))}
+                  {(() => {
+                    const images = [];
+                    
+                    // Ana ürün resmi
+                    if (quickViewItem.imgSrc) {
+                      images.push(quickViewItem.imgSrc);
+                    }
+                    
+                    // Hover resmi (eğer farklıysa)
+                    if (quickViewItem.imgHoverSrc && quickViewItem.imgHoverSrc !== quickViewItem.imgSrc) {
+                      images.push(quickViewItem.imgHoverSrc);
+                    }
+                    
+                    // Renk resimleri
+                    if (quickViewItem.colors && quickViewItem.colors.length > 0) {
+                      quickViewItem.colors.forEach(color => {
+                        if (color.imgSrc && !images.includes(color.imgSrc)) {
+                          images.push(color.imgSrc);
+                        }
+                      });
+                    }
+                    
+                    // Eğer hiç resim yoksa default
+                    if (images.length === 0) {
+                      images.push('/images/products/default.jpg');
+                    }
+                    
+                    return images.map((imageSrc, index) => (
+                      <SwiperSlide className="swiper-slide" key={index}>
+                        <div className="item">
+                          <Image
+                            alt={quickViewItem.title || "Product Image"}
+                            src={imageSrc}
+                            width={720}
+                            height={1045}
+                            style={{ objectFit: "contain" }}
+                          />
+                        </div>
+                      </SwiperSlide>
+                    ));
+                  })()}
 
                   <div className="swiper-button-next button-style-arrow single-slide-prev snbqvp" />
                   <div className="swiper-button-prev button-style-arrow single-slide-next snbqvn" />
@@ -99,7 +134,11 @@ export default function QuickView() {
                   <h5>
                     <Link
                       className="link"
-                      href={`/product-detail/${quickViewItem.id}`}
+                      href={
+                        quickViewItem.type === "furniture_set" || quickViewItem.furnitureType === "Takım"
+                          ? `/product-detail-furniture-set/${quickViewItem.id}` 
+                          : `/product-detail-furniture/${quickViewItem.id}`
+                      }
                     >
                       {quickViewItem.title}
                     </Link>
@@ -119,81 +158,93 @@ export default function QuickView() {
                 </div>
                 <div className="tf-product-description">
                   <p>
-                    Nunc arcu faucibus a et lorem eu a mauris adipiscing conubia
-                    ac aptent ligula facilisis a auctor habitant parturient a
-                    a.Interdum fermentum.
+                    {quickViewItem.description || "Ürün açıklaması mevcut değil."}
                   </p>
                 </div>
                 <div className="tf-product-info-variant-picker">
-                  <div className="variant-picker-item">
-                    <div className="variant-picker-label">
-                      Color:
-                      <span className="fw-6 variant-picker-label-value">
-                        {currentColor.value}
-                      </span>
-                    </div>
-                    <form className="variant-picker-values">
-                      {colors.map((color) => (
-                        <React.Fragment key={color.id}>
-                          <input
-                            id={color.id}
-                            type="radio"
-                            name="color1"
-                            readOnly
-                            checked={currentColor == color}
-                          />
-                          <label
-                            onClick={() => setCurrentColor(color)}
-                            className="hover-tooltip radius-60"
-                            htmlFor={color.id}
-                            data-value={color.value}
-                          >
-                            <span
-                              className={`btn-checkbox ${color.className}`}
-                            />
-                            <span className="tooltip">{color.value}</span>
-                          </label>
-                        </React.Fragment>
-                      ))}
-                    </form>
-                  </div>
-                  <div className="variant-picker-item">
-                    <div className="d-flex justify-content-between align-items-center">
+                  {/* Renk Seçimi */}
+                  {quickViewItem.colors && quickViewItem.colors.length > 0 && (
+                    <div className="variant-picker-item">
                       <div className="variant-picker-label">
-                        Size:
+                        Renk:
                         <span className="fw-6 variant-picker-label-value">
-                          {currentSize.value}
+                          {currentColor?.name || currentColor?.value || ''}
                         </span>
                       </div>
-                      <div
-                        className="find-size btn-choose-size fw-6"
-                        onClick={() => openModalSizeChoice()}
-                      >
-                        Find your size
-                      </div>
+                      <form className="variant-picker-values">
+                        {quickViewItem.colors.map((color, index) => (
+                          <React.Fragment key={color.id || index}>
+                            <input
+                              id={`qv-color-${color.id || index}`}
+                              type="radio"
+                              name="color1"
+                              readOnly
+                              checked={currentColor?.id === color.id || currentColor === color}
+                            />
+                            <label
+                              onClick={() => setCurrentColor(color)}
+                              className="hover-tooltip radius-60"
+                              htmlFor={`qv-color-${color.id || index}`}
+                              data-value={color.name || color.value}
+                              style={{
+                                backgroundColor: color.hexCode || color.value,
+                                width: '32px',
+                                height: '32px',
+                                borderRadius: '50%',
+                                border: '2px solid #ddd',
+                                display: 'inline-block',
+                                margin: '0 5px',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              <span className="tooltip">{color.name || color.value}</span>
+                            </label>
+                          </React.Fragment>
+                        ))}
+                      </form>
                     </div>
-                    <form className="variant-picker-values">
-                      {sizeOptions.map((size) => (
-                        <React.Fragment key={size.id}>
-                          <input
-                            type="radio"
-                            name="size1"
-                            id={size.id}
-                            readOnly
-                            checked={currentSize == size}
-                          />
-                          <label
-                            onClick={() => setCurrentSize(size)}
-                            className="style-text"
-                            htmlFor={size.id}
-                            data-value={size.value}
-                          >
-                            <p>{size.value}</p>
-                          </label>
-                        </React.Fragment>
-                      ))}
-                    </form>
-                  </div>
+                  )}
+                  
+                  {/* Boyut Seçimi */}
+                  {quickViewItem.sizes && quickViewItem.sizes.length > 0 && (
+                    <div className="variant-picker-item">
+                      <div className="d-flex justify-content-between align-items-center">
+                        <div className="variant-picker-label">
+                          Boyut:
+                          <span className="fw-6 variant-picker-label-value">
+                            {currentSize?.value || currentSize?.name || ''}
+                          </span>
+                        </div>
+                        <div
+                          className="find-size btn-choose-size fw-6"
+                          onClick={() => openModalSizeChoice()}
+                        >
+                          Boyut bul
+                        </div>
+                      </div>
+                      <form className="variant-picker-values">
+                        {quickViewItem.sizes.map((size, index) => (
+                          <React.Fragment key={size.id || index}>
+                            <input
+                              type="radio"
+                              name="size1"
+                              id={`qv-size-${size.id || index}`}
+                              readOnly
+                              checked={currentSize?.id === size.id || currentSize === size}
+                            />
+                            <label
+                              onClick={() => setCurrentSize(size)}
+                              className="style-text"
+                              htmlFor={`qv-size-${size.id || index}`}
+                              data-value={size.value || size.name}
+                            >
+                              <p>{size.value || size.name}</p>
+                            </label>
+                          </React.Fragment>
+                        ))}
+                      </form>
+                    </div>
+                  )}
                 </div>
                 <div className="tf-product-info-quantity">
                   <div className="quantity-title fw-6">Quantity</div>
@@ -269,10 +320,14 @@ export default function QuickView() {
                 </div>
                 <div>
                   <Link
-                    href={`/product-detail/${quickViewItem.id}`}
+                    href={
+                      quickViewItem.type === "furniture_set" || quickViewItem.furnitureType === "Takım"
+                        ? `/product-detail-furniture-set/${quickViewItem.id}` 
+                        : `/product-detail-furniture/${quickViewItem.id}`
+                    }
                     className="tf-btn fw-6 btn-line"
                   >
-                    View full details
+                    Tüm detayları görüntüle
                     <i className="icon icon-arrow1-top-left" />
                   </Link>
                 </div>

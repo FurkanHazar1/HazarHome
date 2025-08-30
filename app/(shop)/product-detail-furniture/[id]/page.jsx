@@ -20,7 +20,8 @@ import ProductSinglePrevNext from "@/components/common/ProductSinglePrevNext";
 // API'den ürün verisini çek
 async function getProduct(id) {
   try {
-    const response = await fetch(`/api/products/${id}?type=furniture&includeInactive=false&groupImagesByType=true`, {
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const response = await fetch(`${baseUrl}/api/products/${id}?type=furniture&includeInactive=false&groupImagesByType=true`, {
       cache: 'no-store'
     });
     

@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useContextElement } from "@/context/Context";
 import CountdownComponent from "../common/Countdown";
+import { getColorHex } from "@/utils/colorUtils";
+
 export const ProductCard = ({ product }) => {
   const [currentImage, setCurrentImage] = useState(product.imgSrc);
   const { setQuickViewItem } = useContextElement();
@@ -14,12 +16,13 @@ export const ProductCard = ({ product }) => {
     addToCompareItem,
     isAddedtoCompareItem,
   } = useContextElement();
+
   useEffect(() => {
     setCurrentImage(product.imgSrc);
   }, [product]);
 
   return (
-    <div className="card-product fl-item" key={product.id}>
+    <div className="card-product fl-item">
       <div className="card-product-wrapper">
         <Link 
           href={
@@ -120,7 +123,7 @@ export const ProductCard = ({ product }) => {
             {product.sizes && (
               <div className="size-list">
                 {product.sizes.map((size, index) => (
-                  <span key={size.id || size.value || size || index}>
+                  <span key={`size-${size.id || size.value || size}-${index}`}>
                     {size.value || size}
                   </span>
                 ))}
@@ -145,14 +148,24 @@ export const ProductCard = ({ product }) => {
           <ul className="list-color-product">
             {product.colors.map((color, i) => (
               <li
-                className={`list-color-item color-swatch ${
-                  currentImage == color.imgSrc ? "active" : ""
-                } `}
+                className={`list-color-item color-swatch`}
                 key={color.id || color.value || i}
                 onMouseOver={() => setCurrentImage(color.imgSrc)}
+                style={{
+                  border: 'none',
+                  outline: 'none'
+                }}
               >
                 <span className="tooltip">{color.name}</span>
-                <span className={`swatch-value ${color.colorClass}`} />
+                <span 
+                  className="swatch-value" 
+                  style={{ 
+                    backgroundColor: getColorHex(color),
+                    border: 'none',
+                    borderRadius: '50%',
+                    transition: 'all 0.2s ease'
+                  }}
+                />
                 <Image
                   className="lazyload"
                   data-src={color.imgSrc}

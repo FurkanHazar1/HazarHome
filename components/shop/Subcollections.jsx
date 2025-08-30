@@ -40,6 +40,13 @@ export default function Subcollections({ categories = null }) {
                     <Link
                       href={slide.href || `/shop-default`}
                       className="collection-image img-style"
+                      style={{ 
+                        display: 'block',
+                        width: '100%',
+                        height: '180px',
+                        overflow: 'hidden',
+                        borderRadius: '8px'
+                      }}
                     >
                       <Image
                         className="lazyload"
@@ -48,6 +55,12 @@ export default function Subcollections({ categories = null }) {
                         src={slide.src || slide.imgSrc}
                         width={600}
                         height={721}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          objectPosition: 'center'
+                        }}
                       />
                     </Link>
                     <div className="collection-content">

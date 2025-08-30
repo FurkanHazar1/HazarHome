@@ -8,6 +8,7 @@ import Quantity from "./Quantity";
 import SliderWithGalleryPopup from "./sliders/SliderWithGalleryPopup";
 import { useContextElement } from "@/context/Context";
 import Link from "next/link";
+import { getColorHex } from "@/utils/colorUtils";
 
 export default function FurnitureSetDetailsPopup({ product }) {
   const [currentColor, setCurrentColor] = useState(product.colors?.[0] || {});
@@ -214,7 +215,10 @@ export default function FurnitureSetDetailsPopup({ product }) {
                               htmlFor={`values-${color.value}`}
                               data-value={color.name}
                             >
-                              <span className={`btn-checkbox ${color.colorClass}`} />
+                              <span 
+                                className="btn-checkbox" 
+                                style={{ backgroundColor: getColorHex(color) }}
+                              />
                               <span className="tooltip">{color.name}</span>
                             </label>
                           ))}

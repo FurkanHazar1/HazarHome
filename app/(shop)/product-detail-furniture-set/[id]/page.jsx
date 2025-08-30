@@ -20,8 +20,10 @@ import ProductSinglePrevNext from "@/components/common/ProductSinglePrevNext";
 // API'den ürün verisini çek
 async function getProduct(id) {
   try {
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    
     // Önce furniture_set olarak dene
-    let response = await fetch(`/api/products/${id}?type=furniture_set&includeInactive=false&groupImagesByType=true`, {
+    let response = await fetch(`${baseUrl}/api/products/${id}?type=furniture_set&includeInactive=false&groupImagesByType=true`, {
       cache: 'no-store'
     });
     
@@ -33,7 +35,7 @@ async function getProduct(id) {
     }
     
     // Furniture_set bulunamazsa, furniture olarak dene (özellikle "Takım" türündeki)
-    response = await fetch(`/api/products/${id}?type=furniture&includeInactive=false&groupImagesByType=true`, {
+    response = await fetch(`${baseUrl}/api/products/${id}?type=furniture&includeInactive=false&groupImagesByType=true`, {
       cache: 'no-store'
     });
     
