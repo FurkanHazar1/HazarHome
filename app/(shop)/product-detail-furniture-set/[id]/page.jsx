@@ -21,7 +21,7 @@ import ProductSinglePrevNext from "@/components/common/ProductSinglePrevNext";
 async function getProduct(id) {
   try {
     // Önce furniture_set olarak dene
-    let response = await fetch(`http://localhost:3000/api/products/${id}?type=furniture_set&includeInactive=false&groupImagesByType=true`, {
+    let response = await fetch(`/api/products/${id}?type=furniture_set&includeInactive=false&groupImagesByType=true`, {
       cache: 'no-store'
     });
     
@@ -33,7 +33,7 @@ async function getProduct(id) {
     }
     
     // Furniture_set bulunamazsa, furniture olarak dene (özellikle "Takım" türündeki)
-    response = await fetch(`http://localhost:3000/api/products/${id}?type=furniture&includeInactive=false&groupImagesByType=true`, {
+    response = await fetch(`/api/products/${id}?type=furniture&includeInactive=false&groupImagesByType=true`, {
       cache: 'no-store'
     });
     

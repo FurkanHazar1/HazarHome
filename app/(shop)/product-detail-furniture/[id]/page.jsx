@@ -20,16 +20,18 @@ import ProductSinglePrevNext from "@/components/common/ProductSinglePrevNext";
 // API'den ürün verisini çek
 async function getProduct(id) {
   try {
-    const response = await fetch(`http://localhost:3000/api/products/${id}?type=furniture&includeInactive=false&groupImagesByType=true`, {
+    const response = await fetch(`/api/products/${id}?type=furniture&includeInactive=false&groupImagesByType=true`, {
       cache: 'no-store'
     });
     
-    if (!response.ok) {
-      return null;
+    if (response.ok) {
+      const result = await response.json();
+      if (result.success && result.data) {
+        return result.data;
+      }
     }
     
-    const result = await response.json();
-    return result.success ? result.data : null;
+    return null;
   } catch (error) {
     console.error('Error fetching product:', error);
     return null;

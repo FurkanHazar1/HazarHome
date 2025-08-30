@@ -259,6 +259,7 @@ export const sliderData2 = [
     heading: "Modern Oturma Odası\nTakımları.",
     description: "Kaçırılmayacak Fırsatlar",
     backgroundColor: "bg_light-grey-3",
+    src: "/"
   },
   {
     imgSrc: "/images/slider/yemek_odasi_slider.jpg",
@@ -266,6 +267,7 @@ export const sliderData2 = [
     heading: "Lüx Yemek Odası\nTakımları",
     description: "Kaçırılmayacak Fırsatlar",
     backgroundColor: "bg_light-blue-1",
+    src: "/"
   },
   {
     imgSrc: "/images/slider/yatak_odasi_slider.jpg",
@@ -273,6 +275,7 @@ export const sliderData2 = [
     heading: "Konforlu Yatak Odası\nTakımları",
     description: "Kaçırılmayacak Fırsatlar",
     backgroundColor: "bg_light-purple",
+    src: "/"
   },
 ];
 

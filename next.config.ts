@@ -24,6 +24,27 @@ const nextConfig: NextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     formats: ['image/webp', 'image/avif'],
   },
+  
+  // Webpack Configuration
+  webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      fs: false,
+      net: false,
+      tls: false,
+      crypto: require.resolve('crypto-browserify'),
+      stream: require.resolve('stream-browserify'),
+      url: require.resolve('url'),
+      zlib: require.resolve('browserify-zlib'),
+      http: require.resolve('stream-http'),
+      https: require.resolve('https-browserify'),
+      assert: require.resolve('assert'),
+      os: require.resolve('os-browserify'),
+      path: require.resolve('path-browserify'),
+    };
+    return config;
+  },
+  
   async rewrites() {
     return [
       {
@@ -32,10 +53,12 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  
   // Production optimizations
   poweredByHeader: false,
   generateEtags: false,
   compress: true,
+  
   // Security headers
   async headers() {
     return [

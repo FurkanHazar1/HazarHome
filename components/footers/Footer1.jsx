@@ -95,12 +95,12 @@ export default function Footer1({ bgColor = "" }) {
                     </li>
                     <li>
                       <p>
-                        Email: <a href="#">info@fashionshop.com</a>
+                        Email: <a href="#">info@hazarhome.com</a>
                       </p>
                     </li>
                     <li>
                       <p>
-                        Phone: <a href="#">(212) 555-1234</a>
+                        Phone: <a href="#">+90 533 519 13 29</a>
                       </p>
                     </li>
                   </ul>

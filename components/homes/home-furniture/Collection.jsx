@@ -7,25 +7,26 @@ export default function Collection() {
       <div className="container">
         <div className="masonry-layout-v4 wow fadeInUp" data-wow-delay="0s">
           <div className="item-1 collection-item-v2 hover-img">
-            <Link href={`/shop-collection-sub`} className="collection-inner">
+            <Link href={`/oturma-odasi`} className="collection-inner">
               <div className="collection-image img-style">
                 <Image
                   className="lazyload"
-                  data-src="/images/collections/009furniture-banner-01.jpg"
+                  data-src="/images/menu/koleksiyonlar/oturma_odasi.png"
                   alt="collection-img"
-                  src="/images/collections/009furniture-banner-01.jpg"
-                  width={1058}
-                  height={1194}
+                  src="/images/menu/koleksiyonlar/oturma_odasi.png"
+                  width={500}
+                  height={600}
+                  style={{ objectFit: 'cover' }}
                 />
               </div>
               <div className="collection-content">
                 <div className="top wow fadeInUp" data-wow-delay="0s">
-                  <h5 className="heading text-white">Spring Collection</h5>
+                  <h5 className="heading text-white">Oturma Odası</h5>
                   <p className="subheading text-white">
-                    Every piece is made to last beyond the season
+                    Oturma Odası Takımları
                   </p>
                   <button className="tf-btn btn-line btn-line-light collection-other-link fw-6">
-                    <span>Shop Collection</span>
+                    <span>Oturma Odalarına Göz At</span>
                     <i className="icon icon-arrow1-top-left" />
                   </button>
                 </div>
@@ -33,22 +34,23 @@ export default function Collection() {
             </Link>
           </div>
           <div className="item-2 collection-item-v2 hover-img">
-            <Link href={`/shop-collection-sub`} className="collection-inner">
+            <Link href={`/yatak-odasi`} className="collection-inner">
               <div className="collection-image img-style">
                 <Image
                   className="lazyload"
-                  data-src="/images/collections/009furniture-banner-02.jpg"
+                  data-src="/images/menu/koleksiyonlar/yatak_odasi.png"
                   alt="collection-img"
-                  src="/images/collections/009furniture-banner-02.jpg"
-                  width={1056}
-                  height={575}
+                  src="/images/menu/koleksiyonlar/yatak_odasi.png"
+                  width={500}
+                  height={300}
+                  style={{ objectFit: 'cover' }}
                 />
               </div>
               <div className="collection-content justify-content-end">
                 <div className="bottom wow fadeInUp" data-wow-delay="0s">
-                  <h5 className="heading text-white">Up to 30% off</h5>
+                  <h5 className="heading text-white">Yatak Odası Takımları</h5>
                   <button className="tf-btn btn-line btn-line-light collection-other-link fw-6">
-                    <span>Shop Collection</span>
+                    <span>Yatak Odası Takımlarına Göz At</span>
                     <i className="icon icon-arrow1-top-left" />
                   </button>
                 </div>
@@ -56,22 +58,23 @@ export default function Collection() {
             </Link>
           </div>
           <div className="item-3 collection-item-v2 hover-img">
-            <Link href={`/shop-collection-sub`} className="collection-inner">
+            <Link href={`/yemek-odasi`} className="collection-inner">
               <div className="collection-image img-style">
                 <Image
                   className="lazyload"
-                  data-src="/images/collections/009furniture-banner-03.jpg"
+                  data-src="/images/menu/koleksiyonlar/yemek_odasi.png"
                   alt="collection-img"
-                  src="/images/collections/009furniture-banner-03.jpg"
-                  width={1056}
-                  height={575}
+                  src="/images/menu/koleksiyonlar/yemek_odasi.png"
+                  width={500}
+                  height={300}
+                  style={{ objectFit: 'cover' }}
                 />
               </div>
               <div className="collection-content justify-content-end">
                 <div className="bottom wow fadeInUp" data-wow-delay="0s">
-                  <h5 className="heading text-white">Lighting Collection</h5>
+                  <h5 className="heading text-white">Yemek Odası Takımları</h5>
                   <button className="tf-btn btn-line btn-line-light collection-other-link fw-6">
-                    <span>Shop Collection</span>
+                    <span>Yemek Odalarına Göz At</span>
                     <i className="icon icon-arrow1-top-left" />
                   </button>
                 </div>

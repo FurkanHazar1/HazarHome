@@ -3,16 +3,30 @@ import Link from "next/link";
 import { sliderData2 } from "@/data/heroslides";
 import { Swiper, SwiperSlide } from "swiper/react";
 import Image from "next/image";
-import { Pagination } from "swiper/modules";
+import { Autoplay, EffectFade, Navigation } from "swiper/modules";
 export default function Hero() {
   return (
     <section className="tf-slideshow slideshow-effect slider-effect-fade style-padding position-relative">
-      <Swiper
-        dir="ltr"
-        modules={[Pagination]}
-        pagination={{ clickable: true, el: ".spd164" }}
-        className="swiper tf-sw-effect"
-      >
+      <div className="hover-sw-nav">
+        <Swiper
+          dir="ltr"
+          modules={[Autoplay, EffectFade, Navigation]}
+          effect="fade"
+          fadeEffect={{
+            crossFade: true
+          }}
+          speed={800}
+          navigation={{
+            prevEl: ".snbp-hero",
+            nextEl: ".snbn-hero",
+          }}
+          autoplay={{
+            delay: 4000,
+            disableOnInteraction: false,
+          }}
+          loop={true}
+          className="swiper tf-sw-effect"
+        >
         {sliderData2.map((slide, index) => (
           <SwiperSlide key={index}>
             <div className={`slider-effect wrap-slider `}>
@@ -32,7 +46,7 @@ export default function Hero() {
                           {slide.description}
                         </p>
                         <Link
-                          href={`/shop-collection-list`} // Direct link added here
+                          href={slide.src} // Direct link added here
                           className={`fade-item fade-item-${
                             index + 3
                           } tf-btn btn-light-icon animate-hover-btn btn-xl radius-3`}
@@ -46,7 +60,7 @@ export default function Hero() {
                 </div>
               </div>
               <div className="img-slider" style={{
-                height: '500px',
+                height: '600px',
                 overflow: 'hidden',
                 display: 'flex',
                 alignItems: 'center',
@@ -57,12 +71,12 @@ export default function Hero() {
                   data-src={slide.imgSrc}
                   alt={slide.altText}
                   src={slide.imgSrc}
-                  width={1890}
-                  height={1580}
+                  width={1000}
+                  height={600}
                   priority
                   style={{
-                    width: '100%',
-                    height: '100%',
+                    width: '1000px',
+                    height: '600px',
                     objectFit: 'cover',
                     objectPosition: 'center'
                   }}
@@ -72,10 +86,12 @@ export default function Hero() {
           </SwiperSlide>
         ))}
       </Swiper>
-      <div className="wrap-pagination">
-        <div className="container">
-          <div className="sw-dots sw-pagination-slider spd164" />
-        </div>
+      <div className="nav-sw nav-next-slider nav-next-collection box-icon w_46 round snbp-hero">
+        <span className="icon icon-arrow-left" />
+      </div>
+      <div className="nav-sw nav-prev-slider nav-prev-collection box-icon w_46 round snbn-hero">
+        <span className="icon icon-arrow-right" />
+      </div>
       </div>
     </section>
   );

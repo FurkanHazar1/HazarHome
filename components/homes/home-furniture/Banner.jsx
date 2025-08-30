@@ -5,23 +5,23 @@ export default function Banner() {
     <section
       className="banner-hero-collection-wrap banner-parallax"
       style={{
-        backgroundImage: "url(/images/slider/furniture-banner-collection.jpg)",
+        backgroundImage: "url('/images/menu/banner/image.png')",
       }}
     >
       <div className="box-content">
         <div className="container">
           <Link
-            href={`/shop-collection-sub`}
+            href={`/oturma-odasi`}
             className="card-box text-md-start text-center rounded-0"
           >
-            <p className="subheading">FUNCTIONAL AND STYLISH</p>
-            <h3 className="heading">Mid-Century Modern</h3>
+            <p className="subheading">Hepsi Bir Arada</p>
+            <h3 className="heading">Modern Ve Klasik</h3>
             <p className="text">
-              Find furniture that seamlessly combines functionality and style
+              Fonksiyonelliği ve şıklığı bir arada sunan mobilyaları keşfedin
             </p>
             <div className="wow fadeInUp" data-wow-delay="0s">
               <button className="tf-btn style-2 btn-fill animate-hover-btn">
-                <span>Shop Collection</span>
+                <span>Koleksiyonu İncele</span>
               </button>
             </div>
           </Link>

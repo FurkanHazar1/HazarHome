@@ -90,8 +90,13 @@ export default function Nav({ isArrow = true, textColor = "", Linkfs = "" }) {
                         data-src={item.src}
                         alt={item.alt}
                         src={item.src}
-                        width="300"
-                        height="329"
+                        width={300}
+                        height={329}
+                        style={{
+                          width: '200px',
+                          height: '150px',
+                          objectFit: 'cover'
+                        }}
                       />
                       {item.labels && (
                         <div className="demo-label">
@@ -141,8 +146,13 @@ export default function Nav({ isArrow = true, textColor = "", Linkfs = "" }) {
                         data-src={item.src}
                         alt={item.alt}
                         src={item.src}
-                        width="300"
-                        height="329"
+                        width={300}
+                        height={329}
+                        style={{
+                          width: '200px',
+                          height: '150px',
+                          objectFit: 'cover'
+                        }}
                       />
                       {item.labels && (
                         <div className="demo-label">
@@ -192,8 +202,13 @@ export default function Nav({ isArrow = true, textColor = "", Linkfs = "" }) {
                         data-src={item.src}
                         alt={item.alt}
                         src={item.src}
-                        width="300"
-                        height="329"
+                        width={300}
+                        height={329}
+                        style={{
+                          width: '200px',
+                          height: '150px',
+                          objectFit: 'cover'
+                        }}
                       />
                       {item.labels && (
                         <div className="demo-label">

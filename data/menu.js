@@ -11,15 +11,8 @@ export const oturmaOdasiCategories = [
     href: "/uclu-koltuklar",
     src: "/images/menu/oturma_odasi/uclu_koltuk.jpg",
     alt: "Three-Seater-Sofa",
-    name: "Üçlü Koltuklar",
+    name: "Koltuklar",
     labels: [{ text: "Hot" }],
-  },
-  {
-    href: "/ikili-koltuklar",
-    src: "/images/menu/oturma_odasi/ikili_koltuk.jpg",
-    alt: "Two-Seater-Sofa",
-    name: "İkili Koltuklar",
-    labels: [{ text: "Popular" }],
   },
   {
     href: "/kose-koltuklar",
@@ -32,7 +25,7 @@ export const oturmaOdasiCategories = [
     href: "/berjer-koltuklar",
     src: "/images/menu/oturma_odasi/berjer.jpg",
     alt: "Armchair",
-    name: "Berjer Koltuklar",
+    name: "Berjer/Tekli Koltuklar",
   },
   {
     href: "/tv-uniteleri",
@@ -104,12 +97,7 @@ export const yatakOdasiCategories = [
     alt: "Nightstand",
     name: "Komodinler",
   },
-  {
-    href: "/makyaj-masalari",
-    src: "/images/menu/yatak_odasi/makyaj_masasi.jpg",
-    alt: "Vanity-Table",
-    name: "Makyaj Masaları",
-  },
+
   {
     href: "/sifonyerler",
     src: "/images/menu/yatak_odasi/sifonyer.jpg",
@@ -146,7 +134,83 @@ export const mainCategories = [
   }
 ];
 
+export const subCategories = [
+  {
+    href: "/uclu-koltuklar",
+    src: "/images/menu/oturma_odasi/uclu_koltuk.jpg",
+    alt: "Three-Seater-Sofa",
+    name: "Koltuklar",
+    labels: [{ text: "Hot" }],
+  },
+  {
+    href: "/kose-koltuklar",
+    src: "/images/menu/oturma_odasi/kose_koltuk.jpg",
+    alt: "Corner-Sofa",
+    name: "Köşe Koltuklar",
+    labels: [{ text: "Popular" }],
+  },
+  {
+    href: "/berjer-koltuklar",
+    src: "/images/menu/oturma_odasi/berjer.jpg",
+    alt: "Armchair",
+    name: "Berjer/Tekli Koltuklar",
+  },
+  {
+    href: "/tv-uniteleri",
+    src: "/images/menu/oturma_odasi/tv_unitesi.jpg",
+    alt: "TV-Unit",
+    name: "TV Üniteleri",
+  },
+  {
+    href: "/sehpalar",
+    src: "/images/menu/oturma_odasi/sehpa.jpg",
+    alt: "Coffee-Table",
+    name: "Sehpalar",
+  },
+    {
+    href: "/yemek-masalari",
+    src: "/images/menu/yemek_odasi/yemek_masasi.jpg",
+    alt: "Dining-Table",
+    name: "Yemek Masaları",
+  },
+  {
+    href: "/yemek-sandalyeleri",
+    src: "/images/menu/yemek_odasi/yemek_sandalyesi.jpg",
+    alt: "Dining-Chair",
+    name: "Yemek Sandalyeleri",
+  },
+  {
+    href: "/konsol-vitrin",
+    src: "/images/menu/yemek_odasi/konsol_vitrin.jpg",
+    alt: "Console-Table",
+    name: "Konsol ve Vitrinler",
+  },
+    {
+    href: "/yataklar",
+    src: "/images/menu/yatak_odasi/yatak.jpg",
+    alt: "Bed",
+    name: "Yataklar",
+  },
+  {
+    href: "/gardıroplar",
+    src: "/images/menu/yatak_odasi/gardirop.jpg",
+    alt: "Wardrobe",
+    name: "Gardıroplar",
+  },
+  {
+    href: "/komodinler",
+    src: "/images/menu/yatak_odasi/komodin.jpg",
+    alt: "Nightstand",
+    name: "Komodinler",
+  },
 
+  {
+    href: "/sifonyerler",
+    src: "/images/menu/yatak_odasi/sifonyer.jpg",
+    alt: "Dresser",
+    name: "Şifonyerler",
+  },
+];
 
 export const productsPages = [
   {
