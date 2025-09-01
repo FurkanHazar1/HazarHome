@@ -248,7 +248,17 @@ export default function FurnitureSetDetailsPopup({ product }) {
                   <div className="tf-product-info-buy-button">
                     <form onSubmit={(e) => e.preventDefault()} className="">
                       <a
-                        onClick={() => addProductToCart(product.id, quantity)}
+                        onClick={() => {
+                          // Furniture Set için özel ID formatı kullan (fs_ prefix'i)
+                          const productToAdd = {
+                            id: `fs_${product.id}`, // Furniture Set prefix'i
+                            title: product.title,
+                            price: product.price,
+                            imgSrc: product.imgSrc || (product.images && product.images[0]) || '/images/default-product.jpg',
+                            type: 'furniture_set' // Tip bilgisi ekle
+                          };
+                          addProductToCart(productToAdd, quantity);
+                        }}
                         className="tf-btn btn-fill justify-content-center fw-6 flex-grow-1 animate-hover-btn"
                         style={{ 
                           fontSize: '14px',
@@ -262,12 +272,12 @@ export default function FurnitureSetDetailsPopup({ product }) {
                         <div className="tf-product-btn-wishlist btn-icon-action" style={{ transform: 'scale(0.9)' }}>
                           <i
                             className={`icon-heart ${
-                              isAddedtoWishlist(product.id) ? "added" : ""
+                              isAddedtoWishlist(`fs_${product.id}`) ? "added" : ""
                             }`}
-                            onClick={() => addToWishlist(product.id)}
+                            onClick={() => addToWishlist(`fs_${product.id}`)}
                           />
                           <span className="tooltip" style={{ fontSize: '11px' }}>
-                            {isAddedtoWishlist(product.id)
+                            {isAddedtoWishlist(`fs_${product.id}`)
                               ? "Already Wishlisted"
                               : "Add to Wishlist"}
                           </span>
@@ -275,12 +285,12 @@ export default function FurnitureSetDetailsPopup({ product }) {
                         <div className="tf-product-btn-wishlist btn-icon-action" style={{ transform: 'scale(0.9)' }}>
                           <i
                             className={`icon-compare ${
-                              isAddedtoCompareItem(product.id) ? "added" : ""
+                              isAddedtoCompareItem(`fs_${product.id}`) ? "added" : ""
                             }`}
-                            onClick={() => addToCompareItem(product.id)}
+                            onClick={() => addToCompareItem(`fs_${product.id}`)}
                           />
                           <span className="tooltip" style={{ fontSize: '11px' }}>
-                            {isAddedtoCompareItem(product.id)
+                            {isAddedtoCompareItem(`fs_${product.id}`)
                               ? "Already Compared"
                               : "Add to Compare"}
                           </span>
@@ -289,7 +299,17 @@ export default function FurnitureSetDetailsPopup({ product }) {
                           href="#shoppingCart"
                           data-bs-toggle="modal"
                           className="tf-product-btn-wishlist box-icon bg_white compare btn-icon-action"
-                          onClick={() => addProductToCart(product.id, quantity)}
+                          onClick={() => {
+                            // Furniture Set için özel ID formatı kullan (fs_ prefix'i)
+                            const productToAdd = {
+                              id: `fs_${product.id}`, // Furniture Set prefix'i
+                              title: product.title,
+                              price: product.price,
+                              imgSrc: product.imgSrc || (product.images && product.images[0]) || '/images/default-product.jpg',
+                              type: 'furniture_set' // Tip bilgisi ekle
+                            };
+                            addProductToCart(productToAdd, quantity);
+                          }}
                           style={{ transform: 'scale(0.9)' }}
                         >
                           <span className="icon icon-bag" />
@@ -298,9 +318,6 @@ export default function FurnitureSetDetailsPopup({ product }) {
                       </div>
                     </form>
                   </div>
-
-
-                 
                 </div>
               </div>
             </div>

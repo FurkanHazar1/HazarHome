@@ -60,6 +60,29 @@ export default function QuickView() {
     }
   };
 
+  // QuickViewItem yoksa hiçbir şey render etme
+  if (!quickViewItem) {
+    return (
+      <div className="modal fade modalDemo" id="quick_view">
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content">
+            <div className="header">
+              <span
+                className="icon-close icon-close-popup"
+                data-bs-dismiss="modal"
+              />
+            </div>
+            <div className="wrap">
+              <div className="text-center p-4">
+                <p>No product selected for quick view.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="modal fade modalDemo" id="quick_view">
       <div className="modal-dialog modal-dialog-centered">

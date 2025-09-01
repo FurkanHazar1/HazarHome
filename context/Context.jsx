@@ -1,5 +1,4 @@
 "use client";
-import { allProducts } from "@/data/products";
 import { openCartModal } from "@/utlis/openCartModal";
 // import { openCart } from "@/utlis/toggleCart";
 import React, { useEffect } from "react";
@@ -13,7 +12,16 @@ export default function Context({ children }) {
   const [cartProducts, setCartProducts] = useState([]);
   const [wishList, setWishList] = useState([1, 2, 3]);
   const [compareItem, setCompareItem] = useState([1, 2, 3]);
-  const [quickViewItem, setQuickViewItem] = useState(allProducts[0]);
+  const [quickViewItem, setQuickViewItem] = useState({
+    id: 1,
+    title: "Sample Product",
+    price: 0,
+    imgSrc: "/images/default-product.jpg",
+    type: "furniture",
+    images: ["/images/default-product.jpg"],
+    colors: [],
+    sizes: [],
+  });
   const [quickAddItem, setQuickAddItem] = useState(1);
   const [totalPrice, setTotalPrice] = useState(0);
   useEffect(() => {
@@ -23,38 +31,49 @@ export default function Context({ children }) {
     setTotalPrice(subtotal);
   }, [cartProducts]);
 
-  const addProductToCart = (id, qty) => {
-    if (!cartProducts.filter((elm) => elm.id == id)[0]) {
-      const item = {
-        ...allProducts.filter((elm) => elm.id == id)[0],
-        quantity: qty ? qty : 1,
-      };
-      setCartProducts((pre) => [...pre, item]);
+  const addProductToCart = (productData, qty = 1) => {
+    // Yeni kullanım: Doğrudan ürün objesi geçilmesi
+    if (productData && productData.id) {
+      const existingInCart = cartProducts.find((elm) => elm.id == productData.id);
+      
+      if (existingInCart) {
+        // Zaten sepette varsa, miktarını artır
+        setCartProducts(prev => 
+          prev.map(item => 
+            item.id === productData.id 
+              ? { ...item, quantity: item.quantity + qty }
+              : item
+          )
+        );
+      } else {
+        // Sepette yoksa, yeni ürün olarak ekle
+        const cartItem = {
+          id: productData.id,
+          title: productData.title || productData.name,
+          price: productData.price,
+          imgSrc: productData.imgSrc || (productData.images && productData.images[0]) || '/images/default-product.jpg',
+          quantity: qty,
+        };
+        setCartProducts((pre) => [...pre, cartItem]);
+      }
       openCartModal();
-
-      // openCart();
     }
   };
   const isAddedToCartProducts = (id) => {
-    if (cartProducts.filter((elm) => elm.id == id)[0]) {
-      return true;
-    }
-    return false;
+    return cartProducts.some((elm) => elm.id == id);
   };
 
   const updateQuantity = (id, qty) => {
-    if (isAddedToCartProducts(id)) {
-      let item = cartProducts.filter((elm) => elm.id == id)[0];
-      let items = [...cartProducts];
-      const itemIndex = items.indexOf(item);
-
-      item.quantity = qty / 1;
-      items[itemIndex] = item;
-      setCartProducts(items);
-
+    const existingProduct = cartProducts.find((elm) => elm.id == id);
+    if (existingProduct) {
+      setCartProducts(prev =>
+        prev.map(item =>
+          item.id === id
+            ? { ...item, quantity: qty }
+            : item
+        )
+      );
       openCartModal();
-    } else {
-      addProductToCart(id, qty);
     }
   };
   const addToWishlist = (id) => {

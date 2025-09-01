@@ -251,7 +251,17 @@ export default function FurnitureDetailsPopup({ product }) {
                   <div className="tf-product-info-buy-button">
                     <form onSubmit={(e) => e.preventDefault()} className="">
                       <a
-                        onClick={() => addProductToCart(product.id, quantity)}
+                        onClick={() => {
+                          // Tekil furniture için normal ID kullan
+                          const productToAdd = {
+                            id: product.id,
+                            title: product.title,
+                            price: product.price,
+                            imgSrc: product.imgSrc || (product.images && product.images[0]) || '/images/default-product.jpg',
+                            type: 'furniture' // Tip bilgisi ekle
+                          };
+                          addProductToCart(productToAdd, quantity);
+                        }}
                         className="tf-btn btn-fill justify-content-center fw-6 flex-grow-1 animate-hover-btn"
                         style={{ 
                           fontSize: '14px',
@@ -292,7 +302,16 @@ export default function FurnitureDetailsPopup({ product }) {
                           href="#shoppingCart"
                           data-bs-toggle="modal"
                           className="tf-product-btn-wishlist box-icon bg_white compare btn-icon-action"
-                          onClick={() => addProductToCart(product.id, quantity)}
+                          onClick={() => {
+                            const productToAdd = {
+                              id: product.id,
+                              title: product.title,
+                              price: product.price,
+                              imgSrc: product.imgSrc || (product.images && product.images[0]) || '/images/default-product.jpg',
+                              type: 'furniture' // Tip bilgisi ekle
+                            };
+                            addProductToCart(productToAdd, quantity);
+                          }}
                           style={{ transform: 'scale(0.9)' }}
                         >
                           <span className="icon icon-bag" />
