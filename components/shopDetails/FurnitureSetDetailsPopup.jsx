@@ -247,58 +247,8 @@ export default function FurnitureSetDetailsPopup({ product }) {
 
                   <div className="tf-product-info-buy-button">
                     <form onSubmit={(e) => e.preventDefault()} className="">
-                      <a
-                        onClick={() => {
-                          // Furniture Set için özel ID formatı kullan (fs_ prefix'i)
-                          const productToAdd = {
-                            id: `fs_${product.id}`, // Furniture Set prefix'i
-                            title: product.title,
-                            price: product.price,
-                            imgSrc: product.imgSrc || (product.images && product.images[0]) || '/images/default-product.jpg',
-                            type: 'furniture_set' // Tip bilgisi ekle
-                          };
-                          addProductToCart(productToAdd, quantity);
-                        }}
-                        className="tf-btn btn-fill justify-content-center fw-6 flex-grow-1 animate-hover-btn"
-                        style={{ 
-                          fontSize: '14px',
-                          padding: '10px 16px',
-                          marginBottom: '8px'
-                        }}
-                      >
-                        <span>Takımı Sepete Ekle - ${(product.price * quantity).toFixed(2)}</span>
-                      </a>
-                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                        <div className="tf-product-btn-wishlist btn-icon-action" style={{ transform: 'scale(0.9)' }}>
-                          <i
-                            className={`icon-heart ${
-                              isAddedtoWishlist(`fs_${product.id}`) ? "added" : ""
-                            }`}
-                            onClick={() => addToWishlist(`fs_${product.id}`)}
-                          />
-                          <span className="tooltip" style={{ fontSize: '11px' }}>
-                            {isAddedtoWishlist(`fs_${product.id}`)
-                              ? "Already Wishlisted"
-                              : "Add to Wishlist"}
-                          </span>
-                        </div>
-                        <div className="tf-product-btn-wishlist btn-icon-action" style={{ transform: 'scale(0.9)' }}>
-                          <i
-                            className={`icon-compare ${
-                              isAddedtoCompareItem(`fs_${product.id}`) ? "added" : ""
-                            }`}
-                            onClick={() => addToCompareItem(`fs_${product.id}`)}
-                          />
-                          <span className="tooltip" style={{ fontSize: '11px' }}>
-                            {isAddedtoCompareItem(`fs_${product.id}`)
-                              ? "Already Compared"
-                              : "Add to Compare"}
-                          </span>
-                        </div>
+                      <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                         <a
-                          href="#shoppingCart"
-                          data-bs-toggle="modal"
-                          className="tf-product-btn-wishlist box-icon bg_white compare btn-icon-action"
                           onClick={() => {
                             // Furniture Set için özel ID formatı kullan (fs_ prefix'i)
                             const productToAdd = {
@@ -306,14 +256,88 @@ export default function FurnitureSetDetailsPopup({ product }) {
                               title: product.title,
                               price: product.price,
                               imgSrc: product.imgSrc || (product.images && product.images[0]) || '/images/default-product.jpg',
-                              type: 'furniture_set' // Tip bilgisi ekle
+                              type: 'furniture_set', // Tip bilgisi ekle
+                              category: product.category || product.categoryName || 'Mobilya Takımı'
                             };
-                            addProductToCart(productToAdd, quantity);
+                            
+                            // Seçilen özellikler
+                            const options = {
+                              color: currentColor?.name || null,
+                              size: currentSize || null
+                            };
+                            
+                            addProductToCart(productToAdd, quantity, options);
                           }}
-                          style={{ transform: 'scale(0.9)' }}
+                          className="tf-btn animate-hover-btn justify-content-center fw-6 flex-grow-1 custom-cream-btn"
+                          style={{ 
+                            fontSize: '14px',
+                            padding: '10px 16px',
+                            flex: '1',
+                            backgroundColor: '#F5F5DC',
+                            border: '2px solid #F5F5DC',
+                            color: '#8B4513',
+                            transition: 'all 0.3s ease',
+                            textDecoration: 'none',
+                            outline: 'none'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.setProperty('background-color', '#E6E6C8', 'important');
+                            e.target.style.setProperty('border-color', '#E6E6C8', 'important');
+                            e.target.style.setProperty('color', '#654321', 'important');
+                            e.target.style.transform = 'scale(1.02)';
+                            // Span elementine de aynı stilleri uygula
+                            const spanElement = e.target.querySelector('span');
+                            if (spanElement) {
+                              spanElement.style.setProperty('color', '#654321', 'important');
+                              spanElement.style.setProperty('background-color', 'transparent', 'important');
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.setProperty('background-color', '#F5F5DC', 'important');
+                            e.target.style.setProperty('border-color', '#F5F5DC', 'important');
+                            e.target.style.setProperty('color', '#8B4513', 'important');
+                            e.target.style.transform = 'scale(1)';
+                            // Span elementinin rengini geri al
+                            const spanElement = e.target.querySelector('span');
+                            if (spanElement) {
+                              spanElement.style.setProperty('color', '#8B4513', 'important');
+                              spanElement.style.setProperty('background-color', 'transparent', 'important');
+                            }
+                          }}
                         >
-                          <span className="icon icon-bag" />
-                          <span className="tooltip" style={{ fontSize: '11px' }}>Add to cart</span>
+                          <span style={{ 
+                            backgroundColor: 'transparent', 
+                            color: 'inherit',
+                            border: 'none',
+                            padding: '0',
+                            margin: '0'
+                          }}>Takımı Sepete Ekle - ${(product.price * quantity).toFixed(2)}</span>
+                        </a>
+                        
+                        <a
+                          href={`https://wa.me/905335191329?text=${encodeURIComponent(`Merhaba! ${product.title} takımı hakkında daha fazla bilgi almak istiyorum. Ürün linki: ${window.location.href}`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="tf-btn btn-outline animate-hover-btn justify-content-center fw-6"
+                          style={{ 
+                            fontSize: '14px',
+                            padding: '10px 16px',
+                            flex: '1',
+                            backgroundColor: 'transparent',
+                            border: '2px solid #25D366',
+                            color: '#25D366',
+                            transition: 'all 0.3s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.target.style.backgroundColor = '#25D366';
+                            e.target.style.color = 'white';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.target.style.backgroundColor = 'transparent';
+                            e.target.style.color = '#25D366';
+                          }}
+                        >
+                          <span>Daha Fazla Bilgi Al</span>
                         </a>
                       </div>
                     </form>
