@@ -7,7 +7,7 @@ const tabs = [
   { title: "Açıklama", active: true },
   { title: "Özellikler", active: false },
   { title: "Bakım Bilgileri", active: false },
-  { title: "Değerlendirmeler", active: false },
+
 ];
 
 export default function FurnitureDetailsTab({ product }) {
@@ -21,7 +21,6 @@ export default function FurnitureDetailsTab({ product }) {
     { title: "Özellikler", active: false },
     ...(product.type === 'furniture_set' ? [{ title: "Takım İçeriği", active: false }] : []),
     { title: "Bakım Bilgileri", active: false },
-    { title: "Değerlendirmeler", active: false },
   ];
 
   return (
@@ -164,7 +163,7 @@ export default function FurnitureDetailsTab({ product }) {
                         {/* Mevcut Renkler */}
                         {product.colors && product.colors.length > 0 && (
                           <tr className="tf-attr-pa-colors">
-                            <th className="tf-attr-label">Mevcut Renkler</th>
+                            <th className="tf-attr-label">Renkler</th>
                             <td className="tf-attr-value">
                               <div className="colors-list">
                                 {product.colors.map((color, index) => (
@@ -183,9 +182,7 @@ export default function FurnitureDetailsTab({ product }) {
                                     )}
                                     <div className="color-info">
                                       <div className="color-name fw-6">{color.name}</div>
-                                      <div className="color-status text-success small">
-                                        {color.isAvailable ? 'Stokta Var' : 'Stokta Yok'}
-                                      </div>
+                                      
                                     </div>
                                   </div>
                                 ))}
@@ -472,129 +469,6 @@ export default function FurnitureDetailsTab({ product }) {
                         <h4 className="fs-16 fw-6 mb_10">Garanti Bilgileri</h4>
                         <p className="mb_10"><strong>Garanti Süresi:</strong> {product.warranty || "2 Yıl Üretici Garantisi"}</p>
                         <p className="mb-0 text-muted">Garanti kapsamında olmayan durumlar: Yanlış kullanım, dış etkenler ve normal aşınma.</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Değerlendirmeler Tab */}
-                <div
-                  className={`widget-content-inner ${
-                    currentTab == (product.type === 'furniture_set' ? 5 : 4) ? "active" : ""
-                  } `}
-                >
-                  <div className="reviews-section">
-                    <h3 className="fs-20 fw-6 mb_20">Müşteri Değerlendirmeleri</h3>
-                    
-                    <div className="reviews-summary bg-light p-4 rounded mb_30">
-                      <div className="row">
-                        <div className="col-md-4 text-center">
-                          <div className="rating-average">
-                            <h2 className="display-4 fw-bold text-primary">4.5</h2>
-                            <div className="stars mb-2">
-                              <i className="icon-star text-warning"></i>
-                              <i className="icon-star text-warning"></i>
-                              <i className="icon-star text-warning"></i>
-                              <i className="icon-star text-warning"></i>
-                              <i className="icon-star-half text-warning"></i>
-                            </div>
-                            <p className="text-muted">24 değerlendirme</p>
-                          </div>
-                        </div>
-                        <div className="col-md-8">
-                          <div className="rating-breakdown">
-                            <div className="rating-row d-flex align-items-center mb-2">
-                              <span className="rating-label">5 yıldız</span>
-                              <div className="rating-bar bg-light rounded mx-3" style={{height: '8px', flex: '1'}}>
-                                <div className="rating-fill bg-warning rounded" style={{width: '60%', height: '100%'}}></div>
-                              </div>
-                              <span className="rating-count">60%</span>
-                            </div>
-                            <div className="rating-row d-flex align-items-center mb-2">
-                              <span className="rating-label">4 yıldız</span>
-                              <div className="rating-bar bg-light rounded mx-3" style={{height: '8px', flex: '1'}}>
-                                <div className="rating-fill bg-warning rounded" style={{width: '25%', height: '100%'}}></div>
-                              </div>
-                              <span className="rating-count">25%</span>
-                            </div>
-                            <div className="rating-row d-flex align-items-center mb-2">
-                              <span className="rating-label">3 yıldız</span>
-                              <div className="rating-bar bg-light rounded mx-3" style={{height: '8px', flex: '1'}}>
-                                <div className="rating-fill bg-warning rounded" style={{width: '10%', height: '100%'}}></div>
-                              </div>
-                              <span className="rating-count">10%</span>
-                            </div>
-                            <div className="rating-row d-flex align-items-center mb-2">
-                              <span className="rating-label">2 yıldız</span>
-                              <div className="rating-bar bg-light rounded mx-3" style={{height: '8px', flex: '1'}}>
-                                <div className="rating-fill bg-warning rounded" style={{width: '3%', height: '100%'}}></div>
-                              </div>
-                              <span className="rating-count">3%</span>
-                            </div>
-                            <div className="rating-row d-flex align-items-center">
-                              <span className="rating-label">1 yıldız</span>
-                              <div className="rating-bar bg-light rounded mx-3" style={{height: '8px', flex: '1'}}>
-                                <div className="rating-fill bg-warning rounded" style={{width: '2%', height: '100%'}}></div>
-                              </div>
-                              <span className="rating-count">2%</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="reviews-list">
-                      <h4 className="fs-16 fw-6 mb_20">Son Değerlendirmeler</h4>
-                      
-                      <div className="review-item border-bottom pb_20 mb_20">
-                        <div className="review-header d-flex justify-content-between align-items-start mb_10">
-                          <div className="reviewer-info">
-                            <h5 className="fs-14 fw-6 mb-1">Ayşe K.</h5>
-                            <div className="review-rating">
-                              <i className="icon-star text-warning"></i>
-                              <i className="icon-star text-warning"></i>
-                              <i className="icon-star text-warning"></i>
-                              <i className="icon-star text-warning"></i>
-                              <i className="icon-star text-warning"></i>
-                            </div>
-                          </div>
-                          <span className="review-date text-muted">15 Mart 2024</span>
-                        </div>
-                        <p className="review-text">Çok memnun kaldım. Kaliteli malzeme ve şık tasarım. Montajı da oldukça kolaydı. Kesinlikle tavsiye ederim.</p>
-                      </div>
-                      
-                      <div className="review-item border-bottom pb_20 mb_20">
-                        <div className="review-header d-flex justify-content-between align-items-start mb_10">
-                          <div className="reviewer-info">
-                            <h5 className="fs-14 fw-6 mb-1">Mehmet D.</h5>
-                            <div className="review-rating">
-                              <i className="icon-star text-warning"></i>
-                              <i className="icon-star text-warning"></i>
-                              <i className="icon-star text-warning"></i>
-                              <i className="icon-star text-warning"></i>
-                              <i className="icon-star text-muted"></i>
-                            </div>
-                          </div>
-                          <span className="review-date text-muted">8 Mart 2024</span>
-                        </div>
-                        <p className="review-text">Ürün güzel ama kargo biraz geç geldi. Kalite gayet iyi, fiyat performans açısından başarılı.</p>
-                      </div>
-                      
-                      <div className="review-item">
-                        <div className="review-header d-flex justify-content-between align-items-start mb_10">
-                          <div className="reviewer-info">
-                            <h5 className="fs-14 fw-6 mb-1">Fatma Y.</h5>
-                            <div className="review-rating">
-                              <i className="icon-star text-warning"></i>
-                              <i className="icon-star text-warning"></i>
-                              <i className="icon-star text-warning"></i>
-                              <i className="icon-star text-warning"></i>
-                              <i className="icon-star text-warning"></i>
-                            </div>
-                          </div>
-                          <span className="review-date text-muted">2 Mart 2024</span>
-                        </div>
-                        <p className="review-text">Harika bir ürün! Evimdeki dekorasyona çok uydu. Müşteri hizmetleri de çok ilgiliydi.</p>
                       </div>
                     </div>
                   </div>

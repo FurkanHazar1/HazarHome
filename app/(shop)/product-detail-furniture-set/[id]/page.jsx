@@ -87,7 +87,6 @@ export default async function page({ params }) {
               )}
               <span className="text">{product.title || product.setName}</span>
             </div>
-            <ProductSinglePrevNext currentId={product.id} />
           </div>
         </div>
       </div>

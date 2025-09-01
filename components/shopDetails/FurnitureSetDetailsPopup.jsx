@@ -54,24 +54,31 @@ export default function FurnitureSetDetailsPopup({ product }) {
               </div>
             </div>
             <div className="col-md-6">
-              <div className="tf-product-info-wrap position-relative">
+              <div className="tf-product-info-wrap position-relative" style={{ 
+                maxHeight: '540px', // Ana görselin yüksekliği ile eşleştir (4:3 oranı)
+                overflowY: 'auto',
+                paddingRight: '15px'
+              }}>
                 <div className="tf-zoom-main" />
-                <div className="tf-product-info-list other-image-zoom">
+                <div className="tf-product-info-list other-image-zoom" style={{
+                  padding: '15px 0', // Üst-alt padding küçült
+                  fontSize: '14px' // Genel font boyutunu küçült
+                }}>
                   <div className="tf-product-info-title">
-                    <h5>{product.title}</h5>
+                    <h5 style={{ fontSize: '20px', marginBottom: '10px' }}>{product.title}</h5>
                    
                   </div>
                   
-                  <div className="tf-product-info-price">
-                    <div className="price-on-sale">
+                  <div className="tf-product-info-price" style={{ marginBottom: '15px' }}>
+                    <div className="price-on-sale" style={{ fontSize: '22px' }}>
                       ${product.price?.toFixed(2)}
                     </div>
                     {currentColor.oldPrice && (
                       <>
-                        <div className="compare-at-price">
+                        <div className="compare-at-price" style={{ fontSize: '16px' }}>
                           ${currentColor.oldPrice.toFixed(2)}
                         </div>
-                        <div className="badges-on-sale">
+                        <div className="badges-on-sale" style={{ fontSize: '12px', padding: '2px 6px' }}>
                           <span>{Math.round(((currentColor.oldPrice - product.price) / currentColor.oldPrice) * 100)}</span>% OFF
                         </div>
                       </>
@@ -80,184 +87,130 @@ export default function FurnitureSetDetailsPopup({ product }) {
 
                   {/* Ürün Açıklaması */}
                   {product.description && (
-                    <div className="tf-product-info-description">
-                      <p className="fw-6 text_black-2">{product.description}</p>
+                    <div className="tf-product-info-description" style={{ marginBottom: '12px' }}>
+                      <p className="fw-6 text_black-2" style={{ 
+                        fontSize: '13px', 
+                        lineHeight: '1.4',
+                        maxHeight: '50px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}>{product.description}</p>
                     </div>
                   )}
 
-                  {/* Takım İçeriği */}
-                  {product.setItems && product.setItems.length > 0 && (
-                    <div className="tf-product-info-set-items mb-4">
-                      <div className="set-header d-flex align-items-center justify-content-between mb-4">
-                        <h6 className="fw-6 mb-0 d-flex align-items-center">
-                          <i className="icon-package me-2 text-primary"></i>
-                          Takım İçeriği
-                          <span className="badge bg-primary ms-2">{product.setItems.length} Parça</span>
-                        </h6>
-                      </div>
-                      
-                      <div className="set-items-modern">
-                        {product.setItems.map((item, index) => (
-                          <div key={item.furnitureId || item.name || index} className="set-item-modern mb-3">
-                            <div className="item-card p-3 border-0 rounded-3 shadow-sm bg-white position-relative overflow-hidden">
-                              {/* Gradient Background */}
-                              <div className="gradient-bg position-absolute top-0 start-0 w-100 h-100 opacity-10"></div>
-                              
-                              <div className="row align-items-center position-relative">
-                                <div className="col-auto">
-                                  <div className="item-image-container position-relative">
-                                    {item.image && (
-                                      <div className="image-wrapper rounded-3 overflow-hidden shadow-sm">
-                                        <Image
-                                          src={item.image}
-                                          alt={item.name}
-                                          width={80}
-                                          height={80}
-                                          className="item-image"
-                                          style={{
-                                            objectFit: 'cover',
-                                            width: '80px',
-                                            height: '80px',
-                                            aspectRatio: '1'
-                                          }}
-                                        />
-                                        <div className="image-overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center opacity-0 transition-opacity">
-                                          <i className="icon-eye text-white fs-4"></i>
-                                        </div>
-                                      </div>
-                                    )}
-                                    {item.quantity > 1 && (
-                                      <div className="quantity-indicator position-absolute top-0 end-0 bg-primary text-white rounded-circle d-flex align-items-center justify-content-center">
-                                        <span className="small fw-6">{item.quantity}</span>
-                                      </div>
-                                    )}
+ {((product.properties && product.properties.length > 0) || 
+                    (product.propertiesByType && Object.keys(product.propertiesByType).length > 0)) && (
+                    <div className="tf-product-info-properties mb-2" style={{ marginBottom: '12px' }}>
+                      <h6 className="fw-6 mb-1" style={{ fontSize: '14px', marginBottom: '8px' }}>Ürün Özellikleri</h6>
+                      <div className="properties-list" style={{ maxHeight: '120px', overflow: 'hidden' }}>
+                        {/* Eğer properties array varsa onu kullan */}
+                        {product.properties && product.properties.length > 0 ? (
+                          <div className="row">
+                            {product.properties.slice(0, 6).map((property, index) => ( // İlk 6 özelliği göster
+                              <div key={`property-${property.name || property.propertyName}-${index}`} className="col-6" style={{ marginBottom: '4px' }}>
+                                <div className="property-item" style={{ marginBottom: '2px' }}>
+                                  <span className="property-name small text-muted" style={{ fontSize: '11px', lineHeight: '1.2' }}>
+                                    {property.name || property.propertyName}
+                                  </span>
+                                  <div className="property-value fw-6 text-dark" style={{ fontSize: '12px', lineHeight: '1.2', marginTop: '1px' }}>
+                                    {property.value || property.propertyValue}
                                   </div>
                                 </div>
-                                
-                                <div className="col">
-                                  <div className="item-details">
-                                    <div className="d-flex align-items-start justify-content-between mb-2">
-                                      <h6 className="item-name fw-6 mb-0 text-dark">{item.name}</h6>
-                                      {item.price && (
-                                        <div className="price-container text-end">
-                                          <div className="item-price text-success fw-6">${item.price.toFixed(2)}</div>
-                                          {item.quantity > 1 && (
-                                            <div className="total-price small text-muted">
-                                              Toplam: ${(item.price * item.quantity).toFixed(2)}
-                                            </div>
-                                          )}
-                                        </div>
-                                      )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          /* Eğer propertiesByType varsa onu kullan */
+                          <div className="row">
+                            {product.propertiesByType && Object.entries(product.propertiesByType).slice(0, 3).map(([type, properties]) => 
+                              properties.slice(0, 2).map((property, index) => ( // Her tipten max 2 özellik
+                                <div key={`${type}-${property.propertyName}-${index}`} className="col-6" style={{ marginBottom: '4px' }}>
+                                  <div className="property-item" style={{ marginBottom: '2px' }}>
+                                    <span className="property-name small text-muted" style={{ fontSize: '11px', lineHeight: '1.2' }}>
+                                      {property.propertyName}
+                                    </span>
+                                    <div className="property-value fw-6 text-dark" style={{ fontSize: '12px', lineHeight: '1.2', marginTop: '1px' }}>
+                                      {property.propertyValue}
                                     </div>
-                                    
-                                    {item.description && (
-                                      <p className="item-description text-muted small mb-2 lh-sm">{item.description}</p>
-                                    )}
-                                    
-                                    <div className="item-meta d-flex align-items-center justify-content-between">
-                                      <div className="item-properties">
-                                        {item.properties && item.properties.length > 0 && (
-                                          <div className="properties-tags">
-                                            {item.properties.slice(0, 2).map((prop, propIndex) => (
-                                              <span key={`${item.furnitureId || item.name}-${prop.name}-${propIndex}`} 
-                                                    className="property-tag badge bg-light text-dark me-1 small border">
-                                                <i className="icon-tag me-1"></i>
-                                                {prop.name}: {prop.value}
-                                              </span>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {/* Renk Seçimi */}
+                                    {product.colors && product.colors.length > 0 && (
+                                      <div className="tf-product-info-variant-picker" style={{ marginBottom: '12px' }}>
+                                        <div className="variant-picker-item">
+                                          <div className="variant-picker-label" style={{ fontSize: '13px', marginBottom: '8px' }}>
+                                            Renk: <span className="fw-6 variant-picker-label-value">{currentColor.name}</span>
+                                          </div>
+                                          <div className="variant-picker-values" style={{ gap: '6px' }}>
+                                            {product.colors.map((color, index) => (
+                                              <input
+                                                key={color.id || color.value || index}
+                                                id={`values-${color.value}`}
+                                                type="radio"
+                                                name="color1"
+                                                value={color.value}
+                                                checked={currentColor.value === color.value}
+                                                onChange={() => handleColor(color.value)}
+                                              />
+                                            ))}
+                                            {product.colors.map((color, index) => (
+                                              <label
+                                                key={`label-${color.id || color.value || index}`}
+                                                htmlFor={`values-${color.value}`}
+                                                style={{ 
+                                                  width: '24px', 
+                                                  height: '24px',
+                                                  display: 'inline-block',
+                                                  cursor: 'pointer',
+                                                  borderRadius: '30%',
+                                                  overflow: 'hidden',
+                                                  border: '1px solid transparent',
+                                                  transition: 'all 0.2s ease',
+                                                  boxShadow: '0 1px 1px rgba(0, 0, 0, 0.15)'
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                  e.target.style.transform = 'scale(1.1)';
+                                                  e.target.style.border = '2px solid #ddd';
+                                                  e.target.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.25)';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                  e.target.style.transform = 'scale(1)';
+                                                  e.target.style.border = '2px solid transparent';
+                                                  e.target.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.15)';
+                                                }}
+                                              >
+                                                <span 
+                                                  className="btn-checkbox" 
+                                                  style={{ 
+                                                    backgroundColor: getColorHex(color),
+                                                    width: '100%',
+                                                    height: '100%',
+                                                    display: 'block',
+                                                    borderRadius: '50%'
+                                                  }}
+                                                />
+                                              </label>
                                             ))}
                                           </div>
-                                        )}
-                                      </div>
-                                      
-                                      <div className="item-actions d-flex align-items-center gap-2">
-                                        {item.individualLink && (
-                                          <Link href={item.individualLink} 
-                                                className="btn btn-outline-primary btn-sm d-flex align-items-center">
-                                            <i className="icon-eye me-1"></i>
-                                            <span className="d-none d-md-inline">Detay</span>
-                                          </Link>
-                                        )}
-                                        <div className="status-indicator d-flex align-items-center">
-                                          <div className="status-dot bg-success rounded-circle me-2"></div>
-                                          <span className="small text-success fw-5">Dahil</span>
                                         </div>
                                       </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Özellikler */}
-                  {product.properties && product.properties.length > 0 && (
-                    <div className="tf-product-info-properties mb-3">
-                      <h6 className="fw-6 mb-2">Takım Özellikleri</h6>
-                      <div className="properties-list">
-                        <div className="row">
-                          {product.properties.map((property, index) => (
-                            <div key={`property-${property.name}-${index}`} className="col-6 col-md-4 mb-2">
-                              <div className="property-item">
-                                <span className="property-name small text-muted">{property.name}</span>
-                                <div className="property-value fw-6 text-dark">{property.value}</div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Renk Seçimi */}
-                  {product.colors && product.colors.length > 0 && (
-                    <div className="tf-product-info-variant-picker">
-                      <div className="variant-picker-item">
-                        <div className="variant-picker-label">
-                          Renk: <span className="fw-6 variant-picker-label-value">{currentColor.name}</span>
-                        </div>
-                        <div className="variant-picker-values">
-                          {product.colors.map((color, index) => (
-                            <input
-                              key={color.id || color.value || index}
-                              id={`values-${color.value}`}
-                              type="radio"
-                              name="color1"
-                              value={color.value}
-                              checked={currentColor.value === color.value}
-                              onChange={() => handleColor(color.value)}
-                            />
-                          ))}
-                          {product.colors.map((color, index) => (
-                            <label
-                              key={`label-${color.id || color.value || index}`}
-                              className="hover-tooltip radius-60"
-                              htmlFor={`values-${color.value}`}
-                              data-value={color.name}
-                            >
-                              <span 
-                                className="btn-checkbox" 
-                                style={{ backgroundColor: getColorHex(color) }}
-                              />
-                              <span className="tooltip">{color.name}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
+                                    )}
+                  
                   {/* Boyut Seçimi */}
                   {product.sizes && product.sizes.length > 0 && (
-                    <div className="tf-product-info-variant-picker">
+                    <div className="tf-product-info-variant-picker" style={{ marginBottom: '12px' }}>
                       <div className="variant-picker-item">
-                        <div className="variant-picker-label">
+                        <div className="variant-picker-label" style={{ fontSize: '13px', marginBottom: '8px' }}>
                           Boyut: <span className="fw-6 variant-picker-label-value">{currentSize}</span>
                         </div>
-                        <div className="variant-picker-values">
+                        <div className="variant-picker-values" style={{ gap: '6px' }}>
                           {product.sizes.map((size, index) => (
                             <React.Fragment key={index}>
                               <input
@@ -268,7 +221,15 @@ export default function FurnitureSetDetailsPopup({ product }) {
                                 checked={currentSize === (size.value || size)}
                                 onChange={(e) => setCurrentSize(e.target.value)}
                               />
-                              <label className="style-text" htmlFor={`values-${size.value || size}`}>
+                              <label 
+                                className="style-text" 
+                                htmlFor={`values-${size.value || size}`}
+                                style={{ 
+                                  fontSize: '12px', 
+                                  padding: '4px 8px',
+                                  minWidth: 'auto'
+                                }}
+                              >
                                 {size.value || size}
                               </label>
                             </React.Fragment>
@@ -279,8 +240,8 @@ export default function FurnitureSetDetailsPopup({ product }) {
                   )}
 
                   {/* Miktar ve Satın Al */}
-                  <div className="tf-product-info-quantity">
-                    <div className="quantity-title fw-6">Miktar</div>
+                  <div className="tf-product-info-quantity" style={{ marginBottom: '12px' }}>
+                    <div className="quantity-title fw-6" style={{ fontSize: '13px', marginBottom: '6px' }}>Miktar</div>
                     <Quantity setQuantity={setQuantity} />
                   </div>
 
@@ -288,45 +249,53 @@ export default function FurnitureSetDetailsPopup({ product }) {
                     <form onSubmit={(e) => e.preventDefault()} className="">
                       <a
                         onClick={() => addProductToCart(product.id, quantity)}
-                        className="tf-btn btn-fill justify-content-center fw-6 fs-16 flex-grow-1 animate-hover-btn"
+                        className="tf-btn btn-fill justify-content-center fw-6 flex-grow-1 animate-hover-btn"
+                        style={{ 
+                          fontSize: '14px',
+                          padding: '10px 16px',
+                          marginBottom: '8px'
+                        }}
                       >
                         <span>Takımı Sepete Ekle - ${(product.price * quantity).toFixed(2)}</span>
                       </a>
-                      <div className="tf-product-btn-wishlist btn-icon-action">
-                        <i
-                          className={`icon-heart ${
-                            isAddedtoWishlist(product.id) ? "added" : ""
-                          }`}
-                          onClick={() => addToWishlist(product.id)}
-                        />
-                        <span className="tooltip">
-                          {isAddedtoWishlist(product.id)
-                            ? "Already Wishlisted"
-                            : "Add to Wishlist"}
-                        </span>
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                        <div className="tf-product-btn-wishlist btn-icon-action" style={{ transform: 'scale(0.9)' }}>
+                          <i
+                            className={`icon-heart ${
+                              isAddedtoWishlist(product.id) ? "added" : ""
+                            }`}
+                            onClick={() => addToWishlist(product.id)}
+                          />
+                          <span className="tooltip" style={{ fontSize: '11px' }}>
+                            {isAddedtoWishlist(product.id)
+                              ? "Already Wishlisted"
+                              : "Add to Wishlist"}
+                          </span>
+                        </div>
+                        <div className="tf-product-btn-wishlist btn-icon-action" style={{ transform: 'scale(0.9)' }}>
+                          <i
+                            className={`icon-compare ${
+                              isAddedtoCompareItem(product.id) ? "added" : ""
+                            }`}
+                            onClick={() => addToCompareItem(product.id)}
+                          />
+                          <span className="tooltip" style={{ fontSize: '11px' }}>
+                            {isAddedtoCompareItem(product.id)
+                              ? "Already Compared"
+                              : "Add to Compare"}
+                          </span>
+                        </div>
+                        <a
+                          href="#shoppingCart"
+                          data-bs-toggle="modal"
+                          className="tf-product-btn-wishlist box-icon bg_white compare btn-icon-action"
+                          onClick={() => addProductToCart(product.id, quantity)}
+                          style={{ transform: 'scale(0.9)' }}
+                        >
+                          <span className="icon icon-bag" />
+                          <span className="tooltip" style={{ fontSize: '11px' }}>Add to cart</span>
+                        </a>
                       </div>
-                      <div className="tf-product-btn-wishlist btn-icon-action">
-                        <i
-                          className={`icon-compare ${
-                            isAddedtoCompareItem(product.id) ? "added" : ""
-                          }`}
-                          onClick={() => addToCompareItem(product.id)}
-                        />
-                        <span className="tooltip">
-                          {isAddedtoCompareItem(product.id)
-                            ? "Already Compared"
-                            : "Add to Compare"}
-                        </span>
-                      </div>
-                      <a
-                        href="#shoppingCart"
-                        data-bs-toggle="modal"
-                        className="tf-product-btn-wishlist box-icon bg_white compare btn-icon-action"
-                        onClick={() => addProductToCart(product.id, quantity)}
-                      >
-                        <span className="icon icon-bag" />
-                        <span className="tooltip">Add to cart</span>
-                      </a>
                     </form>
                   </div>
 

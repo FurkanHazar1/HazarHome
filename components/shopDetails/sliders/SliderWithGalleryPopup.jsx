@@ -12,158 +12,12 @@ export default function SliderWithGalleryPopup({
   firstImage,
   images: propImages = [],
 }) {
-  const defaultImages = [
-    {
-      id: 1,
-      src: firstImage || "/images/shop/products/p-d1.png",
-      alt: "",
-      width: 770,
-      height: 1075,
-      dataValue: "beige",
-    },
-    {
-      id: 2,
-      src: "/images/shop/products/hmgoepprod.jpg",
-      alt: "",
-      width: 713,
-      height: 1070,
-      dataValue: "beige",
-    },
-    {
-      id: 3,
-      src: "/images/shop/products/hmgoepprod2.jpg",
-      alt: "img-compare",
-      width: 713,
-      height: 1070,
-      dataValue: "beige",
-    },
-    {
-      id: 4,
-      src: "/images/shop/products/hmgoepprod3.jpg",
-      alt: "img-compare",
-      width: 713,
-      height: 1070,
-      dataValue: "beige",
-    },
-    {
-      id: 5,
-      src: "/images/shop/products/hmgoepprod4.jpg",
-      alt: "img-compare",
-      width: 768,
-      height: 1152,
-      dataValue: "beige",
-    },
-    {
-      id: 6,
-      src: "/images/shop/products/hmgoepprod5.jpg",
-      alt: "img-compare",
-      width: 713,
-      height: 1070,
-      dataValue: "beige",
-    },
-    {
-      id: 7,
-      src: "/images/shop/products/hmgoepprod6.jpg",
-      alt: "",
-      width: 768,
-      height: 1152,
-      dataValue: "black",
-    },
-    {
-      id: 8,
-      src: "/images/shop/products/hmgoepprod7.jpg",
-      alt: "",
-      width: 713,
-      height: 1070,
-      dataValue: "black",
-    },
-    {
-      id: 9,
-      src: "/images/shop/products/hmgoepprod8.jpg",
-      alt: "",
-      width: 713,
-      height: 1070,
-      dataValue: "black",
-    },
-    {
-      id: 10,
-      src: "/images/shop/products/hmgoepprod9.jpg",
-      alt: "",
-      width: 768,
-      height: 1152,
-      dataValue: "black",
-    },
-    {
-      id: 11,
-      src: "/images/shop/products/hmgoepprod10.jpg",
-      alt: "",
-      width: 713,
-      height: 1070,
-      dataValue: "blue",
-    },
-    {
-      id: 12,
-      src: "/images/shop/products/hmgoepprod11.jpg",
-      alt: "",
-      width: 713,
-      height: 1070,
-      dataValue: "blue",
-    },
-    {
-      id: 13,
-      src: "/images/shop/products/hmgoepprod12.jpg",
-      alt: "",
-      width: 768,
-      height: 1152,
-      dataValue: "blue",
-    },
-    {
-      id: 14,
-      src: "/images/shop/products/hmgoepprod13.jpg",
-      alt: "",
-      width: 768,
-      height: 1152,
-      dataValue: "blue",
-    },
-    {
-      id: 15,
-      src: "/images/shop/products/hmgoepprod14.jpg",
-      alt: "",
-      width: 768,
-      height: 1152,
-      dataValue: "white",
-    },
-    {
-      id: 16,
-      src: "/images/shop/products/hmgoepprod15.jpg",
-      alt: "",
-      width: 768,
-      height: 1152,
-      dataValue: "white",
-    },
-    {
-      id: 17,
-      src: "/images/shop/products/hmgoepprod16.jpg",
-      alt: "",
-      width: 768,
-      height: 1152,
-      dataValue: "white",
-    },
-    {
-      id: 18,
-      src: "/images/shop/products/hmgoepprod17.jpg",
-      alt: "",
-      width: 768,
-      height: 1152,
-      dataValue: "white",
-    },
-  ];
 
   // Sabit görsel boyutları tanımlayalım - 4:3 oranında
   const MAIN_IMAGE_WIDTH = 720;
   const MAIN_IMAGE_HEIGHT = 540; // 4:3 oranı için (720 * 3/4 = 540)
-  const THUMB_IMAGE_WIDTH = 80;
-  const THUMB_IMAGE_HEIGHT = 75; // 4:3 oranı için (100 * 3/4 = 75)
+  const THUMB_IMAGE_WIDTH = 60;
+  const THUMB_IMAGE_HEIGHT = 60; // 4:3 oranı için (45 * 3/4 = 60)
 
   // Convert propImages to the expected format with id and dataValue
   const processedPropImages = propImages && propImages.length > 0 
@@ -238,7 +92,13 @@ export default function SliderWithGalleryPopup({
       >
         {images.map((slide, index) => (
           <SwiperSlide key={index} className="stagger-item">
-            <div className="item" style={{ width: THUMB_IMAGE_WIDTH, height: THUMB_IMAGE_HEIGHT, overflow: 'hidden', aspectRatio: '4/3' }}>
+            <div className="item" style={{ 
+              width: THUMB_IMAGE_WIDTH, 
+              height: THUMB_IMAGE_HEIGHT, 
+              overflow: 'hidden', 
+              aspectRatio: '4/3',
+              backgroundColor: 'white' // Thumbnail container için krem arka plan
+            }}>
               <Image
                 className="lazyload"
                 data-src={slide.src}
@@ -249,8 +109,9 @@ export default function SliderWithGalleryPopup({
                 style={{ 
                   width: '100%', 
                   height: '100%', 
-                  objectFit: 'cover',
-                  objectPosition: 'center'
+                  objectFit: 'contain', // Cover yerine contain kullan
+                  objectPosition: 'center',
+                  backgroundColor: 'white' // Görsel için krem arka plan
                 }}
               />
             </div>
@@ -304,7 +165,8 @@ export default function SliderWithGalleryPopup({
                       height: MAIN_IMAGE_HEIGHT, 
                       position: 'relative',
                       overflow: 'hidden',
-                      aspectRatio: '4/3' // Açıkça 4:3 oranını belirtelim
+                      aspectRatio: '4/3', // Açıkça 4:3 oranını belirtelim
+                      backgroundColor: '#f8f6f0' // Container için krem arka plan
                     }}>
                       <Image
                         className="tf-image-zoom-magnifier ls-is-cached lazyloaded"
@@ -315,8 +177,9 @@ export default function SliderWithGalleryPopup({
                         src={slide.src}
                         fill={true}
                         style={{ 
-                          objectFit: 'cover',
-                          objectPosition: 'center'
+                          objectFit: 'contain',
+                          objectPosition: 'center',
+                          backgroundColor: '#f8f6f0' // Boş alanlar için krem arka plan
                         }}
                       />
                     </div>
