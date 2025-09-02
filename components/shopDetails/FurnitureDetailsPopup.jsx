@@ -35,12 +35,16 @@ export default function FurnitureDetailsPopup({ product }) {
   return (
     <section
       className="flat-spacing-4 pt_0"
-      style={{ maxWidth: "100vw", overflow: "clip" }}
+      style={{ 
+        maxWidth: "100vw", 
+        overflow: "clip",
+        paddingBottom: "30px"
+      }}
     >
       <div className="tf-main-product section-image-zoom">
         <div className="container">
           <div className="row">
-            <div className="col-md-6">
+            <div className="col-md-8">
               <div className="tf-product-media-wrap">
                 <div className="thumbs-slider">
                   <SliderWithGalleryPopup
@@ -52,7 +56,7 @@ export default function FurnitureDetailsPopup({ product }) {
                 </div>
               </div>
             </div>
-            <div className="col-md-6">
+            <div className="col-md-4">
               <div className="tf-product-info-wrap position-relative" style={{ 
                 maxHeight: '540px', // Ana görselin yüksekliği ile eşleştir (4:3 oranı)
                 overflowY: 'auto',
@@ -71,12 +75,12 @@ export default function FurnitureDetailsPopup({ product }) {
                   
                   <div className="tf-product-info-price" style={{ marginBottom: '15px' }}>
                     <div className="price-on-sale" style={{ fontSize: '22px' }}>
-                      ${product.price?.toFixed(2)}
+                      ₺{product.price?.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </div>
                     {currentColor.oldPrice && (
                       <>
                         <div className="compare-at-price" style={{ fontSize: '16px' }}>
-                          ${currentColor.oldPrice.toFixed(2)}
+                          ₺{currentColor.oldPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>
                         <div className="badges-on-sale" style={{ fontSize: '12px', padding: '2px 6px' }}>
                           <span>{Math.round(((currentColor.oldPrice - product.price) / currentColor.oldPrice) * 100)}</span>% OFF
@@ -314,7 +318,7 @@ export default function FurnitureDetailsPopup({ product }) {
                             border: 'none',
                             padding: '0',
                             margin: '0'
-                          }}>Sepete Ekle - ${(product.price * quantity).toFixed(2)}</span>
+                          }}>Sepete Ekle - ₺{(product.price * quantity).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         </a>
                         
                         <a
@@ -354,7 +358,7 @@ export default function FurnitureDetailsPopup({ product }) {
           </div>
         </div>
       </div>
-      <StickyItem product={product} />
+      <StickyItem product={product} style={{ marginTop: '20px' }} />
     </section>
   );
 }

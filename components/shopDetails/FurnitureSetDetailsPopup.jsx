@@ -36,12 +36,16 @@ export default function FurnitureSetDetailsPopup({ product }) {
   return (
     <section
       className="flat-spacing-4 pt_0"
-      style={{ maxWidth: "100vw", overflow: "clip" }}
+      style={{ 
+        maxWidth: "100vw", 
+        overflow: "clip",
+        paddingBottom: "30px"
+      }}
     >
       <div className="tf-main-product section-image-zoom">
         <div className="container">
           <div className="row">
-            <div className="col-md-6">
+            <div className="col-md-8">
               <div className="tf-product-media-wrap">
                 <div className="thumbs-slider">
                   <SliderWithGalleryPopup
@@ -53,10 +57,9 @@ export default function FurnitureSetDetailsPopup({ product }) {
                 </div>
               </div>
             </div>
-            <div className="col-md-6">
+            <div className="col-md-4">
               <div className="tf-product-info-wrap position-relative" style={{ 
-                maxHeight: '540px', // Ana görselin yüksekliği ile eşleştir (4:3 oranı)
-                overflowY: 'auto',
+                minHeight: '540px', // Minimum yükseklik - içerik arttıkça genişler
                 paddingRight: '15px'
               }}>
                 <div className="tf-zoom-main" />
@@ -71,12 +74,12 @@ export default function FurnitureSetDetailsPopup({ product }) {
                   
                   <div className="tf-product-info-price" style={{ marginBottom: '15px' }}>
                     <div className="price-on-sale" style={{ fontSize: '22px' }}>
-                      ${product.price?.toFixed(2)}
+                      ₺{product.price?.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </div>
                     {currentColor.oldPrice && (
                       <>
                         <div className="compare-at-price" style={{ fontSize: '16px' }}>
-                          ${currentColor.oldPrice.toFixed(2)}
+                          ₺{currentColor.oldPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>
                         <div className="badges-on-sale" style={{ fontSize: '12px', padding: '2px 6px' }}>
                           <span>{Math.round(((currentColor.oldPrice - product.price) / currentColor.oldPrice) * 100)}</span>% OFF
@@ -95,6 +98,144 @@ export default function FurnitureSetDetailsPopup({ product }) {
                         overflow: 'hidden',
                         textOverflow: 'ellipsis'
                       }}>{product.description}</p>
+                    </div>
+                  )}
+
+                  {/* Takım İçeriği */}
+                  {(product.setItems && product.setItems.length > 0) && (
+                    <div className="tf-product-info-set-contents" style={{ marginBottom: '20px' }}>
+                      <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        marginBottom: '15px',
+                        gap: '8px'
+                      }}>
+                        <div style={{
+                          width: '4px',
+                          height: '18px',
+                          backgroundColor: '#8B4513',
+                          borderRadius: '2px'
+                        }}></div>
+                        <h6 className="fw-6 mb-0" style={{ 
+                          fontSize: '15px', 
+                          color: '#8B4513',
+                          letterSpacing: '0.5px'
+                        }}>
+                          Takım İçeriği
+                        </h6>
+                        <span style={{
+                          fontSize: '11px',
+                          backgroundColor: '#8B4513',
+                          color: 'white',
+                          padding: '2px 8px',
+                          borderRadius: '12px',
+                          fontWeight: '600'
+                        }}>
+                          {product.setItems.length} Parça
+                        </span>
+                      </div>
+                      
+                      <div className="set-items-list" style={{ 
+                        backgroundColor: '#FEFEFE', 
+                        padding: '16px', 
+                        borderRadius: '12px',
+                        border: '1px solid #E8E8E8',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+                      }}>
+                        {product.setItems.map((item, index) => (
+                          <div key={index} className="set-item" style={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'center',
+                            padding: '12px 0',
+                            borderBottom: index < product.setItems.length - 1 ? '1px solid #F0F0F0' : 'none',
+                            transition: 'all 0.2s ease'
+                          }}>
+                            <div className="item-info" style={{ flex: '1', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <div style={{
+                                width: '6px',
+                                height: '6px',
+                                backgroundColor: '#8B4513',
+                                borderRadius: '50%',
+                                flexShrink: 0
+                              }}></div>
+                              <div>
+                                <div className="item-name" style={{ 
+                                  fontSize: '13px', 
+                                  fontWeight: '600',
+                                  color: '#2C3E50',
+                                  lineHeight: '1.4'
+                                }}>
+                                  {item.name || item.furnitureName}
+                                </div>
+                                <div className="item-quantity" style={{ 
+                                  fontSize: '11px',
+                                  color: '#7F8C8D',
+                                  fontWeight: '500',
+                                  marginTop: '2px'
+                                }}>
+                                  {item.quantity || 1} adet
+                                </div>
+                              </div>
+                            </div>
+                            <div className="item-price" style={{ 
+                              fontSize: '13px',
+                              fontWeight: '700',
+                              color: '#8B4513',
+                              backgroundColor: '#FFF8F0',
+                              padding: '6px 12px',
+                              borderRadius: '8px',
+                              border: '1px solid #F0E6D2'
+                            }}>
+                              ₺{(item.price || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </div>
+                          </div>
+                        ))}
+                        
+                        {product.setItems.length > 1 && (
+                          <div className="set-total" style={{
+                            marginTop: '12px',
+                            paddingTop: '12px',
+                            borderTop: '2px solid #8B4513',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            backgroundColor: '#FFF8F0',
+                            padding: '12px',
+                            borderRadius: '8px',
+                            marginLeft: '-16px',
+                            marginRight: '-16px',
+                            marginBottom: '-16px'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span style={{ 
+                                fontSize: '14px', 
+                                fontWeight: '700',
+                                color: '#8B4513'
+                              }}>
+                                Toplam Değer:
+                              </span>
+                              <span style={{
+                                fontSize: '10px',
+                                color: '#8B4513',
+                                backgroundColor: 'rgba(139, 69, 19, 0.1)',
+                                padding: '2px 6px',
+                                borderRadius: '6px',
+                                fontWeight: '600'
+                              }}>
+                                Ayrı satış
+                              </span>
+                            </div>
+                            <span style={{ 
+                              fontSize: '15px',
+                              fontWeight: '800',
+                              color: '#8B4513'
+                            }}>
+                              ₺{product.setItems.reduce((total, item) => total + ((item.price || 0) * (item.quantity || 1)), 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
 
@@ -311,7 +452,7 @@ export default function FurnitureSetDetailsPopup({ product }) {
                             border: 'none',
                             padding: '0',
                             margin: '0'
-                          }}>Takımı Sepete Ekle - ${(product.price * quantity).toFixed(2)}</span>
+                          }}>Takımı Sepete Ekle - ₺{(product.price * quantity).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         </a>
                         
                         <a
@@ -348,7 +489,7 @@ export default function FurnitureSetDetailsPopup({ product }) {
           </div>
         </div>
       </div>
-      <StickyItem product={product} />
+      <StickyItem product={product} style={{ marginTop: '20px' }} />
     </section>
   );
 }

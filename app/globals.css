@@ -48,3 +48,13 @@ body {
   border-color: #E6E6C8 !important;
   color: #654321 !important;
 }
+
+/* Custom Scrollbar Hide */
+.custom-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.custom-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
