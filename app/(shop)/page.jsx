@@ -12,8 +12,8 @@ import ShopGram from "@/components/homes/home-furniture/ShopGram";
 import React from "react";
 
 export const metadata = {
-  title: "Home Furniture || Ecomus - Ultimate Nextjs Ecommerce Template",
-  description: "Ecomus - Ultimate Nextjs Ecommerce Template",
+  title: "Hazar Home || Ferahlığın Anahtarı",
+  description: "Hazar Home",
 };
 
 export default function page() {

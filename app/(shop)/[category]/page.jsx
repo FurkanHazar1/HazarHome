@@ -100,13 +100,7 @@ export default async function CategoryPage({ params }) {
   const { category } = await params;
   const categoryData = categoryMappings[category];
   const subCategoryData = getSubCategoryMapping()[category];
-  
-  console.log('=== DEBUG ===');
-  console.log('Category:', category);
-  console.log('CategoryData:', categoryData);
-  console.log('SubCategoryData:', subCategoryData);
-  console.log('Categories for subcollections (main):', categoryData?.categories);
-  
+
   if (subCategoryData) {
     let parentCategories = null;
     if (subCategoryData.parentCategory === 'oturma-odasi') {

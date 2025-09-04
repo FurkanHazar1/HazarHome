@@ -29,7 +29,25 @@ export default function Announcment() {
       <div className="wrap-announcement-bar">
         <div className="box-sw-announcement-bar speed-1">
           <div className="announcement-bar-item">
-            <p>FREE SHIPPING AND RETURNS</p>
+            <p>DÜNYANIN HER YERİNE ÜCRETSİZ KARGO</p>
+          </div>
+          <div className="announcement-bar-item">
+            <p>YENİ SEZON, YENİ STİLLER: KAÇIRMAYACAĞINIZ  İNDİRİMİ</p>
+          </div>
+          <div className="announcement-bar-item">
+            <p>LIMITED TIME OFFER: FASHION SALE YOU CAN'T RESIST</p>
+          </div>
+          <div className="announcement-bar-item">
+            <p>DÜNYANIN HER YERİNE ÜCRETSİZ KARGO</p>
+          </div>
+          <div className="announcement-bar-item">
+            <p>YENİ SEZON, YENİ STİLLER: KAÇIRMAYACAĞINIZ  İNDİRİMİ</p>
+          </div>
+          <div className="announcement-bar-item">
+            <p>LIMITED TIME OFFER: FASHION SALE YOU CAN'T RESIST</p>
+          </div>
+          <div className="announcement-bar-item">
+            <p>DÜNYANIN HER YERİNE ÜCRETSİZ KARGO</p>
           </div>
           <div className="announcement-bar-item">
             <p>NEW SEASON, NEW STYLES: FASHION SALE YOU CAN'T MISS</p>
@@ -38,19 +56,10 @@ export default function Announcment() {
             <p>LIMITED TIME OFFER: FASHION SALE YOU CAN'T RESIST</p>
           </div>
           <div className="announcement-bar-item">
-            <p>FREE SHIPPING AND RETURNS</p>
+            <p>DÜNYANIN HER YERİNE ÜCRETSİZ KARGO</p>
           </div>
           <div className="announcement-bar-item">
-            <p>NEW SEASON, NEW STYLES: FASHION SALE YOU CAN'T MISS</p>
-          </div>
-          <div className="announcement-bar-item">
-            <p>LIMITED TIME OFFER: FASHION SALE YOU CAN'T RESIST</p>
-          </div>
-          <div className="announcement-bar-item">
-            <p>FREE SHIPPING AND RETURNS</p>
-          </div>
-          <div className="announcement-bar-item">
-            <p>NEW SEASON, NEW STYLES: FASHION SALE YOU CAN'T MISS</p>
+            <p>YENİ SEZON, YENİ STİLLER: KAÇIRMAYACAĞINIZ  İNDİRİMİ</p>
           </div>
           <div className="announcement-bar-item">
             <p>LIMITED TIME OFFER: FASHION SALE YOU CAN'T RESIST</p>

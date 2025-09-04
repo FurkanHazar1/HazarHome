@@ -6,6 +6,8 @@ import Link from "next/link";
 const tabs = [
   { title: "Açıklama", active: true },
   { title: "Özellikler", active: false },
+  { title: "Bakım Bilgileri", active: false },
+
 ];
 
 export default function FurnitureDetailsTab({ product }) {
@@ -18,6 +20,7 @@ export default function FurnitureDetailsTab({ product }) {
     { title: "Açıklama", active: true },
     { title: "Özellikler", active: false },
     ...(product.type === 'furniture_set' ? [{ title: "Takım İçeriği", active: false }] : []),
+    { title: "Bakım Bilgileri", active: false },
   ];
 
   return (
@@ -402,6 +405,74 @@ export default function FurnitureDetailsTab({ product }) {
                     </div>
                   </div>
                 )}
+
+                {/* Bakım Bilgileri Tab */}
+                <div
+                  className={`widget-content-inner ${
+                    currentTab == (product.type === 'furniture_set' ? 4 : 3) ? "active" : ""
+                  } `}
+                >
+                  <div className="care-instructions">
+                    <h3 className="fs-20 fw-6 mb_20">Bakım ve Kullanım Talimatları</h3>
+                    
+                    <div className="care-content">
+                      <div className="care-main mb_30">
+                        <h4 className="fs-16 fw-6 mb_15">Genel Bakım Bilgisi</h4>
+                        <p className="mb_20">{product.care || "Ürününüzün uzun ömürlü olması için düzenli bakım yapınız."}</p>
+                      </div>
+                      
+                      <div className="care-instructions-list">
+                        <h4 className="fs-16 fw-6 mb_15">Detaylı Bakım Adımları</h4>
+                        {product.careInstructions?.map((instruction, index) => (
+                          <div key={`care-${index}-${instruction.substring(0, 20)}`} className="care-step d-flex gap-15 mb_20 align-items-start">
+                            <div className="step-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style={{minWidth: '30px', height: '30px', fontSize: '14px', fontWeight: '600'}}>
+                              {index + 1}
+                            </div>
+                            <div className="step-content">
+                              <p className="mb-0">{instruction}</p>
+                            </div>
+                          </div>
+                        )) || (
+                          <>
+                            <div className="care-step d-flex gap-15 mb_20 align-items-start">
+                              <div className="step-icon">
+                                <i className="icon-machine text-primary" style={{fontSize: '24px'}} />
+                              </div>
+                              <div className="step-content">
+                                <h5 className="fs-14 fw-6">Düzenli Temizlik</h5>
+                                <p>Haftada bir kez yumuşak bez ile temizleyiniz.</p>
+                              </div>
+                            </div>
+                            <div className="care-step d-flex gap-15 mb_20 align-items-start">
+                              <div className="step-icon">
+                                <i className="icon-sun text-warning" style={{fontSize: '24px'}} />
+                              </div>
+                              <div className="step-content">
+                                <h5 className="fs-14 fw-6">Güneş Koruması</h5>
+                                <p>Doğrudan güneş ışığından koruyunuz.</p>
+                              </div>
+                            </div>
+                            <div className="care-step d-flex gap-15 mb_20 align-items-start">
+                              <div className="step-icon">
+                                <i className="icon-droplet text-info" style={{fontSize: '24px'}} />
+                              </div>
+                              <div className="step-content">
+                                <h5 className="fs-14 fw-6">Nem Koruması</h5>
+                                <p>Aşırı nemli ortamlardan uzak tutunuz.</p>
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      
+                      <div className="warranty-info bg-light p-3 rounded mt_30">
+                        <h4 className="fs-16 fw-6 mb_10">Garanti Bilgileri</h4>
+                        <p className="mb_10"><strong>Garanti Süresi:</strong> {product.warranty || "2 Yıl Üretici Garantisi"}</p>
+                        <p className="mb-0 text-muted">Garanti kapsamında olmayan durumlar: Yanlış kullanım, dış etkenler ve normal aşınma.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
