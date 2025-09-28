@@ -6,7 +6,28 @@ import Image from "next/image";
 import { Pagination, Navigation } from "swiper/modules";
 export default function Categories() {
   return (
-    <section className="flat-spacing-15 bg_beige-3 flat-control-sw">
+    <>
+      <style jsx>{`
+        .responsive-category-btn {
+          font-size: 9px !important;
+          padding: 10px 25px !important;
+        }
+        
+        @media (max-width: 768px) {
+          .responsive-category-btn {
+            font-size: 8px !important;
+            padding: 8px 18px !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .responsive-category-btn {
+            font-size: 7px !important;
+            padding: 6px 15px !important;
+          }
+        }
+      `}</style>
+      <section className="flat-spacing-15 bg_beige-3 flat-control-sw">
       <div className="container">
         <div className="flat-title flex-row justify-content-between px-0">
           <span className="title wow fadeInUp" data-wow-delay="0s">
@@ -64,28 +85,57 @@ export default function Categories() {
                 <SwiperSlide key={index}>
                   <div className="collection-item large hover-img">
                     <div className="collection-inner">
-                      <Link
-                        href={item.href}
+                      <div 
                         className="collection-image img-style"
+                        style={{ position: 'relative', overflow: 'hidden', borderRadius: '8px' }}
                       >
                         <Image
                           className="lazyload"
                           data-src={item.src}
                           alt={item.alt}
                           src={item.src}
-                          width={300}
-                          height={400}
-                          style={{ width: '300px', height: '400px', objectFit: 'cover', objectPosition: 'center' }}
+                          width={800}
+                          height={600}
+                          style={{ width: '100%', height: 'auto', aspectRatio: '4/3', objectFit: 'cover', objectPosition: 'center' }}
                         />
-                      </Link>
-                      <div className="collection-content">
-                        <Link
-                          href={item.href}
-                          className="tf-btn collection-title hover-icon"
+                        <div 
+                          className="collection-content"
+                          style={{ 
+                            position: 'absolute',
+                            bottom: '15px',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            zIndex: 10,
+                            width: '90%',
+                            display: 'flex',
+                            justifyContent: 'center'
+                          }}
                         >
-                          <span>{item.name}</span>
-                          <i className="icon icon-arrow1-top-left" />
-                        </Link>
+                          <Link
+                            href={item.href}
+                            className="tf-btn collection-title hover-icon responsive-category-btn"
+                            style={{ 
+                              justifyContent: 'center', 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: '5px',
+                              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                              padding: '10px 25px',
+                              borderRadius: '2px',
+                              color: '#333',
+                              textDecoration: 'none',
+                              fontWeight: '500',
+                              fontSize: '9px',
+                              boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+                              transition: 'all 0.3s ease',
+                              whiteSpace: 'nowrap',
+                              minWidth: 'auto'
+                            }}
+                          >
+                            <span>{item.name}</span>
+                            <i className="icon icon-arrow1-top-left" style={{ color: '#000', fontSize: '8px' }} />
+                          </Link>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -102,5 +152,6 @@ export default function Categories() {
         </div>
       </div>
     </section>
+    </>
   );
 }

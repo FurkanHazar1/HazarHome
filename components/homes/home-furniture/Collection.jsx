@@ -11,9 +11,9 @@ export default function Collection() {
               <div className="collection-image img-style">
                 <Image
                   className="lazyload"
-                  data-src="/images/menu/koleksiyonlar/oturma_odasi.png"
+                  data-src="/images/menu/koleksiyonlar/oturma_odasi.jpeg"
                   alt="collection-img"
-                  src="/images/menu/koleksiyonlar/oturma_odasi.png"
+                  src="/images/menu/koleksiyonlar/oturma_odasi.jpeg"
                   width={500}
                   height={600}
                   style={{ objectFit: 'cover' }}

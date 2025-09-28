@@ -41,9 +41,9 @@ export default function Lookbook() {
               <div className="image">
                 <Image
                   className="lazyload"
-                  data-src="/images/slider/009furniture-banner-10.jpg"
+                  data-src="/uploads/images/furniture-sets/yatak-odasi/4/image_1.jpg"
                   alt="image-lookbook"
-                  src="/images/slider/009furniture-banner-10.jpg"
+                  src="/uploads/images/furniture-sets/yatak-odasi/4/image_1.jpg"
                   width={2153}
                   height={1059}
                 />
@@ -59,12 +59,44 @@ export default function Lookbook() {
                       <span />
                     </button>
                     <ul className="dropdown-menu p-0 border-0">
-                      <LookbookComponent product={lookbookProducts[6]} />
+                      <LookbookComponent product={lookbookProducts[0]} />
                     </ul>
                   </div>
                 </div>
               </div>
               <div className="lookbook-item item-2">
+                <div className="inner">
+                  <div className="btn-group dropdown dropup dropdown-center">
+                    <button
+                      className="tf-pin-btn"
+                      data-bs-toggle="dropdown"
+                      aria-expanded="false"
+                    >
+                      <span />
+                    </button>
+                    <ul className="dropdown-menu p-0 border-0">
+                      <LookbookComponent product={lookbookProducts[7]} />
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              <div className="lookbook-item item-3">
+                <div className="inner">
+                  <div className="btn-group dropdown dropup dropdown-center">
+                    <button
+                      className="tf-pin-btn"
+                      data-bs-toggle="dropdown"
+                      aria-expanded="false"
+                    >
+                      <span />
+                    </button>
+                    <ul className="dropdown-menu p-0 border-0">
+                      <LookbookComponent product={lookbookProducts[7]} />
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              <div className="lookbook-item item-4">
                 <div className="inner">
                   <div className="btn-group dropdown dropup dropdown-center">
                     <button

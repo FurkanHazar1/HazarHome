@@ -81,7 +81,7 @@ export const yatakOdasiCategories = [
     name: "Yataklar",
   },
   {
-    href: "/gardıroplar",
+    href: "/gardiroplar",
     src: "/images/menu/yatak_odasi/gardirop.jpg",
     alt: "Wardrobe",
     name: "Gardıroplar",
@@ -169,12 +169,6 @@ export const subCategories = [
     name: "Yemek Masaları",
   },
   {
-    href: "/yemek-sandalyeleri",
-    src: "/images/menu/yemek_odasi/yemek_sandalyesi.jpg",
-    alt: "Dining-Chair",
-    name: "Yemek Sandalyeleri",
-  },
-  {
     href: "/konsol-vitrin",
     src: "/images/menu/yemek_odasi/konsol_vitrin.jpg",
     alt: "Console-Table",
@@ -187,7 +181,7 @@ export const subCategories = [
     name: "Yataklar",
   },
   {
-    href: "/gardıroplar",
+    href: "/gardiroplar",
     src: "/images/menu/yatak_odasi/gardirop.jpg",
     alt: "Wardrobe",
     name: "Gardıroplar",
@@ -636,7 +630,7 @@ export const navItems = [
         links: [
           { href: "/yatak-odasi-takimlari", label: "Yatak Odası Takımları" },
           { href: "/yataklar", label: "Yataklar" },
-          { href: "/gardıroplar", label: "Gardıroplar" },
+          { href: "/gardiroplar", label: "Gardıroplar" },
           { href: "/komodinler", label: "Komodinler" },
           { href: "/makyaj-masalari", label: "Makyaj Masaları" },
           { href: "/sifonyer", label: "Şifonyer" },

@@ -15,13 +15,13 @@ export default function Hero() {
           fadeEffect={{
             crossFade: true
           }}
-          speed={800}
+          speed={300}
           navigation={{
             prevEl: ".snbp-hero",
             nextEl: ".snbn-hero",
           }}
           autoplay={{
-            delay: 4000,
+            delay: 6000,
             disableOnInteraction: false,
           }}
           loop={true}
@@ -51,7 +51,7 @@ export default function Hero() {
                             index + 3
                           } tf-btn btn-light-icon animate-hover-btn btn-xl radius-3`}
                         >
-                          <span>Mobilyaları İncele</span>
+                          <span>Mobilya Takımını İncele</span>
                           <i className="icon icon-arrow-right" />
                         </Link>
                       </div>

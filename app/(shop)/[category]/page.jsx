@@ -68,6 +68,13 @@ const getSubCategoryMapping = () => {
       parentCategory: 'yatak-odasi',
       categoryData: item
     };
+    
+    // URL encoding sorunları için alternatif slug'ları da ekle
+    if (slug === 'gardıroplar') {
+      // Türkçe karakter problemleri için farklı varyasyonları da ekle
+      subCategories['gardiroplar'] = subCategories[slug];
+      subCategories['gardırpolar'] = subCategories[slug]; // URL encoding sonucu olabilir
+    }
   });
   
   return subCategories;

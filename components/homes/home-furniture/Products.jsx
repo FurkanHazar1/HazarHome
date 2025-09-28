@@ -41,7 +41,7 @@ export default function Products() {
       <section className="flat-spacing-12 has-line-bottom">
         <div className="container">
           <div className="flat-title wow fadeInUp" data-wow-delay="0s">
-            <span className="title">Trending now</span>
+            <span className="title">Bunlarıda Beğenebilirsiniz</span>
           </div>
           <div className="text-center py-5">
             <p>Ürünler yükleniyor...</p>
@@ -56,7 +56,7 @@ export default function Products() {
       <section className="flat-spacing-12 has-line-bottom">
         <div className="container">
           <div className="flat-title wow fadeInUp" data-wow-delay="0s">
-            <span className="title">Trending now</span>
+            <span className="title">Bunlarıda Beğenebilirsiniz</span>
           </div>
           <div className="text-center py-5">
             <p>Şu anda gösterilecek ürün bulunmuyor.</p>
@@ -70,21 +70,7 @@ export default function Products() {
     <section className="flat-spacing-12 has-line-bottom">
       <div className="container">
         <div className="flat-title wow fadeInUp" data-wow-delay="0s">
-          <span className="title">Trending now</span>
-          <div className="d-flex gap-16 align-items-center box-pagi-arr">
-            <div className="nav-sw-arrow nav-next-slider nav-next-product snbp166">
-              <span className="icon icon-arrow1-left" />
-            </div>
-            <Link
-              href={`/product-style-05`}
-              className="tf-btn btn-line fs-12 fw-6"
-            >
-              VIEW ALL
-            </Link>
-            <div className="nav-sw-arrow nav-prev-slider nav-prev-product snbn166">
-              <span className="icon icon-arrow1-right" />
-            </div>
-          </div>
+          <span className="title">Bunlarıda Beğenebilirsiniz</span>
         </div>
         <div className="hover-sw-nav hover-sw-2">
           <Swiper

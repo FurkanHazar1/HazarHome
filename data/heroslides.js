@@ -254,28 +254,28 @@ export const slideshowSlides = [
 
 export const sliderData2 = [
   {
-    imgSrc: "/images/slider/oturma_odasi_slider.jpg",
+    imgSrc: "/images/menu/slider/living.png",
     altText: "fashion-slideshow",
-    heading: "Modern Oturma Odası\nTakımları.",
-    description: "Kaçırılmayacak Fırsatlar",
+    heading: "Milano Oturma Odası\nTakımı.",
+    description: "Eşsiz Tasarım ve Konfor",
     backgroundColor: "bg_light-grey-3",
-    src: "/"
+    src: "/product-detail-furniture-set/12"
   },
   {
-    imgSrc: "/images/slider/yemek_odasi_slider.jpg",
+    imgSrc: "/images/menu/slider/dinner.jpg",
     altText: "fashion-slideshow",
-    heading: "Lüx Yemek Odası\nTakımları",
-    description: "Kaçırılmayacak Fırsatlar",
+    heading: "Alaçatı Yemek Odası\nTakımları",
+    description: "Zarafet ve İşlevsellik",
     backgroundColor: "bg_light-blue-1",
-    src: "/"
+    src: "/product-detail-furniture-set/22"
   },
   {
-    imgSrc: "/images/slider/yatak_odasi_slider.jpg",
+    imgSrc: "/images/menu/slider/bedroom.png",
     altText: "fashion-slideshow",
-    heading: "Konforlu Yatak Odası\nTakımları",
-    description: "Kaçırılmayacak Fırsatlar",
+    heading: "Tokyo Yatak Odası\nTakımları",
+    description: "Rahatlık ve Şıklık",
     backgroundColor: "bg_light-purple",
-    src: "/"
+    src: "/product-detail-furniture-set/4"
   },
 ];
 

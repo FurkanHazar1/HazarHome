@@ -1,11 +1,11 @@
 export const galleryItems = [
   {
-    src: "/images/shop/gallery/furniture-gallery_01.jpg",
+    src: "/uploads/images/furnitures/gardiroplar/22/image_1.jpg",
     alt: "image-gallery",
     delay: "0s",
   },
   {
-    src: "/images/shop/gallery/furniture-gallery_02.jpg",
+    src: "/uploads/images/furnitures/sehpalar/17/image_1.jpg",
     alt: "image-gallery",
     delay: ".1s",
   },

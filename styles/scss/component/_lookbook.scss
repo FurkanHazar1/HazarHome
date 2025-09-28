@@ -242,130 +242,33 @@
 .slideshow-lookbook-furniture{
     .lookbook-1{
         .item-1{
-            left: 40%;
-            top: 40%;
+            left: 30%;
+            top: 75%;
         }
         .item-2{
-            left: 50%;
-            top: 50%;
+            left: 90%;
+            top: 60%;
+        }
+         .item-3{
+            left: 10%;
+            top: 75%;
+        }
+         .item-4{
+            left: 40%;
+            top: 40%;
         }
     }
     .lookbook-2{
         .item-1{
-            left: 50%;
-            top: 50%;
+            left: 30%;
+            top: 75%;
         }
     }
     .lookbook-3{
         .item-1{
-            top: 45%;
-            left: 45%;
+            left: 30%;
+            top: 75%;
         }
 
-    }
-}
-
-.lookbook-kitchen-wear {
-    form {
-        .tf-lookbook {
-            height: unset !important;
-        }
-        .swiper-slide:last-child {
-            .tf-bundle-product-item {
-                border: 0;
-            }
-        }
-        .tf-btn {
-            width: 100%;
-            max-width: 461px;
-        }
-    }
-    .wrap-lookbook {
-        .item-1 {
-            top: 65%;
-            left: 50%;
-        }
-        .item-2 {
-            top: 17%;
-            left: 57%;
-        }
-        .item-3 {
-            top: 70%;
-            left: 85%;
-        }
-    }
-}
-
-.flat-activewear-lookbook{
-    .wrap-lookbook{
-        .item-1{
-            top: 20%;
-            left: 65%;
-        }
-        .item-2{
-            top: 60%;
-            left: 16%;
-        }
-        .item-3{
-            top: 61%;
-            left: 80%;
-        }
-    }
-    .inner-sw-lookbook{
-        .tf-btn{
-            margin-top: 16px;
-            border-radius: 60px;
-
-        }
-    }
-}
-
-.lookbook-handbag{
-    .lookbook-item{
-        position: absolute;
-    }
-    .item-1{
-        left: 49%;
-        top: 28%;
-    }
-    .item-2{
-        left: 30%;
-        top: 45%;
-    }
-    .item-3{
-        left: 50%;
-        top: 68%;
-    }
-}
-
-.lookbook-sneaker{
-    .lookbook-item{
-        position: absolute;
-    }
-    .item-1{
-        left: 64%;
-        top: 21%;
-    }
-    .item-2{
-        left: 38%;
-        top: 45%;
-    }
-}
-
-.lookbook-gaming-accessories{
-    .lookbook-item{
-        position: absolute;
-    }
-    .item-1{
-        left: 74%;
-        top: 28%;
-    }
-    .item-2{
-        left: 26%;
-        top: 32%;
-    }
-    .item-3{
-        left: 45%;
-        top: 75%;
     }
 }
