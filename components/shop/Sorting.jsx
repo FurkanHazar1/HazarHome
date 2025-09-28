@@ -9,17 +9,17 @@ export default function Sorting({ products = products1, setFinalSorted }) {
   useEffect(() => {
     if (selectedOptions.text == "Default") {
       setFinalSorted([...products]);
-    } else if (selectedOptions.text == "Alphabetically, A-Z") {
+    } else if (selectedOptions.text == "Alfabetik, A-Z") {
       setFinalSorted(
         [...products].sort((a, b) => a.title.localeCompare(b.title))
       );
-    } else if (selectedOptions.text == "Alphabetically, Z-A") {
+    } else if (selectedOptions.text == "Alfabetik, Z-A") {
       setFinalSorted(
         [...products].sort((a, b) => b.title.localeCompare(a.title))
       );
-    } else if (selectedOptions.text == "Price, low to high") {
+    } else if (selectedOptions.text == "Fiyata göre, düşükten yükseğe") {
       setFinalSorted([...products].sort((a, b) => a.price - b.price));
-    } else if (selectedOptions.text == "Price, high to low") {
+    } else if (selectedOptions.text == "Fiyata göre, yüksekte düşüğe") {
       setFinalSorted([...products].sort((a, b) => b.price - a.price));
     }
   }, [products, selectedOptions]);

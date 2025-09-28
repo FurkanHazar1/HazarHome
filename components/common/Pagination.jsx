@@ -1,54 +1,45 @@
 "use client";
 import React, { useState } from "react";
 
-export default function Pagination() {
-  // State to track the active page
-  const [activePage, setActivePage] = useState(1);
+import { useRouter, useSearchParams } from "next/navigation";
 
-  // Function to handle page click
+export default function Pagination({ currentPage = 1, totalPages = 1 }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const handlePageClick = (pageNumber) => {
-    setActivePage(pageNumber);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", pageNumber);
+    router.push(`?${params.toString()}`);
   };
+
+  if (totalPages <= 1) return null;
+
+  // Sayfa numaralarını oluştur
+  const pageNumbers = [];
+  for (let i = 1; i <= totalPages; i++) {
+    pageNumbers.push(i);
+  }
 
   return (
     <>
-      <li className={activePage === 1 ? "active" : ""}>
-        <a className="pagination-link" onClick={() => handlePageClick(1)}>
-          1
-        </a>
-      </li>{" "}
-      <li className={activePage === 2 ? "active" : ""}>
-        <a
-          className="pagination-link animate-hover-btn"
-          onClick={() => handlePageClick(2)}
-        >
-          2
-        </a>
-      </li>
-      <li className={activePage === 3 ? "active" : ""}>
-        <a
-          className="pagination-link animate-hover-btn"
-          onClick={() => handlePageClick(3)}
-        >
-          3
-        </a>
-      </li>
-      <li className={activePage === 4 ? "active" : ""}>
-        <a
-          className="pagination-link animate-hover-btn"
-          onClick={() => handlePageClick(4)}
-        >
-          4
-        </a>
-      </li>
-      <li>
-        <a
-          onClick={() => setActivePage((pre) => (pre !== 4 ? pre + 1 : pre))}
-          className="pagination-link animate-hover-btn"
-        >
-          <span className="icon icon-arrow-right" />
-        </a>
-      </li>
+      {pageNumbers.map((num) => (
+        <li key={num} className={currentPage === num ? "active" : ""}>
+          <a className="pagination-link animate-hover-btn" onClick={() => handlePageClick(num)}>
+            {num}
+          </a>
+        </li>
+      ))}
+      {currentPage < totalPages && (
+        <li>
+          <a
+            onClick={() => handlePageClick(currentPage + 1)}
+            className="pagination-link animate-hover-btn"
+          >
+            <span className="icon icon-arrow-right" />
+          </a>
+        </li>
+      )}
     </>
   );
 }

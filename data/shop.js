@@ -1,9 +1,5 @@
 export const layouts = [
-  {
-    className: "sw-layout-list list-layout",
-    dataValueGrid: "1",
-    iconClass: "icon icon-list",
-  },
+
   {
     className: "sw-layout-2",
     dataValueGrid: "2",
@@ -19,23 +15,13 @@ export const layouts = [
     dataValueGrid: "4",
     iconClass: "icon-grid-4",
   },
-  {
-    className: "sw-layout-5",
-    dataValueGrid: "5",
-    iconClass: "icon-grid-5",
-  },
-  {
-    className: "sw-layout-6",
-    dataValueGrid: "6",
-    iconClass: "icon-grid-6",
-  },
 ];
 
 export const sortingOptions = [
   { text: "Default" },
 
-  { text: "Alphabetically, A-Z" },
-  { text: "Alphabetically, Z-A" },
-  { text: "Price, low to high" },
-  { text: "Price, high to low" },
+  { text: "Alfabetik, A-Z" },
+  { text: "Alfabetik, Z-A" },
+  { text: "Fiyata göre, düşükten yükseğe" },
+  { text: "Fiyata göre, yüksekte düşüğe" },
 ];

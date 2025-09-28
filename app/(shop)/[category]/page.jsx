@@ -103,23 +103,13 @@ export async function generateMetadata({ params }) {
   };
 }
 
-export default async function CategoryPage({ params }) {
-  const { category } = await params;
+export default async function CategoryPage({ params, searchParams }) {
+  const { category } = params;
+  const page = searchParams?.page ? parseInt(searchParams.page, 10) : 1;
+  const pageSize = 12;
   const categoryData = categoryMappings[category];
   const subCategoryData = getSubCategoryMapping()[category];
 
-  if (subCategoryData) {
-    let parentCategories = null;
-    if (subCategoryData.parentCategory === 'oturma-odasi') {
-      parentCategories = oturmaOdasiCategories;
-    } else if (subCategoryData.parentCategory === 'yemek-odasi') {
-      parentCategories = yemekOdasiCategories;
-    } else if (subCategoryData.parentCategory === 'yatak-odasi') {
-      parentCategories = yatakOdasiCategories;
-    }
-    console.log('Parent categories for subcategory:', parentCategories);
-  }
-  
   // Ana kategori kontrolü
   if (categoryData) {
     return (
@@ -135,12 +125,12 @@ export default async function CategoryPage({ params }) {
           </div>
         </div>
         <Subcollections categories={categoryData.categories} />
-        <ShopDefault category={categoryData.mainCategory} />
+        <ShopDefault category={categoryData.mainCategory} page={page} pageSize={pageSize} />
         <Footer1 />
       </>
     );
   }
-  
+
   // Alt kategori kontrolü
   if (subCategoryData) {
     // Ana kategorinin tüm alt kategorilerini al
@@ -152,7 +142,7 @@ export default async function CategoryPage({ params }) {
     } else if (subCategoryData.parentCategory === 'yatak-odasi') {
       parentCategories = yatakOdasiCategories;
     }
-    
+
     return (
       <>
         <Topbar1 />
@@ -170,12 +160,14 @@ export default async function CategoryPage({ params }) {
         <ShopDefault 
           category={subCategoryData.parentCategory} 
           subCategory={category}
+          page={page}
+          pageSize={pageSize}
         />
         <Footer1 />
       </>
     );
   }
-  
+
   // Kategori bulunamadıysa 404
   notFound();
 }

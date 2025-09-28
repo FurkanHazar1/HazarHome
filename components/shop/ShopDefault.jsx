@@ -40,7 +40,7 @@ async function fetchProducts(categorySlug = null, subCategorySlug = null) {
   }
 }
 
-export default function ShopDefault({ category = null, subCategory = null, categories = null }) {
+export default function ShopDefault({ category = null, subCategory = null, categories = null, page = 1, pageSize = 12 }) {
   const [gridItems, setGridItems] = useState(4);
   const [products, setProducts] = useState([]);
   const [finalSorted, setFinalSorted] = useState([]);
@@ -50,35 +50,29 @@ export default function ShopDefault({ category = null, subCategory = null, categ
   useEffect(() => {
     async function loadProducts() {
       setLoading(true);
-      
       const fetchedProducts = await fetchProducts(category, subCategory);
-      
       setProducts(fetchedProducts);
       setFinalSorted(fetchedProducts);
       setLoading(false);
     }
-
     loadProducts();
   }, [category, subCategory]);
+
+  // Sayfalama için ürünleri böl
+  const totalProducts = finalSorted.length;
+  const totalPages = Math.ceil(totalProducts / pageSize);
+  const pagedProducts = finalSorted.slice((page - 1) * pageSize, page * pageSize);
 
   return (
     <>
       {/* Eğer categories prop'u varsa Subcollections'ı göster */}
       {categories && <Subcollections categories={categories} />}
-      
+
       <section className="flat-spacing-2">
         <div className="container">
           <div className="tf-shop-control grid-3 align-items-center">
             <div className="tf-control-filter">
-              <a
-                href="#filterShop"
-                data-bs-toggle="offcanvas"
-                aria-controls="offcanvasLeft"
-                className="tf-btn-filter"
-              >
-                <span className="icon icon-filter" />
-                <span className="text">Filter</span>
-              </a>
+
             </div>
             <ul className="tf-control-layout d-flex justify-content-center">
               {layouts.map((layout, index) => (
@@ -108,14 +102,14 @@ export default function ShopDefault({ category = null, subCategory = null, categ
                 <p>Ürünler yükleniyor...</p>
               </div>
             ) : (
-              <ProductGrid allproducts={finalSorted} gridItems={gridItems} />
+              <ProductGrid allproducts={pagedProducts} gridItems={gridItems} />
             )}
             {/* pagination */}
-            {!loading && finalSorted.length ? (
+            {!loading && totalProducts > pageSize ? (
               <ul className="tf-pagination-wrap tf-pagination-list tf-pagination-btn">
-                <Pagination />
+                <Pagination currentPage={page} totalPages={totalPages} />
               </ul>
-            ) : !loading && (
+            ) : !loading && totalProducts === 0 && (
               <div className="text-center py-5">
                 <p>Bu kategoride henüz ürün bulunmamaktadır.</p>
               </div>

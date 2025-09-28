@@ -52,37 +52,8 @@ export default function Productcard23({ product }) {
         >
           {product.title}
         </Link>
-        <span className="price">${product.price.toFixed(2)}</span>
-        <p className="description">
-          Button-up shirt sleeves and a relaxed silhouette. It’s tailored with
-          drapey, crinkle-texture fabric that’s made from LENZING™ ECOVERO™
-          Viscose — responsibly sourced wood-based fibres produced through a
-          process that reduces...
-        </p>
-        {product.colors && (
-          <ul className="list-color-product">
-            {product.colors.map((color) => (
-              <li
-                className={`list-color-item color-swatch ${
-                  currentImage == color.imgSrc ? "active" : ""
-                } `}
-                onMouseOver={() => setCurrentImage(color.imgSrc)}
-                key={color.name}
-              >
-                <span className="tooltip">{color.name}</span>
-                <span className={`swatch-value ${color.colorClass}`} />
-                <Image
-                  className="lazyload"
-                  data-src={color.imgSrc}
-                  src={color.imgSrc}
-                  alt="image-product"
-                  width={720}
-                  height={1005}
-                />
-              </li>
-            ))}
-          </ul>
-        )}
+  <span className="price">{product.price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
+  {/* Açıklama ve renk bilgisi kaldırıldı */}
         {product.sizes && (
           <div className="size-list">
             {product.sizes.map((size) => (

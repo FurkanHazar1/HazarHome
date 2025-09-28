@@ -20,12 +20,7 @@ export const ProductCard = ({ product }) => {
   
   useEffect(() => {
     setCurrentImage(product.imgSrc);
-    // Renk seçimi için default rengi ayarla
-    if (product.colors && product.colors.length > 0) {
-      setCurrentColor(product.colors[0]);
-    } else {
-      setCurrentColor(null);
-    }
+    setCurrentColor(null); // Renk seçimi kaldırıldı
   }, [product]);
 
   return (
@@ -72,44 +67,10 @@ export const ProductCard = ({ product }) => {
                 className="box-icon bg_white quick-add tf-btn-loading"
               >
                 <span className="icon icon-bag" />
-                <span className="tooltip">Quick Add</span>
+                <span className="tooltip">Sepete Ekle</span>
               </a>
-              <a
-                onClick={() => addToWishlist(product.id)}
-                className="box-icon bg_white wishlist btn-icon-action"
-              >
-                <span
-                  className={`icon icon-heart ${
-                    isAddedtoWishlist(product.id) ? "added" : ""
-                  }`}
-                />
-                <span className="tooltip">
-                  {isAddedtoWishlist(product.id)
-                    ? "Already Wishlisted"
-                    : "Add to Wishlist"}
-                </span>
-                <span className="icon icon-delete" />
-              </a>
-              <a
-                href="#compare"
-                data-bs-toggle="offcanvas"
-                aria-controls="offcanvasLeft"
-                onClick={() => addToCompareItem(product.id)}
-                className="box-icon bg_white compare btn-icon-action"
-              >
-                <span
-                  className={`icon icon-compare ${
-                    isAddedtoCompareItem(product.id) ? "added" : ""
-                  }`}
-                />
-                <span className="tooltip">
-                  {" "}
-                  {isAddedtoCompareItem(product.id)
-                    ? "Already Compared"
-                    : "Add to Compare"}
-                </span>
-                <span className="icon icon-check" />
-              </a>
+
+
               <a
                 href="#quick_view"
                 onClick={() => setQuickViewItem(product)}
@@ -117,7 +78,7 @@ export const ProductCard = ({ product }) => {
                 className="box-icon bg_white quickview tf-btn-loading"
               >
                 <span className="icon icon-view" />
-                <span className="tooltip">Quick View</span>
+                <span className="tooltip">İncele</span>
               </a>
             </div>
             {product.countdown && (
@@ -150,54 +111,8 @@ export const ProductCard = ({ product }) => {
         >
           {product.title}
         </Link>
-        <span className="price">${product.price.toFixed(2)}</span>
-        {product.colors && (
-          <div className="tf-product-info-variant-picker">
-            <div className="variant-picker-item">
-              <div className="variant-picker-label">
-                Renk:
-                <span className="fw-6 variant-picker-label-value">
-                  {currentColor?.name || currentColor?.value || ''}
-                </span>
-              </div>
-              <form className="variant-picker-values">
-                {product.colors.map((color, i) => (
-                  <React.Fragment key={color.id || color.value || i}>
-                    <input
-                      id={`color-${product.id}-${color.id || i}`}
-                      type="radio"
-                      name={`color-${product.id}`}
-                      readOnly
-                      checked={currentColor?.id === color.id || currentColor === color}
-                    />
-                    <label
-                      onClick={() => {
-                        setCurrentColor(color);
-                        setCurrentImage(color.imgSrc);
-                      }}
-                      className="hover-tooltip radius-60"
-                      htmlFor={`color-${product.id}-${color.id || i}`}
-                      data-value={color.name || color.value}
-                      style={{
-                        backgroundColor: getColorHex(color),
-                        width: '24px',
-                        height: '24px',
-                        borderRadius: '50%',
-                        border: currentColor?.id === color.id || currentColor === color ? '2px solid #000' : '2px solid #ddd',
-                        display: 'inline-block',
-                        margin: '0 3px',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                    >
-                      <span className="tooltip">{color.name || color.value}</span>
-                    </label>
-                  </React.Fragment>
-                ))}
-              </form>
-            </div>
-          </div>
-        )}
+  <span className="price">{product.price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
+  {/* Renk bilgisi kaldırıldı */}
       </div>
     </div>
   );
