@@ -16,7 +16,7 @@ export const oturmaOdasiCategories = [
   },
   {
     href: "/kose-koltuklar",
-    src: "/images/menu/oturma_odasi/kose_koltuk.jpg",
+    src: "/images/menu/oturma_odasi/kose_koltuk.png",
     alt: "Corner-Sofa",
     name: "Köşe Koltuklar",
     labels: [{ text: "Popular" }],
@@ -139,7 +139,7 @@ export const subCategories = [
   },
   {
     href: "/kose-koltuklar",
-    src: "/images/menu/oturma_odasi/kose_koltuk.jpg",
+    src: "/images/menu/oturma_odasi/kose_koltuk.png",
     alt: "Corner-Sofa",
     name: "Köşe Koltuklar",
     labels: [{ text: "Popular" }],

@@ -60,7 +60,7 @@ export default function Hero() {
                 </div>
               </div>
               <div className="img-slider" style={{
-                height: '600px',
+                height: '%100vh',
                 overflow: 'hidden',
                 display: 'flex',
                 alignItems: 'center',
@@ -75,8 +75,8 @@ export default function Hero() {
                   height={600}
                   priority
                   style={{
-                    width: '1000px',
-                    height: '600px',
+                    width: '%100vh',
+                    height: '%100vh',
                     objectFit: 'cover',
                     objectPosition: 'center'
                   }}

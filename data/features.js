@@ -20,43 +20,43 @@ export const iconBoxes = [
 export const iconBoxData = [
   {
     iconClass: "icon-shipping",
-    title: "Free Shipping",
-    description: "Free shipping over order $120",
+    title: "Ücretsiz Kargo",
+    description: "Dünyanın her yerine ücretsiz kargo",
   },
   {
     iconClass: "icon-payment fs-22",
-    title: "Flexible Payment",
-    description: "Pay with Multiple Credit Cards",
+    title: "Esnek Ödeme",
+    description: "Peşin veya kredi kartı ile ödeme seçenekleri",
   },
   {
     iconClass: "icon-return fs-20",
-    title: "14 Day Returns",
-    description: "Within 30 days for an exchange",
+    title: "2 Sene Garanti",
+    description: "Bütün ürünlerimiz 2 sene garantilidir",
   },
   {
     iconClass: "icon-suport",
-    title: "Premium Support",
-    description: "Outstanding premium support",
+    title: "Premium Destek",
+    description: "7/24 müşteri desteği",
   },
   {
     iconClass: "icon-shipping",
-    title: "Free Shipping",
-    description: "Free shipping over order $120",
+    title: "Ücretsiz Kargo",
+    description: "Dünyanın her yerine ücretsiz kargo",
   },
   {
     iconClass: "icon-payment fs-22",
-    title: "Flexible Payment",
-    description: "Pay with Multiple Credit Cards",
+    title: "Esnek Ödeme",
+    description: "Peşin veya kredi kartı ile ödeme seçenekleri",
   },
   {
     iconClass: "icon-return fs-20",
-    title: "14 Day Returns",
-    description: "Within 30 days for an exchange",
+    title: "2 Sene Garanti",
+    description: "Bütün ürünlerimiz 2 sene garantilidir",
   },
   {
     iconClass: "icon-suport",
-    title: "Premium Support",
-    description: "Outstanding premium support",
+    title: "Premium Destek",
+    description: "7/24 müşteri desteği",
   },
 ];
 export const iconBoxes7 = [

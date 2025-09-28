@@ -5667,7 +5667,7 @@ export const products43 = [
 
 export const lookbookProducts = [
   {
-    id: 271,
+    id: 8,
     imgSrc: "/uploads/images/furnitures/yataklar/8/image_1.jpg",
     altText: "lookbook-item",
     title: "Tokyo Yatak",
@@ -5675,18 +5675,41 @@ export const lookbookProducts = [
     width: "98",
     height: "70",
     isLookBookProduct: true,
+    href: "/product-detail-furniture/8",
   },
   {
-    id: 272,
-    imgSrc: "/images/shop/products/img-p4.png",
-    altText: "",
-    title: "Ribbed modal T-shirt",
-    price: 20.0,
+    id: 10,
+    imgSrc: "/uploads/images/furnitures/sifonyerler/10/image_1.jpg",
+    altText: "lookbook-item",
+    title: "Tokyo Şifonyer",
+    price: 112.0,
     width: "98",
     height: "70",
     isLookBookProduct: true,
+    href: "/product-detail-furniture/10",
   },
-
+   {
+    id: 10,
+    imgSrc: "/uploads/images/furnitures/komodinler/9/image_1.jpg",
+    altText: "lookbook-item",
+    title: "Tokyo Komodin",
+    price: 112.0,
+    width: "98",
+    height: "70",
+    isLookBookProduct: true,
+    href: "/product-detail-furniture/9",
+  },
+   {
+    id: 10,
+    imgSrc: "/uploads/images/furnitures/gardiroplar/7/image_1.jpg",
+    altText: "lookbook-item",
+    title: "Tokyo Dolap",
+    price: 112.0,
+    width: "98",
+    height: "70",
+    isLookBookProduct: true,
+    href: "/product-detail-furniture/7",
+  },
 ];
 
 export const featuredProducts = [

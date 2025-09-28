@@ -9,8 +9,8 @@ export default function LookbookComponent({ product = lookbookProducts[0] }) {
   const { setQuickViewItem } = useContextElement();
   return (
     <li>
-      <div className="lookbook-product">
-        <Link href={`/product-detail/${product.id}`} className="image">
+      <div className="lookbook-product" style={{ maxWidth: 240 }}>
+        <Link href={product.href} className="image">
           <Image
             className="lazyload"
             data-src={product.imgSrc}
@@ -22,18 +22,10 @@ export default function LookbookComponent({ product = lookbookProducts[0] }) {
         </Link>
         <div className="content-wrap">
           <div className="product-title">
-            <a href="#">{product.title}</a>
+              <a href={product.href}>{product.title}</a>
           </div>
           <div className="price">${product.price.toFixed(2)}</div>
         </div>
-        <a
-          href="#quick_view"
-          onClick={() => setQuickViewItem(product)}
-          data-bs-toggle="modal"
-          className=""
-        >
-          <i className="icon-view" />
-        </a>
       </div>
     </li>
   );

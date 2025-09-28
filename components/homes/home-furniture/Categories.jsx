@@ -125,7 +125,7 @@ export default function Categories() {
                               color: '#333',
                               textDecoration: 'none',
                               fontWeight: '500',
-                              fontSize: '9px',
+                              fontSize: '12px',
                               boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
                               transition: 'all 0.3s ease',
                               whiteSpace: 'nowrap',

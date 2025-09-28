@@ -1,15 +1,58 @@
+
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
+
+
+// Lookbook dropdown taşma önleyici stil
+const lookbookDropdownMenuStyle = {
+  position: "absolute",
+  left: "50%",
+  top: "100%",
+  transform: "translateX(-50%)",
+  maxWidth: "100%",
+  overflowWrap: "break-word",
+  zIndex: 9999,
+};
 import { Swiper, SwiperSlide } from "swiper/react";
 import Image from "next/image";
 import LookbookComponent from "@/components/common/LookbookComponent";
 import { lookbookProducts } from "@/data/products";
 import { Navigation, Pagination } from "swiper/modules";
 export default function Lookbook() {
+  // Responsive image style state
+  const [imageStyle, setImageStyle] = useState({
+    width: '100vw',
+    height: '100vh',
+    objectFit: 'cover',
+    objectPosition: 'center',
+  });
+
+  useEffect(() => {
+    function handleResize() {
+      if (window.innerWidth <= 768) {
+        setImageStyle({
+          width: '100%',
+          height: '60vw',
+          objectFit: 'cover',
+          objectPosition: 'center',
+        });
+      } else {
+        setImageStyle({
+          width: '100vw',
+          height: '100vh',
+          objectFit: 'cover',
+          objectPosition: 'center',
+        });
+      }
+    }
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   return (
     <section className="flat-spacing-27 pb-0">
       <div className="flat-title wow fadeInUp" data-wow-delay="0s">
-        <span className="title">Room for inspiration</span>
+        <span className="title">Evinizi Güzelleştirin</span>
       </div>
       <div className="hover-sw-nav view-default">
         <Swiper
@@ -38,7 +81,7 @@ export default function Lookbook() {
         >
           <SwiperSlide className="swiper-slide">
             <div className="wrap-lookbook lookbook-1">
-              <div className="image">
+              <div className="image" style={{ overflow: "hidden" }}>
                 <Image
                   className="lazyload"
                   data-src="/uploads/images/furniture-sets/yatak-odasi/4/image_1.jpg"
@@ -46,6 +89,7 @@ export default function Lookbook() {
                   src="/uploads/images/furniture-sets/yatak-odasi/4/image_1.jpg"
                   width={2153}
                   height={1059}
+                  style={imageStyle}
                 />
               </div>
               <div className="lookbook-item item-1">
@@ -58,7 +102,7 @@ export default function Lookbook() {
                     >
                       <span />
                     </button>
-                    <ul className="dropdown-menu p-0 border-0">
+                    <ul className="dropdown-menu p-0 border-0" style={lookbookDropdownMenuStyle}>
                       <LookbookComponent product={lookbookProducts[0]} />
                     </ul>
                   </div>
@@ -74,8 +118,8 @@ export default function Lookbook() {
                     >
                       <span />
                     </button>
-                    <ul className="dropdown-menu p-0 border-0">
-                      <LookbookComponent product={lookbookProducts[7]} />
+                    <ul className="dropdown-menu p-0 border-0" style={lookbookDropdownMenuStyle}>
+                      <LookbookComponent product={lookbookProducts[1]} />
                     </ul>
                   </div>
                 </div>
@@ -90,8 +134,8 @@ export default function Lookbook() {
                     >
                       <span />
                     </button>
-                    <ul className="dropdown-menu p-0 border-0">
-                      <LookbookComponent product={lookbookProducts[7]} />
+                    <ul className="dropdown-menu p-0 border-0" style={lookbookDropdownMenuStyle}>
+                      <LookbookComponent product={lookbookProducts[2]} />
                     </ul>
                   </div>
                 </div>
@@ -106,8 +150,8 @@ export default function Lookbook() {
                     >
                       <span />
                     </button>
-                    <ul className="dropdown-menu p-0 border-0">
-                      <LookbookComponent product={lookbookProducts[7]} />
+                    <ul className="dropdown-menu p-0 border-0" style={lookbookDropdownMenuStyle}>
+                      <LookbookComponent product={lookbookProducts[3]} />
                     </ul>
                   </div>
                 </div>
@@ -116,14 +160,15 @@ export default function Lookbook() {
           </SwiperSlide>
           <SwiperSlide className="swiper-slide">
             <div className="wrap-lookbook lookbook-2">
-              <div className="image">
+              <div className="image" style={{ overflow: "hidden" }}>
                 <Image
                   className="lazyload"
-                  data-src="/images/slider/009furniture-banner-11.jpg"
+                  data-src="/uploads/images/furniture-sets/oturma-odasi/21/image_1.jpg"
                   alt="image-lookbook"
-                  src="/images/slider/009furniture-banner-11.jpg"
-                  width={1435}
-                  height={706}
+                  src="/uploads/images/furniture-sets/oturma-odasi/21/image_1.jpg"
+                  width={2153}
+                  height={1059}
+                  style={imageStyle}
                 />
               </div>
               <div className="lookbook-item item-1">
@@ -136,7 +181,7 @@ export default function Lookbook() {
                     >
                       <span />
                     </button>
-                    <ul className="dropdown-menu p-0 border-0">
+                    <ul className="dropdown-menu p-0 border-0" style={lookbookDropdownMenuStyle}>
                       <LookbookComponent product={lookbookProducts[8]} />
                     </ul>
                   </div>
@@ -146,14 +191,15 @@ export default function Lookbook() {
           </SwiperSlide>
           <SwiperSlide className="swiper-slide">
             <div className="wrap-lookbook lookbook-3">
-              <div className="image">
+              <div className="image" style={{ overflow: "hidden" }}>
                 <Image
                   className="lazyload"
-                  data-src="/images/slider/009furniture-banner-12.jpg"
+                  data-src="/uploads/images/furniture-sets/yemek-odasi/5/image_1.jpg"
                   alt="image-lookbook"
-                  src="/images/slider/009furniture-banner-12.jpg"
+                  src="/uploads/images/furniture-sets/yemek-odasi/5/image_1.jpg"
                   width={1435}
                   height={706}
+                  style={imageStyle}
                 />
               </div>
               <div className="lookbook-item item-1">
@@ -166,7 +212,7 @@ export default function Lookbook() {
                     >
                       <span />
                     </button>
-                    <ul className="dropdown-menu p-0 border-0">
+                    <ul className="dropdown-menu p-0 border-0" style={lookbookDropdownMenuStyle}>
                       <LookbookComponent product={lookbookProducts[9]} />
                     </ul>
                   </div>

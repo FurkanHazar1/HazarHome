@@ -4,14 +4,33 @@ import { galleryItems } from "@/data/productGallery";
 
 import { Swiper, SwiperSlide } from "swiper/react";
 import Image from "next/image";
+import Link from "next/link";
+
+// ShopGram özel stilleri (CSS-in-JS)
+const shopgramStyle = {
+  width: "100%",
+  aspectRatio: "5/4",
+  height: "auto",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  overflow: "hidden",
+};
+const shopgramImgStyle = {
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
+  display: "block",
+  aspectRatio: "5/4",
+};
 export default function ShopGram() {
   return (
     <section className="pb-0 flat-spacing-18">
       <div className="container-full px-0">
         <div className="flat-title wow fadeInUp" data-wow-delay="0s">
-          <span className="title">Shop Gram</span>
+          <span className="title">Popüler Ürünlerimiz</span>
           <p className="sub-title">
-            Here’s some of our most popular products people are in love with.
+            Seveceğiniz ürünlerimizden bazıları.
           </p>
         </div>
         <Swiper
@@ -29,21 +48,26 @@ export default function ShopGram() {
         >
           {galleryItems.map((item, index) => (
             <SwiperSlide key={index}>
+              <Link  href={item.href}>
               <div
                 className="gallery-item hover-img rounded-0 wow fadeInUp"
                 data-wow-delay={item.delay}
               >
-                <div className="img-style">
+               
+                <div style={shopgramStyle}>
                   <Image
                     className="lazyload img-hover"
                     data-src={item.src}
                     alt={item.alt}
                     src={item.src}
-                    width={400}
-                    height={400}
+                    width={500}
+                    height={500}
+                    style={shopgramImgStyle}
                   />
                 </div>
+              
               </div>
+               </Link>
             </SwiperSlide>
           ))}
         </Swiper>

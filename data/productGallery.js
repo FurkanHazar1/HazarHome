@@ -3,30 +3,30 @@ export const galleryItems = [
     src: "/uploads/images/furnitures/gardiroplar/22/image_1.jpg",
     alt: "image-gallery",
     delay: "0s",
+    href : "/product-detail-furniture/22"
   },
   {
-    src: "/uploads/images/furnitures/sehpalar/17/image_1.jpg",
+    src: "/uploads/images/furniture-sets/oturma-odasi/10/image_1.jpg",
     alt: "image-gallery",
     delay: ".1s",
+    href : "/product-detail-furniture-set/10"
   },
   {
-    src: "/images/shop/gallery/furniture-gallery_03.jpg",
+    src: "/uploads/images/furniture-sets/yatak-odasi/32/image_1.jpg",
     alt: "image-gallery",
     delay: ".2s",
+    href : "/product-detail-furniture-set/32"
   },
   {
-    src: "/images/shop/gallery/furniture-gallery_04.jpg",
+    src: "/uploads/images/furniture-sets/yemek-odasi/5/image_1.jpg",
     alt: "image-gallery",
     delay: ".3s",
+    href : "/product-detail-furniture-set/5"
   },
   {
-    src: "/images/shop/gallery/furniture-gallery_05.jpg",
+    src: "/uploads/images/furniture-sets/oturma-odasi/9/image_1.jpg",
     alt: "image-gallery",
     delay: ".4s",
-  },
-  {
-    src: "/images/shop/gallery/furniture-gallery_06.jpg",
-    alt: "image-gallery",
-    delay: ".4s",
-  },
+    href : "/product-detail-furniture-set/9"
+  }
 ];
