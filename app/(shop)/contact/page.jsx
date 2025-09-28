@@ -18,7 +18,7 @@ export default function page() {
         </div>
       </div>
       <Map2 />
-      <ContactForm2 />
+
       <Footer1 />
     </>
   );
