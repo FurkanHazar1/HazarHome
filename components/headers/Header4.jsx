@@ -79,23 +79,7 @@ export default function Header4() {
                     <i className="icon icon-search" />
                   </a>
                 </li>
-                <li className="nav-account">
-                  <a
-                    href="#login"
-                    data-bs-toggle="modal"
-                    className="nav-icon-item"
-                  >
-                    <i className="icon icon-account" />
-                  </a>
-                </li>
-                <li className="nav-wishlist">
-                  <Link href={`/wishlist`} className="nav-icon-item">
-                    <i className="icon icon-heart" />
-                    <span className="count-box">
-                      <WishlistLength />
-                    </span>
-                  </Link>
-                </li>
+                
                 <li className="nav-cart">
                   <a
                     href="#shoppingCart"

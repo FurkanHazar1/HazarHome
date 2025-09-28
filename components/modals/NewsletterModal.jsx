@@ -73,7 +73,7 @@ export default function NewsletterModal() {
                         className="box-icon square social-facebook social-line newsletter-social-icon"
                         aria-label="Facebook"
                       >
-                        <img src="/images/icon/facebook.jpg" alt="Facebook" className="newsletter-social-img" />
+                        <img src="/images/icon/facebook.png" alt="Facebook" className="newsletter-social-img" />
                       </a>
                     </li>
                     <li>
@@ -82,7 +82,7 @@ export default function NewsletterModal() {
                         className="box-icon square social-instagram social-line newsletter-social-icon"
                         aria-label="Instagram"
                       >
-                        <img src="/images/icon/instagram.jpg" alt="Instagram" className="newsletter-social-img" />
+                        <img src="/images/icon/instagram.jpeg" alt="Instagram" className="newsletter-social-img" />
                       </a>
                     </li>
                     <li>
@@ -91,7 +91,7 @@ export default function NewsletterModal() {
                         className="box-icon square social-tiktok social-line newsletter-social-icon"
                         aria-label="TikTok"
                       >
-                        <img src="/images/icon/tiktok.jpg" alt="TikTok" className="newsletter-social-img" />
+                        <img src="/images/icon/tiktok.png" alt="TikTok" className="newsletter-social-img" />
                       </a>
                     </li>
       {/* Responsive social icon styles */}

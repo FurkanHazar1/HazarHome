@@ -346,13 +346,9 @@ export default function QuickView() {
                 </div>
           
                 <div className="tf-product-info-price">
-                  <div className="price">${quickViewItem.price.toFixed(2)}</div>
+                  <div className="price">{quickViewItem.price.toFixed(2)} TL</div>
                 </div>
-                <div className="tf-product-description">
-                  <p>
-                    {quickViewItem.description || "Ürün açıklaması mevcut değil."}
-                  </p>
-                </div>
+
                 <div className="tf-product-info-variant-picker">
                   {/* Renk Seçimi */}
                   {quickViewItem.colors && quickViewItem.colors.length > 0 && (
@@ -443,55 +439,21 @@ export default function QuickView() {
                   <form onSubmit={(e) => e.preventDefault()} className="">
                     <a
                       href="#"
-                      className="tf-btn btn-fill justify-content-center fw-6 fs-16 flex-grow-1 animate-hover-btn"
-                      onClick={() => addProductToCart(quickViewItem.id)}
+                      className={`tf-btn btn-fill justify-content-center fw-6 fs-16 flex-grow-1 animate-hover-btn${isAddedToCartProducts(quickViewItem.id) ? ' btn-success' : ''}`}
+                      style={isAddedToCartProducts(quickViewItem.id) ? { backgroundColor: '#28a745', borderColor: '#28a745', color: '#fff' } : {}}
+                      onClick={() => addProductToCart(quickViewItem, 1, { color: currentColor, size: currentSize })}
                     >
                       <span>
                         {isAddedToCartProducts(quickViewItem.id)
-                          ? "Already Added - "
-                          : "Add to cart - "}
+                          ? "Ürün Sepete Eklendi- "
+                          : "Sepete Ekle- "}
                       </span>
                       <span className="tf-qty-price">
-                        ${quickViewItem.price.toFixed(2)}
+                        {quickViewItem.price.toFixed(2)} TL
                       </span>
-                    </a>
-                    <a
-                      onClick={() => addToWishlist(quickViewItem.id)}
-                      className="tf-product-btn-wishlist hover-tooltip box-icon bg_white wishlist btn-icon-action"
-                    >
-                      <span
-                        className={`icon icon-heart ${
-                          isAddedtoWishlist(quickViewItem.id) ? "added" : ""
-                        }`}
-                      />
-                      <span className="tooltip">
-                        {isAddedtoWishlist(quickViewItem.id)
-                          ? "Already Wishlisted"
-                          : "Add to Wishlist"}
-                      </span>
-                      <span className="icon icon-delete" />
-                    </a>
-                    <a
-                      href="#compare"
-                      data-bs-toggle="offcanvas"
-                      aria-controls="offcanvasLeft"
-                      onClick={() => addToCompareItem(quickViewItem.id)}
-                      className="tf-product-btn-wishlist hover-tooltip box-icon bg_white compare btn-icon-action"
-                    >
-                      <span
-                        className={`icon icon-compare ${
-                          isAddedtoCompareItem(quickViewItem.id) ? "added" : ""
-                        }`}
-                      />
-                      <span className="tooltip">
-                        {" "}
-                        {isAddedtoCompareItem(quickViewItem.id)
-                          ? "Already Compared"
-                          : "Add to Compare"}
-                      </span>
-                      <span className="icon icon-check" />
                     </a>
                 
+                    
                   </form>
                 </div>
                 <div>

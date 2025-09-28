@@ -69,7 +69,7 @@ export default function ShopCart() {
       }
       
       // Ürün linkini ekle
-      const productId = product.type === 'furniture_set' ? product.id.replace('fs_', '') : product.id;
+  const productId = product.type === 'furniture_set' && typeof product.id === 'string' ? product.id.replace('fs_', '') : product.id;
       const productUrl = product.type === 'furniture_set' 
         ? `${window.location.origin}/product-detail-furniture-set/${productId}`
         : `${window.location.origin}/product-detail-furniture/${productId}`;
@@ -112,7 +112,7 @@ export default function ShopCart() {
                     {cartProducts.map((elm, i) => (
                       <div key={i} className="tf-mini-cart-item">
                         <div className="tf-mini-cart-image">
-                          <Link href={elm.type === 'furniture_set' ? `/product-detail-furniture-set/${elm.id.replace('fs_', '')}` : `/product-detail-furniture/${elm.id}`}>
+                          <Link href={elm.type === 'furniture_set' && typeof elm.id === 'string' ? `/product-detail-furniture-set/${elm.id.replace('fs_', '')}` : `/product-detail-furniture/${elm.id}`}>
                             <Image
                               alt={elm.title || "Product image"}
                               src={elm.imgSrc || '/images/default-product.jpg'}
@@ -125,7 +125,7 @@ export default function ShopCart() {
                         <div className="tf-mini-cart-info">
                           <Link
                             className="title link"
-                            href={elm.type === 'furniture_set' ? `/product-detail-furniture-set/${elm.id.replace('fs_', '')}` : `/product-detail-furniture/${elm.id}`}
+                            href={elm.type === 'furniture_set' && typeof elm.id === 'string' ? `/product-detail-furniture-set/${elm.id.replace('fs_', '')}` : `/product-detail-furniture/${elm.id}`}
                           >
                             {elm.title}
                            

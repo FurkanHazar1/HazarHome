@@ -18,16 +18,7 @@ export default function ToolbarBottom() {
         </a>
       </div>
       <div className="toolbar-item">
-        <a
-          href="#canvasSearch"
-          data-bs-toggle="offcanvas"
-          aria-controls="offcanvasLeft"
-        >
-          <div className="toolbar-icon">
-            <i className="icon-search" />
-          </div>
-          <div className="toolbar-label">Search</div>
-        </a>
+    
       </div>
       <div className="toolbar-item">
         <a href="#login" data-bs-toggle="modal">

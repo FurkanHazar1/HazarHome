@@ -22,7 +22,7 @@ import MobileMenu from "@/components/modals/MobileMenu";
 import Register from "@/components/modals/Register";
 import ResetPass from "@/components/modals/ResetPass";
 import SearchModal from "@/components/modals/SearchModal";
-import ToolbarBottom from "@/components/modals/ToolbarBottom";
+
 import ToolbarShop from "@/components/modals/ToolbarShop";
 
 import { usePathname } from "next/navigation";
@@ -186,7 +186,6 @@ export default function ShopLayout({ children }) {
         <Register />
         <ResetPass />
         <SearchModal />
-        <ToolbarBottom />
         <ToolbarShop />
         <NewsletterModal />
         <ShareModal />

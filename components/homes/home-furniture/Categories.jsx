@@ -15,18 +15,54 @@ export default function Categories() {
         
         @media (max-width: 768px) {
           .responsive-category-btn {
-            font-size: 8px !important;
-            padding: 8px 18px !important;
-          }
-        }
-        
-        @media (max-width: 480px) {
-          .responsive-category-btn {
-            font-size: 7px !important;
-            padding: 6px 15px !important;
+                        <Image
+                          className="lazyload category-img"
+                          data-src={item.src}
+                          alt={item.alt}
+                          src={item.src}
+                          width={1200}
+                          height={900}
+                          style={{ width: '100%', height: 'auto', aspectRatio: '4/3', objectFit: 'cover', objectPosition: 'center', maxHeight: '340px' }}
+                        />
           }
         }
       `}</style>
+        <style jsx>{`
+          .responsive-category-btn {
+            font-size: 9px !important;
+            padding: 10px 25px !important;
+          }
+          .category-img {
+            max-height: 340px;
+            min-height: 180px;
+          }
+          @media (max-width: 1024px) {
+            .category-img {
+              max-height: 260px;
+              min-height: 120px;
+            }
+          }
+          @media (max-width: 768px) {
+            .responsive-category-btn {
+              font-size: 8px !important;
+              padding: 8px 18px !important;
+            }
+            .category-img {
+              max-height: 340px;
+              min-height: 220px;
+            }
+          }
+          @media (max-width: 480px) {
+            .responsive-category-btn {
+              font-size: 7px !important;
+              padding: 6px 15px !important;
+            }
+            .category-img {
+              max-height: 280px;
+              min-height: 180px;
+            }
+          }
+        `}</style>
       <section className="flat-spacing-15 bg_beige-3 flat-control-sw">
       <div className="container">
         <div className="flat-title flex-row justify-content-between px-0">
@@ -48,14 +84,19 @@ export default function Categories() {
             spaceBetween={15}
             breakpoints={{
               0: {
-                slidesPerView: 2.5,
-                spaceBetween: 30,
-                slidesPerGroup: 2,
+                slidesPerView: 1.2, // Mobilde daha büyük görsel için
+                spaceBetween: 10,
+                slidesPerGroup: 1,
+              },
+              480: {
+                slidesPerView: 1.5,
+                spaceBetween: 15,
+                slidesPerGroup: 1,
               },
               768: {
-                slidesPerView: 4.5,
-                spaceBetween: 30,
-                slidesPerGroup: 3,
+                slidesPerView: 3.5,
+                spaceBetween: 20,
+                slidesPerGroup: 2,
               },
               1024: {
                 slidesPerView: 4.5,
