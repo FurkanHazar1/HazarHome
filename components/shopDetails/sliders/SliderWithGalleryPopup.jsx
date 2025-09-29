@@ -14,10 +14,13 @@ export default function SliderWithGalleryPopup({
 }) {
 
   // Sabit görsel boyutları tanımlayalım - 4:3 oranında
-  const MAIN_IMAGE_WIDTH = 720;
-  const MAIN_IMAGE_HEIGHT = 540; // 4:3 oranı için (720 * 3/4 = 540)
-  const THUMB_IMAGE_WIDTH = 60;
-  const THUMB_IMAGE_HEIGHT = 60; // 4:3 oranı için (45 * 3/4 = 60)
+  // Responsive ana görsel boyutları
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 600;
+  const MAIN_IMAGE_WIDTH = isMobile ? 320 : 720;
+  const MAIN_IMAGE_HEIGHT = isMobile ? 240 : 540; // 4:3 oranı
+  // Thumbnail boyutları orantısal ve responsive olacak şekilde ayarlanıyor
+  // Sabit px yerine yüzde ve aspect-ratio ile çerçeve kullanıyoruz
+  // (ör: %100 genişlik, 4/3 oran)
 
   // Convert propImages to the expected format with id and dataValue
   const processedPropImages = propImages && propImages.length > 0 
@@ -76,42 +79,68 @@ export default function SliderWithGalleryPopup({
       <Swiper
         dir="ltr"
         direction="vertical"
-        spaceBetween={10}
-        slidesPerView={6}
+        slidesPerView={isMobile ? 4 : 4}
         className="tf-product-media-thumbs other-image-zoom"
         onSwiper={setThumbsSwiper}
         modules={[Thumbs]}
         breakpoints={{
           0: {
             direction: "horizontal",
+            spaceBetween: 2,
+          },
+          600: {
+            direction: "horizontal",
+            spaceBetween: 4,
+          },
+          900: {
+            direction: "vertical",
+            spaceBetween: 2,
           },
           1150: {
             direction: "vertical",
+            spaceBetween: 2,
           },
+        }}
+        style={{
+          height: isMobile ? 80 : MAIN_IMAGE_HEIGHT,
+          maxHeight: isMobile ? 80 : MAIN_IMAGE_HEIGHT,
+          minHeight: isMobile ? 80 : MAIN_IMAGE_HEIGHT,
+          marginBottom: isMobile ? 8 : 0,
         }}
       >
         {images.map((slide, index) => (
           <SwiperSlide key={index} className="stagger-item">
-            <div className="item" style={{ 
-              width: THUMB_IMAGE_WIDTH, 
-              height: THUMB_IMAGE_HEIGHT, 
-              overflow: 'hidden', 
-              aspectRatio: '4/3',
-              backgroundColor: 'white' // Thumbnail container için krem arka plan
-            }}>
+            <div
+              className="item"
+              style={{
+                width: isMobile ? 60 : '100%',
+                height: isMobile ? 60 : `${Math.floor(MAIN_IMAGE_HEIGHT / 5)}px`,
+                maxWidth: isMobile ? 60 : '90px',
+                aspectRatio: isMobile ? '1/1' : '5/4',
+                backgroundColor: '#f8f6f0',
+                overflow: 'hidden',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: isMobile ? '0 4px' : '0 auto',
+                position: 'relative',
+              }}
+            >
               <Image
                 className="lazyload"
                 data-src={slide.src}
                 alt={slide.alt || ""}
                 src={slide.src}
-                width={THUMB_IMAGE_WIDTH}
-                height={THUMB_IMAGE_HEIGHT}
-                style={{ 
-                  width: '100%', 
-                  height: '100%', 
-                  objectFit: 'contain', // Cover yerine contain kullan
+                fill={true}
+                style={{
+                  objectFit: 'contain',
                   objectPosition: 'center',
-                  backgroundColor: 'white' // Görsel için krem arka plan
+                  width: '100%',
+                  height: '100%',
+                  backgroundColor: '#b1aeaea5',
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
                 }}
               />
             </div>
@@ -121,7 +150,7 @@ export default function SliderWithGalleryPopup({
       <Gallery>
         <Swiper
           dir="ltr"
-          spaceBetween={10}
+          spaceBetween={isMobile ? 4 : 10}
           slidesPerView={1}
           navigation={{
             nextEl: ".swiper-button-next",
@@ -136,6 +165,12 @@ export default function SliderWithGalleryPopup({
             if (images && images[swiper.activeIndex] && images[swiper.activeIndex].dataValue) {
               handleColor(images[swiper.activeIndex].dataValue);
             }
+          }}
+          style={{
+            minHeight: isMobile ? 180 : MAIN_IMAGE_HEIGHT,
+            maxHeight: isMobile ? 240 : MAIN_IMAGE_HEIGHT,
+            height: isMobile ? 200 : MAIN_IMAGE_HEIGHT,
+            marginBottom: isMobile ? 8 : 0,
           }}
         >
           {images.map((slide, index) => (
@@ -161,12 +196,13 @@ export default function SliderWithGalleryPopup({
                     }}
                   >
                     <div style={{ 
-                      width: MAIN_IMAGE_WIDTH, 
-                      height: MAIN_IMAGE_HEIGHT, 
+                      width: isMobile ? 320 : MAIN_IMAGE_WIDTH, 
+                      height: isMobile ? 180 : MAIN_IMAGE_HEIGHT, 
                       position: 'relative',
                       overflow: 'hidden',
-                      aspectRatio: '4/3', // Açıkça 4:3 oranını belirtelim
-                      backgroundColor: '#f8f6f0' // Container için krem arka plan
+                      aspectRatio: isMobile ? '16/9' : '4/3',
+                      backgroundColor: '#f8f6f0',
+                      borderRadius: '18px'
                     }}>
                       <Image
                         className="tf-image-zoom-magnifier ls-is-cached lazyloaded"
@@ -179,7 +215,7 @@ export default function SliderWithGalleryPopup({
                         style={{ 
                           objectFit: 'contain',
                           objectPosition: 'center',
-                          backgroundColor: '#f8f6f0' // Boş alanlar için krem arka plan
+                          backgroundColor: '#88867eff'
                         }}
                       />
                     </div>

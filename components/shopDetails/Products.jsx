@@ -41,7 +41,7 @@ export default function Products() {
       <section className="flat-spacing-1 pt_0">
         <div className="container">
           <div className="flat-title">
-            <span className="title">İnsanlar Bunları da Satın Aldı</span>
+            <span className="title">Bunlarıda Beğenebilirsiniz</span>
           </div>
           <div className="text-center py-5">
             <p>Ürünler yükleniyor...</p>
@@ -56,7 +56,7 @@ export default function Products() {
       <section className="flat-spacing-1 pt_0">
         <div className="container">
           <div className="flat-title">
-            <span className="title">İnsanlar Bunları da Satın Aldı</span>
+            <span className="title">Bunlarıda Beğenebilirsiniz</span>
           </div>
           <div className="text-center py-5">
             <p>Şu anda gösterilecek ürün bulunmuyor.</p>
@@ -69,7 +69,7 @@ export default function Products() {
     <section className="flat-spacing-1 pt_0">
       <div className="container">
         <div className="flat-title">
-          <span className="title">İnsanlar Bunları da Satın Aldı</span>
+          <span className="title">Bunlarıda Beğenebilirsiniz</span>
         </div>
         <div className="hover-sw-nav hover-sw-2">
           <Swiper
