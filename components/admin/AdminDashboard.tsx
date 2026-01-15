@@ -11,160 +11,176 @@ export default function AdminDashboard() {
     colors: 0
   })
   const [loading, setLoading] = useState(true)
+  const [recentItems, setRecentItems] = useState<any[]>([])
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchData = async () => {
       try {
-        // Basic stats - simplified
-        const response = await fetch('/api/furniture')
-        const furniture = await response.json()
+        const [furnRes, setsRes, catRes, colorRes] = await Promise.all([
+          fetch('/api/furniture?limit=5&includeDetails=true'),
+          fetch('/api/furniture-sets?limit=5'),
+          fetch('/api/categories'),
+          fetch('/api/colors')
+        ])
+        
+        const furnData = await furnRes.json()
+        const setsData = await setsRes.json()
+        const catData = await catRes.json()
+        const colorData = await colorRes.json()
         
         setStats({
-          furniture: Array.isArray(furniture) ? furniture.length : 0,
-          furnitureSets: 0, // Simplified
-          categories: 0,    // Simplified
-          colors: 0         // Simplified
+          furniture: furnData.pagination?.total || 0,
+          furnitureSets: setsData.pagination?.total || 0,
+          categories: catData.data?.length || 0,
+          colors: colorData.data?.length || 0
         })
+
+        // Combine recent items
+        const combined = [
+          ...(furnData.data || []).map((i: any) => ({ ...i, type: 'furniture', date: i.createdAt })),
+          ...(setsData.data || []).map((i: any) => ({ ...i, type: 'set', date: i.createdAt, furnitureName: i.setName }))
+        ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5)
+
+        setRecentItems(combined)
+
       } catch (error) {
-        console.error('Stats yüklenirken hata:', error)
+        console.error('Dashboard data error:', error)
       } finally {
         setLoading(false)
       }
     }
 
-    fetchStats()
+    fetchData()
   }, [])
 
-  const quickActions = [
-    { 
-      title: 'Mobilya Ekle', 
-      href: '/admin/furniture/add', 
-      icon: '🪑', 
-      color: 'from-emerald-500 to-teal-600',
-      description: 'Yeni mobilya ürünü ekle'
-    },
-    { 
-      title: 'Takım Oluştur', 
-      href: '/admin/furniture-sets/add', 
-      icon: '🛋️', 
-      color: 'from-blue-500 to-indigo-600',
-      description: 'Mobilya takımı oluştur'
-    },
-    { 
-      title: 'Kategori Yönet', 
-      href: '/admin/categories', 
-      icon: '📂', 
-      color: 'from-purple-500 to-violet-600',
-      description: 'Kategorileri düzenle'
-    },
-    { 
-      title: 'Özellik Yönet', 
-      href: '/admin/properties', 
-      icon: '�️', 
-      color: 'from-pink-500 to-rose-600',
-      description: 'Ürün özelliklerini düzenle'
-    }
+  const statCards = [
+    { title: 'Toplam Mobilya', value: stats.furniture, icon: '🪑', color: 'from-blue-500 to-indigo-600', link: '/admin/furniture' },
+    { title: 'Mobilya Takımları', value: stats.furnitureSets, icon: '🛋️', color: 'from-pink-500 to-rose-600', link: '/admin/furniture-sets' },
+    { title: 'Kategoriler', value: stats.categories, icon: '📂', color: 'from-emerald-500 to-teal-600', link: '/admin/categories' },
+    { title: 'Renk Seçenekleri', value: stats.colors, icon: '🎨', color: 'from-violet-500 to-purple-600', link: '/admin/colors' },
   ]
 
-  const managementLinks = [
-    { title: 'Mobilyalar', href: '/admin/furniture', icon: '🪑', count: stats.furniture },
-    { title: 'Mobilya Takımları', href: '/admin/furniture-sets', icon: '🛋️', count: stats.furnitureSets },
-    { title: 'Kategoriler', href: '/admin/categories', icon: '📂', count: stats.categories },
-    { title: 'Özellikler', href: '/admin/properties', icon: '�️', count: 0 },
-    { title: 'Renkler', href: '/admin/colors', icon: '�', count: stats.colors }
+  const quickActions = [
+    { title: 'Mobilya Ekle', desc: 'Yeni ürün girişi yap', href: '/admin/furniture/add', icon: '➕', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+    { title: 'Takım Oluştur', desc: 'Yeni set oluştur', href: '/admin/furniture-sets/add', icon: '✨', color: 'bg-pink-500/10 text-pink-400 border-pink-500/20' },
+    { title: 'Özellik Ekle', desc: 'Teknik detay tanımla', href: '/admin/properties', icon: '⚙️', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
   ]
 
   return (
-    <div className="space-y-4 sm:space-y-6 lg:space-y-8">
-      {/* Header - Mobile-first sizing */}
-      <div className="text-center">
-        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-1 sm:mb-2">
-          HazarHome Admin Panel
-        </h1>
-        <p className="text-xs sm:text-sm lg:text-base text-gray-400">
-          Mobilya yönetim sistemi
-        </p>
+    <div className="space-y-8 p-6">
+      
+      {/* Welcome Banner */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-600 to-purple-600 p-8 sm:p-10 shadow-2xl">
+        <div className="relative z-10">
+          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">Hoş Geldiniz, Admin 👋</h1>
+          <p className="text-indigo-100 text-lg max-w-2xl">
+            Mağaza yönetim panelinizdesiniz. Buradan ürünlerinizi, kategorilerinizi ve diğer tüm içerikleri kolayca yönetebilirsiniz.
+          </p>
+        </div>
+        {/* Decorative Circles */}
+        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
+        <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-black/10 rounded-full blur-2xl"></div>
       </div>
 
-      {/* Quick Actions Grid - Mobile-optimized */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
-        {quickActions.map((action, index) => (
-          <Link
-            key={index}
-            href={action.href}
-            className={`group relative overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-br ${action.color} border border-gray-700/50 hover:border-gray-600/50 transition-all duration-300 hover:scale-105 hover:shadow-xl`}
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {statCards.map((stat, idx) => (
+          <Link 
+            href={stat.link} 
+            key={idx}
+            className={`relative group overflow-hidden rounded-2xl p-6 bg-slate-800 border border-slate-700/50 hover:border-slate-600 transition-all hover:shadow-xl hover:-translate-y-1`}
           >
-            <div className="p-3 sm:p-4 lg:p-6 text-center relative z-10">
-              <div className="text-2xl sm:text-3xl lg:text-4xl mb-2 sm:mb-3 lg:mb-4 transform group-hover:scale-110 transition-transform duration-300">
-                {action.icon}
+            <div className={`absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity bg-gradient-to-br ${stat.color} w-24 h-24 rounded-bl-full`}></div>
+            <div className="relative z-10">
+              <div className="text-3xl mb-4">{stat.icon}</div>
+              <div className="text-3xl font-bold text-white mb-1">
+                {loading ? <div className="h-8 w-16 bg-slate-700 animate-pulse rounded"></div> : stat.value}
               </div>
-              <h3 className="text-xs sm:text-sm lg:text-base font-semibold text-white mb-1 sm:mb-2">
-                {action.title}
-              </h3>
-              <p className="text-xs sm:text-xs lg:text-sm text-white/80 hidden sm:block">
-                {action.description}
-              </p>
+              <div className="text-sm text-slate-400 font-medium">{stat.title}</div>
             </div>
-            <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </Link>
         ))}
       </div>
 
-      {/* Management Grid - Mobile-first design */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
-        {managementLinks.map((link, index) => (
-          <Link
-            key={index}
-            href={link.href}
-            className="group bg-gray-800/60 hover:bg-gray-800/80 border border-gray-700/50 hover:border-gray-600/50 rounded-lg sm:rounded-xl lg:rounded-2xl p-4 sm:p-5 lg:p-6 transition-all duration-300 hover:scale-105 hover:shadow-lg"
-          >
-            <div className="flex items-center justify-between mb-2 sm:mb-3 lg:mb-4">
-              <div className="text-lg sm:text-xl lg:text-2xl">
-                {link.icon}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* Recent Activity */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-white">Son Eklenenler</h2>
+            <Link href="/admin/furniture" className="text-sm text-indigo-400 hover:text-indigo-300 font-medium">Tümünü Gör →</Link>
+          </div>
+          
+          <div className="bg-slate-800 border border-slate-700/50 rounded-2xl overflow-hidden shadow-lg">
+            {loading ? (
+              <div className="p-8 text-center text-slate-500">Yükleniyor...</div>
+            ) : recentItems.length > 0 ? (
+              <div className="divide-y divide-slate-700/50">
+                {recentItems.map((item, idx) => (
+                  <div key={idx} className="p-4 flex items-center gap-4 hover:bg-slate-700/30 transition">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shrink-0 ${item.type === 'furniture' ? 'bg-indigo-500/20 text-indigo-400' : 'bg-pink-500/20 text-pink-400'}`}>
+                      {item.type === 'furniture' ? '🪑' : '🛋️'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-white font-medium truncate">{item.furnitureName}</h4>
+                      <p className="text-xs text-slate-400">
+                        {item.category?.categoryName || 'Kategorisiz'} • {new Date(item.date).toLocaleDateString('tr-TR')}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <span className={`inline-flex px-2 py-1 rounded text-xs font-bold ${item.isActive ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+                        {item.isActive ? 'AKTİF' : 'PASİF'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
-              {loading ? (
-                <div className="w-6 h-4 sm:w-8 sm:h-5 lg:w-10 lg:h-6 bg-gray-700 animate-pulse rounded" />
-              ) : (
-                <span className="text-lg sm:text-xl lg:text-2xl font-bold text-white">
-                  {link.count}
-                </span>
-              )}
-            </div>
-            <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-white group-hover:text-blue-300 transition-colors duration-300">
-              {link.title}
-            </h3>
-            <p className="text-xs sm:text-sm lg:text-sm text-gray-400 mt-1">
-              Yönetim paneli
-            </p>
-          </Link>
-        ))}
-      </div>
-
-      {/* Recent Activity - Simplified for mobile */}
-      <div className="bg-gray-800/60 border border-gray-700/50 rounded-lg sm:rounded-xl lg:rounded-2xl p-4 sm:p-5 lg:p-6">
-        <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-white mb-3 sm:mb-4 lg:mb-6">
-          🕒 Son Aktiviteler
-        </h2>
-        <div className="space-y-2 sm:space-y-3 lg:space-y-4">
-          <div className="flex items-center justify-between py-2 sm:py-3 border-b border-gray-700/50 last:border-b-0">
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              <div className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-green-500/20 border border-green-500/30 rounded-full flex items-center justify-center">
-                <span className="text-xs sm:text-sm lg:text-base">✓</span>
-              </div>
-              <div>
-                <p className="text-xs sm:text-sm lg:text-base text-white">
-                  Sistem hazır
-                </p>
-                <p className="text-xs sm:text-xs lg:text-sm text-gray-400">
-                  Panel başarıyla yüklendi
-                </p>
-              </div>
-            </div>
-            <span className="text-xs sm:text-xs lg:text-sm text-gray-400">
-              Şimdi
-            </span>
+            ) : (
+              <div className="p-12 text-center text-slate-500">Henüz veri yok.</div>
+            )}
           </div>
         </div>
+
+        {/* Quick Actions */}
+        <div className="space-y-6">
+          <h2 className="text-xl font-bold text-white">Hızlı İşlemler</h2>
+          <div className="grid gap-4">
+            {quickActions.map((action, idx) => (
+              <Link 
+                key={idx} 
+                href={action.href}
+                className={`flex items-center gap-4 p-4 rounded-2xl border transition-all hover:scale-[1.02] ${action.color} bg-slate-800 border-slate-700 hover:border-current`}
+              >
+                <div className="text-2xl">{action.icon}</div>
+                <div>
+                  <h4 className="font-bold text-slate-200">{action.title}</h4>
+                  <p className="text-xs text-slate-400">{action.desc}</p>
+                </div>
+                <div className="ml-auto opacity-50">→</div>
+              </Link>
+            ))}
+          </div>
+
+          {/* System Info Widget */}
+          <div className="p-6 rounded-2xl bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700/50">
+            <h3 className="text-sm font-semibold text-slate-300 mb-4 uppercase tracking-wider">Sistem Durumu</h3>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-slate-500">Sunucu</span>
+                <span className="text-green-400">● Çevrimiçi</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Veritabanı</span>
+                <span className="text-green-400">● Bağlı</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Versiyon</span>
+                <span className="text-slate-300">v2.4.0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   )

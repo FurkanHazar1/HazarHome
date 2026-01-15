@@ -153,7 +153,7 @@ export async function processImageFiles(
   itemId: number,
   categorySlug: string,
   itemType: ItemType = 'furnitures'
-): Promise<Array<{
+): Promise<Array<{ 
   fileName: string
   sortOrder: number
   publicUrl: string
@@ -195,8 +195,8 @@ export async function processImageFiles(
         fileName: paths.fileName,
         filePath: relativePath,
         altText: `Image ${sortOrder}`,
-        description: null,
-        width: null, // Could be determined with sharp library
+        description: null, // Could be determined with sharp library
+        width: null,
         height: null,
         fileSize: file.size
       }
@@ -238,8 +238,8 @@ export async function processImageFiles(
 }
 
 /**
- * Renumber existing images to maintain sequence (both DB and disk files)
- * Prevents conflicts by using temporary naming strategy
+ * Renumber existing images to maintain sequence based on DB sort order
+ * Syncs physical file names with database sortOrder
  */
 export async function renumberImages(
   diskDir: string,
@@ -247,137 +247,123 @@ export async function renumberImages(
   itemType: ItemType = 'furnitures'
 ): Promise<void> {
   try {
-    // Read current disk images
-    const currentImages = await readDirImages(diskDir)
-    if (currentImages.length === 0) return
-
-    // Step 1: Rename all files to temporary names to avoid conflicts
-    const tempMappings: Array<{original: string, temp: string, final: string, sortOrder: number}> = []
+    // 1. Fetch images from database in correct order
+    let dbImages: any[] = []
     
-    for (let i = 0; i < currentImages.length; i++) {
-      const currentImage = currentImages[i]
-      const newSortOrder = i + 1
-      const tempFileName = `temp_${Date.now()}_${i}.${currentImage.ext}`
-      const finalFileName = `image_${newSortOrder}.${currentImage.ext}`
-      
-      tempMappings.push({
-        original: currentImage.fileName,
-        temp: tempFileName,
-        final: finalFileName,
-        sortOrder: newSortOrder
-      })
-    }
-
-    // Step 2: Rename all to temp names first
-    for (const mapping of tempMappings) {
-      const originalPath = path.join(diskDir, mapping.original)
-      const tempPath = path.join(diskDir, mapping.temp)
-      
-      try {
-        await fs.rename(originalPath, tempPath)
-      } catch (error) {
-        console.warn(`Failed to rename ${mapping.original} to temp:`, error)
-      }
-    }
-
-    // Step 3: Rename temp files to final names
-    for (const mapping of tempMappings) {
-      const tempPath = path.join(diskDir, mapping.temp)
-      const finalPath = path.join(diskDir, mapping.final)
-      
-      try {
-        await fs.rename(tempPath, finalPath)
-      } catch (error) {
-        console.warn(`Failed to rename temp to ${mapping.final}:`, error)
-      }
-    }
-
-    // Step 4: Update database records
     if (itemType === 'furnitures') {
-      const furnitureImages = await prisma.furnitureImage.findMany({
+      dbImages = await prisma.furnitureImage.findMany({
         where: { furnitureId: itemId, isActive: true },
         include: { image: true },
         orderBy: { sortOrder: 'asc' }
       })
-
-      for (let i = 0; i < furnitureImages.length; i++) {
-        const newSortOrder = i + 1
-        const furnitureImage = furnitureImages[i]
-        const mapping = tempMappings[i]
-
-        if (mapping) {
-          const newRelativePath = furnitureImage.image.filePath.replace(
-            /image_\d+\.\w+$/,
-            mapping.final
-          )
-
-          // Update sortOrder and imageType
-          await prisma.furnitureImage.update({
-            where: { id: furnitureImage.id },
-            data: { 
-              sortOrder: newSortOrder,
-              imageType: newSortOrder === 1 ? 'main' : 'gallery'
-            }
-          })
-
-          // Update image filePath if needed
-          await prisma.image.update({
-            where: { imageId: furnitureImage.imageId },
-            data: {
-              fileName: mapping.final,
-              filePath: newRelativePath
-            }
-          })
-        }
-      }
     } else if (itemType === 'furniture-sets') {
-      const furnitureSetImages = await prisma.furnitureSetImage.findMany({
+      dbImages = await prisma.furnitureSetImage.findMany({
         where: { furnitureSetId: itemId, isActive: true },
         include: { image: true },
         orderBy: { sortOrder: 'asc' }
       })
+    }
 
-      for (let i = 0; i < furnitureSetImages.length; i++) {
-        const newSortOrder = i + 1
-        const furnitureSetImage = furnitureSetImages[i]
-        const mapping = tempMappings[i]
+    if (dbImages.length === 0) return
 
-        if (mapping) {
-          const newRelativePath = furnitureSetImage.image.filePath.replace(
-            /image_\d+\.\w+$/,
-            mapping.final
-          )
+    // 2. Create renaming plan
+    // We need to map: DB Record -> Current Physical File -> Temp Name -> Final Name
+    const renames: Array<{ 
+      imageRecordId: number; // ID in join table (FurnitureImage or FurnitureSetImage)
+      imageId: number;       // ID in Image table
+      currentFilePath: string;
+      tempFilePath: string;
+      finalFileName: string;
+      finalFilePath: string;
+      newSortOrder: number;
+      extension: string;
+    }> = []
 
-          // Update sortOrder and imageType
-          await prisma.furnitureSetImage.update({
-            where: { id: furnitureSetImage.id },
-            data: { 
-              sortOrder: newSortOrder,
-              imageType: newSortOrder === 1 ? 'main' : 'gallery'
-            }
-          })
+    for (let i = 0; i < dbImages.length; i++) {
+      const record = dbImages[i]
+      const image = record.image
+      const newSortOrder = i + 1
+      
+      // Get extension from current file or default to jpg
+      const ext = image.fileName.split('.').pop() || 'jpg'
+      
+      const currentFullPath = path.join(process.cwd(), 'public', image.filePath)
+      const dirPath = path.dirname(currentFullPath)
+      
+      const tempFileName = `temp_${Date.now()}_${i}.${ext}`
+      const tempFullPath = path.join(dirPath, tempFileName)
+      
+      const finalFileName = `image_${newSortOrder}.${ext}`
+      const finalFullPath = path.join(dirPath, finalFileName)
+      
+      renames.push({
+        imageRecordId: record.id,
+        imageId: image.imageId,
+        currentFilePath: currentFullPath,
+        tempFilePath: tempFullPath,
+        finalFileName: finalFileName,
+        finalFilePath: finalFullPath,
+        newSortOrder: newSortOrder,
+        extension: ext
+      })
+    }
 
-          // Update image filePath if needed
-          await prisma.image.update({
-            where: { imageId: furnitureSetImage.imageId },
-            data: {
-              fileName: mapping.final,
-              filePath: newRelativePath
-            }
-          })
-        }
+    // 3. Execute Phase 1: Rename all to temporary names
+    for (const item of renames) {
+      try {
+        await fs.access(item.currentFilePath)
+        await fs.rename(item.currentFilePath, item.tempFilePath)
+      } catch (err) {
+        console.warn(`File not found for renaming: ${item.currentFilePath}`)
+        continue 
       }
     }
 
+    // 4. Execute Phase 2: Rename temp to final names and update DB
+    for (const item of renames) {
+      try {
+        await fs.access(item.tempFilePath)
+        await fs.rename(item.tempFilePath, item.finalFilePath)
+
+        const relativeDir = path.dirname(dbImages.find((img: any) => img.image.imageId === item.imageId).image.filePath)
+        const finalRelativePath = `${relativeDir}/${item.finalFileName}`.replace(/\\/g, '/').replace(/^\//, '')
+
+        await prisma.image.update({
+          where: { imageId: item.imageId },
+          data: {
+            fileName: item.finalFileName,
+            filePath: finalRelativePath,
+            altText: `Image ${item.newSortOrder}`
+          }
+        })
+
+        if (itemType === 'furnitures') {
+          await prisma.furnitureImage.update({
+            where: { id: item.imageRecordId },
+            data: {
+              sortOrder: item.newSortOrder,
+              imageType: item.newSortOrder === 1 ? 'main' : 'gallery'
+            }
+          })
+        } else {
+          await prisma.furnitureSetImage.update({
+            where: { id: item.imageRecordId },
+            data: {
+              sortOrder: item.newSortOrder,
+              imageType: item.newSortOrder === 1 ? 'main' : 'gallery'
+            }
+          })
+        }
+      } catch (error) {
+        console.error(`Error finalizing rename: ${item.tempFilePath} -> ${item.finalFilePath}`, error)
+      }
+    }
   } catch (error) {
     console.error('Error renumbering images:', error)
     throw error
   }
 }
 
-/**
- * Delete image file and database records with new system
- */
 /**
  * Delete image by ID - handles both database and file deletion
  */
@@ -386,117 +372,28 @@ export async function deleteImage(
   itemType: ItemType = 'furnitures'
 ): Promise<boolean> {
   try {
-    console.log(`🗑️ Deleting image ID: ${imageId} for ${itemType}`)
-    
-    // First get the image record to find file path
     const image = await prisma.image.findUnique({
       where: { imageId: imageId }
     })
 
-    if (!image) {
-      console.warn(`❌ Image ${imageId} not found in database`)
-      return false
-    }
+    if (!image) return false
 
-    // Delete physical file
     const filePath = path.join(process.cwd(), 'public', image.filePath)
     try {
       await fs.unlink(filePath)
-      console.log(`✅ Physical file deleted: ${filePath}`)
     } catch (error) {
-      console.warn(`⚠️ File deletion error (file might not exist): ${error}`)
+      console.warn(`⚠️ File deletion error: ${error}`)
     }
 
-    // Delete from database - Prisma will handle cascading due to onDelete: Cascade
     await prisma.image.delete({
       where: { imageId: imageId }
     })
     
-    console.log(`✅ Image ${imageId} deleted from database`)
     return true
-    
   } catch (error) {
     console.error(`❌ Error deleting image ${imageId}:`, error)
     return false
   }
-}
-
-/**
- * Recursively delete directory and all contents
- */
-export async function deleteDirRecursive(dirPath: string): Promise<void> {
-  try {
-    const stat = await fs.stat(dirPath)
-    if (!stat.isDirectory()) {
-      await fs.unlink(dirPath)
-      return
-    }
-
-    const files = await fs.readdir(dirPath)
-    await Promise.all(
-      files.map(file => deleteDirRecursive(path.join(dirPath, file)))
-    )
-    await fs.rmdir(dirPath)
-  } catch (error) {
-    // Directory might not exist, which is fine
-    console.warn('Directory deletion warning:', error)
-  }
-}
-
-/**
- * Move directory from old location to new location (for category changes)
- */
-export async function moveDir(oldDir: string, newDir: string): Promise<void> {
-  try {
-    // Ensure new directory parent exists
-    await ensureDir(path.dirname(newDir))
-    
-    // Move directory
-    await fs.rename(oldDir, newDir)
-  } catch (error) {
-    console.error('Directory move error:', error)
-    throw error
-  }
-}
-
-/**
- * Convert image type from old system to new system
- */
-export function convertImageType(oldType: string): string {
-  switch (oldType.toLowerCase()) {
-    case 'main_image':
-    case 'main':
-    case 'cover':
-      return 'main'
-    case 'gallery_image':
-    case 'gallery':
-      return 'gallery'
-    case 'thumbnail':
-      return 'thumbnail'
-    default:
-      return 'gallery'
-  }
-}
-
-/**
- * Normalize file path for cross-platform compatibility
- */
-export function normalizeFilePath(filePath: string): string {
-  return filePath.replace(/\\/g, '/').replace(/\/+/g, '/')
-}
-
-/**
- * Generate legacy paths for backward compatibility
- */
-export function generateLegacyPaths(categoryName: string, itemId: number, itemName: string): string[] {
-  const normalizedName = itemName.toLowerCase().replace(/\s+/g, '-')
-  const categorySlug = slugifyCategory(categoryName)
-  
-  return [
-    `uploads/furniture/${categorySlug}/${itemId}_${normalizedName}`,
-    `uploads/furniture/${categoryName.toLowerCase()}/${itemId}_${normalizedName}`,
-    `uploads/furniture/${normalizedName}`
-  ]
 }
 
 /**
@@ -511,16 +408,7 @@ export function isNewStructurePath(filePath: string): boolean {
  * Convert file path to public URL
  */
 export function toPublicUrl(filePath: string): string {
-  // If already starts with /, return as is
-  if (filePath.startsWith('/')) {
-    return filePath
-  }
-  
-  // If doesn't start with uploads/, add it
-  if (!filePath.startsWith('uploads/')) {
-    return `/uploads/${filePath}`
-  }
-  
-  // Add leading slash
+  if (filePath.startsWith('/')) return filePath
+  if (!filePath.startsWith('uploads/')) return `/uploads/${filePath}`
   return `/${filePath}`
 }

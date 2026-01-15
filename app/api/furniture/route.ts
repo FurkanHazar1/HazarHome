@@ -297,7 +297,7 @@ export async function POST(request: Request) {
       validationErrors.push('Furniture type is required')
     }
 
-    if (price === undefined || price === null || isNaN(parseFloat(price)) || parseFloat(price) <= 0) {
+    if (price === undefined || price === null || isNaN(parseFloat(price)) || parseFloat(price) < 0) {
       validationErrors.push('A valid price must be entered')
     }
 

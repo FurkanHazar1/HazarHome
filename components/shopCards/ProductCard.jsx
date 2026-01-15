@@ -11,7 +11,7 @@ export const ProductCard = ({ product }) => {
   const [currentColor, setCurrentColor] = useState(null);
   const { setQuickViewItem } = useContextElement();
   const {
-    setQuickAddItem,
+    addProductToCart,
     addToWishlist,
     isAddedtoWishlist,
     addToCompareItem,
@@ -60,15 +60,14 @@ export const ProductCard = ({ product }) => {
         ) : (
           <>
             <div className="list-product-btn">
-              <a
-                href="#quick_add"
-                onClick={() => setQuickAddItem(product.id)}
-                data-bs-toggle="modal"
+              <button
+                type="button"
+                onClick={() => addProductToCart(product, 1)}
                 className="box-icon bg_white quick-add tf-btn-loading"
               >
                 <span className="icon icon-bag" />
                 <span className="tooltip">Sepete Ekle</span>
-              </a>
+              </button>
 
 
               <a

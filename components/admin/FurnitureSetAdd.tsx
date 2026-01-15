@@ -1,1201 +1,344 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-
-// Types
-interface Category {
-  categoryId: number
-  categoryName: string
-  categoryPath: string | null
-  categoryLevel: number
-  isActive: boolean
-}
-
-interface Furniture {
-  furnitureId: number
-  furnitureName: string
-  furnitureType: string
-  price: number
-  isActive: boolean
-  categoryId: number | null
-}
-
-interface Color {
-  colorId: number
-  colorName: string
-  colorCode: string | null
-  isActive: boolean
-}
-
-interface Property {
-  propertyId: number
-  propertyName: string
-  propertyType: string
-  isActive: boolean
-}
-
-interface FurnitureItem {
-  furnitureId: number
-  quantity: number
-  sortOrder: number
-  furniture?: Furniture
-}
-
-interface PropertyValue {
-  propertyId: number
-  propertyValue: string
-}
-
-interface ImageFile {
-  file: File
-  preview: string
-  imageType: 'main' | 'gallery'
-  sortOrder: number
-  tempId: string
-}
-
-// Icon components - Styled to match FurnitureAdd
-const FurnitureSetIcon = () => <span className="text-2xl">🏠</span>
-const FurnitureIcon = () => <span className="text-2xl">🪑</span>
-const PlusIcon = () => <span className="text-lg">➕</span>
-const LoaderIcon = () => <span className="text-lg animate-spin">⏳</span>
-const ImageIcon = () => <span className="text-xl">🖼️</span>
-const SaveIcon = () => <span className="text-lg">💾</span>
-const BackIcon = () => <span className="text-lg">←</span>
-const UpIcon = () => <span className="text-lg">↑</span>
-const DownIcon = () => <span className="text-lg">↓</span>
-const DragIcon = () => <span className="text-lg">☰</span>
-const DeleteIcon = () => <span className="text-lg">🗑️</span>
-const MainIcon = () => <span className="text-lg">⭐</span>
-const GalleryIcon = () => <span className="text-lg">📸</span>
-const SuccessIcon = () => <span className="text-lg">✅</span>
-const ColorIcon = () => <span className="text-lg">🎨</span>
-const PropertyIcon = () => <span className="text-lg">🏷️</span>
-const MoneyIcon = () => <span className="text-lg">💰</span>
-
-const generateImageUrl = (filePath: string): string => {
-  if (!filePath) return ''
-  
-  // New system: Direct public URLs
-  const normalizedPath = filePath.replace(/\\/g, '/')
-  
-  // Priority: new structure first, then fallback to API serve
-  if (normalizedPath.startsWith('/uploads/')) {
-    return normalizedPath
-  } else {
-    const cleanPath = normalizedPath.replace(/^uploads\//, '')
-    return `/uploads/${cleanPath}` // Try direct public first
-  }
-}
+import { compressImage } from '@/utils/imageCompression'
 
 export default function FurnitureSetAdd() {
   const router = useRouter()
+  const [loading, setLoading] = useState(false)
   
-  // Form state
+  // Data Options
+  const [categories, setCategories] = useState<any[]>([])
+  const [furnitureList, setFurnitureList] = useState<any[]>([])
+  
+  // Modal State
+  const [showFurnitureModal, setShowFurnitureModal] = useState(false)
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<number | null>(null) // New state for category filter
+
+  // Form Data
   const [formData, setFormData] = useState({
     setName: '',
     categoryId: '',
     description: '',
-    price: '',
     isActive: true
   })
 
-  // Data state
-  const [categories, setCategories] = useState<Category[]>([])
-  const [furnitureList, setFurnitureList] = useState<Furniture[]>([])
-  const [colors, setColors] = useState<Color[]>([])
-  const [properties, setProperties] = useState<Property[]>([])
-  
-  // Form selections
-  const [selectedFurniture, setSelectedFurniture] = useState<FurnitureItem[]>([])
-  const [selectedColors, setSelectedColors] = useState<number[]>([])
-  const [selectedProperties, setSelectedProperties] = useState<PropertyValue[]>([])
-  const [images, setImages] = useState<ImageFile[]>([])
-  
-  // UI state
-  const [loading, setLoading] = useState(false)
-  const [dataLoading, setDataLoading] = useState(true)
-  const [errors, setErrors] = useState<{[key: string]: string}>({})
-  const [success, setSuccess] = useState(false)
-  const [showFurnitureModal, setShowFurnitureModal] = useState(false)
+  // Selected Furniture Items
+  const [selectedItems, setSelectedItems] = useState<{ id: number, name: string, quantity: number, image?: string }[]>([])
 
-  // Fetch initial data
+  // Images
+  const [images, setImages] = useState<File[]>([])
+  const [previews, setPreviews] = useState<string[]>([])
+
+  const getImageUrl = (path?: string) => {
+    if (!path) return null
+    let cleanPath = path.replace(/\\/g, '/')
+    if (cleanPath.startsWith('public/')) cleanPath = cleanPath.replace('public/', '')
+    if (!cleanPath.startsWith('/')) cleanPath = '/' + cleanPath
+    if (!cleanPath.startsWith('/uploads/')) cleanPath = '/uploads/' + cleanPath.replace(/^\//, '')
+    return `${cleanPath}?t=${Date.now()}`
+  }
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setDataLoading(true)
-        
-        // Fetch parent categories (level = 1)
-        const categoriesRes = await fetch('/api/categories?level=1&active=true')
-        const categoriesData = await categoriesRes.json()
-        if (categoriesData.success) {
-          setCategories(categoriesData.data)
-        }
-
-        // Fetch furniture
-        const furnitureRes = await fetch('/api/furniture?active=true&limit=100')
-        const furnitureData = await furnitureRes.json()
-        if (furnitureData.success) {
-          setFurnitureList(furnitureData.data)
-        }
-
-        // Fetch colors
-        const colorsRes = await fetch('/api/colors?active=true')
-        const colorsData = await colorsRes.json()
-        if (colorsData.success) {
-          setColors(colorsData.data)
-        }
-
-        // Fetch properties
-        const propertiesRes = await fetch('/api/properties?active=true')
-        const propertiesData = await propertiesRes.json()
-        if (propertiesData.success) {
-          setProperties(propertiesData.data)
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error)
-        setErrors({ submit: 'Veriler yüklenemedi. Lütfen sayfayı yenileyin.' })
-      } finally {
-        setDataLoading(false)
+    // Load Categories
+    fetch('/api/categories?includeHierarchy=true').then(res => res.json()).then(data => {
+      if (data.success) {
+        // Only level 1 categories usually for Sets, but let's allow all active
+        const flattened: any[] = []
+        data.data.forEach((cat: any) => {
+          flattened.push({ ...cat, level: 1 })
+          cat.children?.forEach((child: any) => {
+            flattened.push({ ...child, level: 2 })
+          })
+        })
+        setCategories(flattened)
       }
-    }
+    })
 
-    fetchData()
+    // Load Furniture List
+    fetch('/api/furniture?active=true&limit=1000&includeDetails=true').then(res => res.json()).then(data => {
+      if (data.success) setFurnitureList(data.data)
+    })
   }, [])
 
-  // Handle form input changes
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
-    }))
-    
-    // Clear error for this field
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }))
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files)
+      const compressedFiles = await Promise.all(newFiles.map(file => compressImage(file)))
+      
+      setImages(prev => [...prev, ...compressedFiles])
+      const urls = compressedFiles.map(file => URL.createObjectURL(file))
+      setPreviews(prev => [...prev, ...urls])
     }
   }
 
-  // Add furniture to set
-  const addFurniture = (furniture: Furniture) => {
-    const exists = selectedFurniture.find(item => item.furnitureId === furniture.furnitureId)
-    if (!exists) {
-      const newItem: FurnitureItem = {
-        furnitureId: furniture.furnitureId,
-        quantity: 1,
-        sortOrder: selectedFurniture.length + 1,
-        furniture
-      }
-      setSelectedFurniture(prev => [...prev, newItem])
-    }
+  const removeImage = (idx: number) => {
+    setImages(prev => prev.filter((_, i) => i !== idx))
+    setPreviews(prev => {
+      URL.revokeObjectURL(prev[idx])
+      return prev.filter((_, i) => i !== idx)
+    })
+  }
+
+  const addFurnitureToSet = (item: any) => {
+    if (selectedItems.find(i => i.id === item.furnitureId)) return
+    const imagePath = item.images?.[0]?.image?.filePath
+    setSelectedItems(prev => [...prev, { 
+      id: item.furnitureId, 
+      name: item.furnitureName, 
+      quantity: 1,
+      image: imagePath
+    }])
     setShowFurnitureModal(false)
   }
 
-  // Update furniture quantity
-  const updateFurnitureQuantity = (furnitureId: number, quantity: number) => {
-    if (quantity <= 0) {
-      setSelectedFurniture(prev => prev.filter(item => item.furnitureId !== furnitureId))
-    } else {
-      setSelectedFurniture(prev => 
-        prev.map(item => 
-          item.furnitureId === furnitureId 
-            ? { ...item, quantity }
-            : item
-        )
-      )
-    }
-  }
-
-  // Handle color selection
-  const toggleColor = (colorId: number) => {
-    setSelectedColors(prev => 
-      prev.includes(colorId) 
-        ? prev.filter(id => id !== colorId)
-        : [...prev, colorId]
-    )
-  }
-
-  // Handle property changes
-  const updateProperty = (propertyId: number, value: string) => {
-    if (!value.trim()) {
-      setSelectedProperties(prev => prev.filter(p => p.propertyId !== propertyId))
-    } else {
-      setSelectedProperties(prev => {
-        const exists = prev.find(p => p.propertyId === propertyId)
-        if (exists) {
-          return prev.map(p => p.propertyId === propertyId ? { ...p, propertyValue: value } : p)
-        } else {
-          return [...prev, { propertyId, propertyValue: value }]
-        }
-      })
-    }
-  }
-
-  // Handle image upload
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || [])
-    
-    files.forEach((file, index) => {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        setErrors(prev => ({ ...prev, submit: `${file.name} geçerli bir resim dosyası değil.` }))
-        return
+  const updateQuantity = (id: number, delta: number) => {
+    setSelectedItems(prev => prev.map(item => {
+      if (item.id === id) {
+        const newQ = Math.max(1, item.quantity + delta)
+        return { ...item, quantity: newQ }
       }
-
-      // Validate file size (100MB)
-      if (file.size > 100 * 1024 * 1024) {
-        setErrors(prev => ({ ...prev, submit: `${file.name} dosyası 100MB'dan büyük.` }))
-        return
-      }
-
-      const reader = new FileReader()
-      reader.onload = (event) => {
-        const tempId = `temp_${Date.now()}_${Math.random()}_${index}`
-        const newImage: ImageFile = {
-          file,
-          preview: event.target?.result as string,
-          imageType: index === 0 ? 'main' : 'gallery',
-          sortOrder: images.length + index + 1,
-          tempId
-        }
-        setImages(prev => [...prev, newImage])
-      }
-      reader.readAsDataURL(file)
-    })
-
-    // Clear input
-    e.target.value = ''
-  }
-
-  // Remove image
-  const removeImage = (tempId: string) => {
-    setImages(prev => {
-      const newImages = prev.filter(img => img.tempId !== tempId)
-      // Reorder sort orders after removal
-      return newImages.map((img, i) => ({
-        ...img,
-        sortOrder: i + 1
-      }))
-    })
-  }
-
-  // Change image type
-  const changeImageType = (tempId: string, imageType: 'main' | 'gallery') => {
-    setImages(prev => prev.map(img => {
-      if (img.tempId === tempId) {
-        return { ...img, imageType }
-      }
-      // If setting this as main, make other main images gallery
-      if (imageType === 'main' && img.imageType === 'main') {
-        return { ...img, imageType: 'gallery' }
-      }
-      return img
+      return item
     }))
   }
 
-  // Move image up in sort order
-  const moveImageUp = (tempId: string) => {
-    setImages(prev => {
-      const currentIndex = prev.findIndex(img => img.tempId === tempId)
-      if (currentIndex <= 0) return prev
-      
-      const newImages = [...prev]
-      const temp = newImages[currentIndex]
-      newImages[currentIndex] = newImages[currentIndex - 1]
-      newImages[currentIndex - 1] = temp
-      
-      return newImages.map((img, index) => ({
-        ...img,
-        sortOrder: index + 1
-      }))
-    })
+  const removeFurniture = (id: number) => {
+    setSelectedItems(prev => prev.filter(item => item.id !== id))
   }
 
-  // Move image down in sort order
-  const moveImageDown = (tempId: string) => {
-    setImages(prev => {
-      const currentIndex = prev.findIndex(img => img.tempId === tempId)
-      if (currentIndex >= prev.length - 1) return prev
-      
-      const newImages = [...prev]
-      const temp = newImages[currentIndex]
-      newImages[currentIndex] = newImages[currentIndex + 1]
-      newImages[currentIndex + 1] = temp
-      
-      return newImages.map((img, index) => ({
-        ...img,
-        sortOrder: index + 1
-      }))
-    })
-  }
-
-  // Update sort order manually
-  const updateSortOrder = (tempId: string, newSortOrder: number) => {
-    if (newSortOrder < 1 || newSortOrder > images.length) return
-    
-    setImages(prev => {
-      const currentIndex = prev.findIndex(img => img.tempId === tempId)
-      if (currentIndex === -1) return prev
-      
-      const newImages = [...prev]
-      const imageToMove = newImages[currentIndex]
-      
-      // Remove from current position
-      newImages.splice(currentIndex, 1)
-      
-      // Insert at new position (adjust for 0-based indexing)
-      newImages.splice(newSortOrder - 1, 0, imageToMove)
-      
-      // Update all sort orders
-      return newImages.map((img, i) => ({
-        ...img,
-        sortOrder: i + 1
-      }))
-    })
-  }
-
-  // Validate form
-  const validateForm = () => {
-    const newErrors: {[key: string]: string} = {}
-
-    if (!formData.setName.trim()) {
-      newErrors.setName = 'Takım adı gereklidir'
-    }
-
-    if (!formData.categoryId) {
-      newErrors.categoryId = 'Kategori seçimi gereklidir'
-    }
-
-    if (!formData.price || isNaN(parseFloat(formData.price)) || parseFloat(formData.price) <= 0) {
-      newErrors.price = 'Geçerli bir fiyat giriniz'
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  // Submit form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (selectedItems.length === 0) return alert('Lütfen takıma en az bir mobilya ekleyin')
     
-    if (!validateForm()) {
-      return
-    }
-
     setLoading(true)
-    setErrors({})
-
+    
     try {
-      const submitData = new FormData()
-      
-      // Basic info
-      submitData.append('setName', formData.setName.trim())
-      submitData.append('categoryId', formData.categoryId)
-      submitData.append('description', formData.description.trim())
-      submitData.append('price', formData.price)
-      submitData.append('isActive', formData.isActive.toString())
-      
-      // Furniture items (optional)
-      const furnitureItems = selectedFurniture.map(item => ({
-        furnitureId: item.furnitureId,
+      const data = new FormData()
+      data.append('setName', formData.setName)
+      data.append('categoryId', formData.categoryId)
+      data.append('description', formData.description)
+      data.append('isActive', String(formData.isActive))
+      data.append('price', '0') // Fiyatsız kayıt
+
+      // Furniture Items
+      const items = selectedItems.map((item, idx) => ({
+        furnitureId: item.id,
         quantity: item.quantity,
-        sortOrder: item.sortOrder
+        sortOrder: idx + 1
       }))
-      submitData.append('furnitureItems', JSON.stringify(furnitureItems))
-      
-      // Colors (optional)
-      if (selectedColors.length > 0) {
-        submitData.append('colorIds', JSON.stringify(selectedColors))
-      }
-      
-      // Properties (optional)
-      if (selectedProperties.length > 0) {
-        submitData.append('properties', JSON.stringify(selectedProperties))
-      }
-      
-      // Image type mappings
-      const imageTypeMappings: {[key: string]: 'main' | 'gallery'} = {}
-      images.forEach(img => {
-        imageTypeMappings[img.file.name] = img.imageType
-      })
-      if (Object.keys(imageTypeMappings).length > 0) {
-        submitData.append('imageTypeMappings', JSON.stringify(imageTypeMappings))
-      }
-      
+      data.append('furnitureItems', JSON.stringify(items))
+
       // Images
-      images.forEach(img => {
-        submitData.append('images', img.file)
-      })
-
-      const response = await fetch('/api/furniture-sets', {
-        method: 'POST',
-        body: submitData
-      })
-
-      const result = await response.json()
-
-      if (result.success) {
-        setSuccess(true)
-        
-        if (result.imageResults) {
-          console.log(`✅ ${result.imageResults.uploaded}/${result.imageResults.total} resim yüklendi`)
-          if (result.imageResults.categoryBasedPaths) {
-            console.log('📁 Category-based paths:', result.imageResults.categoryBasedPaths)
-          }
-        }
-        
-        setTimeout(() => {
-          router.push(`/admin/furniture-sets/${result.data.setId}`)
-        }, 2000)
-      } else {
-        if (result.validationErrors && Array.isArray(result.validationErrors)) {
-          const newErrors: {[key: string]: string} = {}
-          
-          result.validationErrors.forEach((error: string) => {
-            const errorLower = error.toLowerCase()
-            if (errorLower.includes('name') || errorLower.includes('takım')) {
-              newErrors.setName = error
-            } else if (errorLower.includes('category') || errorLower.includes('kategori')) {
-              newErrors.categoryId = error
-            } else if (errorLower.includes('price') || errorLower.includes('fiyat')) {
-              newErrors.price = error
-            } else {
-              newErrors.submit = error
-            }
-          })
-          
-          setErrors(newErrors)
-        } else {
-          setErrors({ submit: result.error || 'Mobilya takımı oluşturulamadı' })
-        }
-      }
-    } catch (error) {
-      console.error('Submit error:', error)
+      images.forEach(file => data.append('images', file))
       
-      if (error instanceof TypeError && (error as TypeError).message.includes('fetch')) {
-        setErrors({ submit: 'Bağlantı hatası. İnternet bağlantınızı kontrol edin ve tekrar deneyin.' })
-      } else {
-        setErrors({ submit: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.' })
-      }
+      // Mappings
+      const mappings: any = {}
+      images.forEach((file, idx) => {
+        mappings[file.name] = idx === 0 ? 'main' : 'gallery'
+      })
+      data.append('imageTypeMappings', JSON.stringify(mappings))
+
+      const res = await fetch('/api/furniture-sets', {
+        method: 'POST',
+        body: data
+      })
+
+      if (res.ok) router.push('/admin/furniture-sets')
+      else alert('Hata oluştu')
+
+    } catch (error) {
+      console.error(error)
     } finally {
       setLoading(false)
     }
   }
 
-  // Calculate total price
-  const calculateTotalPrice = () => {
-    return selectedFurniture.reduce((sum, item) => sum + (Number(item.furniture?.price) || 0) * item.quantity, 0)
-  }
-
-  const totalIndividualPrice = calculateTotalPrice()
-  const setPrice = parseFloat(formData.price) || 0
-  const savings = totalIndividualPrice - setPrice
-
-  // Get selected category details
-  const selectedCategory = categories.find(cat => cat.categoryId === parseInt(formData.categoryId))
-
-  // Get selected property details
-  const selectedPropertiesWithDetails = selectedProperties.map(sp => {
-    const property = properties.find(p => p.propertyId === sp.propertyId)
-    return { ...sp, property }
-  }).filter(sp => sp.property)
-
-  // Success screen
-  if (success) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 to-slate-900 flex items-center justify-center">
-        <div className="max-w-md w-full bg-gray-800 rounded-2xl shadow-2xl border border-green-600/30 overflow-hidden">
-          <div className="bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-8 text-center">
-            <div className="w-20 h-20 mx-auto mb-4 bg-gray-800 rounded-full flex items-center justify-center">
-              <SuccessIcon />
-            </div>
-            <h2 className="text-2xl font-bold text-white mb-2">Başarılı!</h2>
-            <p className="text-green-100">Mobilya takımı başarıyla oluşturuldu.</p>
-          </div>
-          <div className="p-6 text-center">
-            <div className="flex items-center justify-center space-x-2 text-gray-300">
-              <LoaderIcon />
-              <span>Yönlendiriliyorsunuz...</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  // Filter furniture list based on selected category
+  const filteredFurnitureList = selectedCategoryFilter
+    ? furnitureList.filter(item => item.categoryId === selectedCategoryFilter)
+    : furnitureList
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-slate-900">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
-        {/* Header */}
-        <div className="mb-6 sm:mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center space-x-3 sm:space-x-4">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                <FurnitureSetIcon />
-              </div>
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
-                  Yeni Mobilya Takımı Oluştur
-                </h1>
-                <p className="text-gray-400 mt-1 text-sm sm:text-base">
-                  Mobilya takımı oluşturun. İsterseniz mobilyalarınızı gruplandırabilirsiniz.
-                </p>
-              </div>
-            </div>
-            
-            <button
-              onClick={() => router.back()}
-              className="flex items-center justify-center space-x-2 px-4 py-2 text-gray-400 hover:text-gray-200 hover:bg-gray-800 rounded-lg transition-all duration-200 w-full sm:w-auto"
-            >
-              <BackIcon />
-              <span>Geri</span>
-            </button>
-          </div>
+    <div className="min-h-screen bg-slate-900 text-white p-6 sm:p-10">
+      <div className="max-w-5xl mx-auto">
+        
+        <div className="flex items-center gap-4 mb-8">
+          <button onClick={() => router.back()} className="p-2 bg-slate-800 rounded-lg hover:bg-slate-700 transition">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+          </button>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-pink-400 to-rose-400 bg-clip-text text-transparent">
+            Yeni Takım Ekle
+          </h1>
         </div>
 
-        {/* Loading State */}
-        {dataLoading && (
-          <div className="flex items-center justify-center py-12 sm:py-20">
-            <div className="bg-gray-800 rounded-2xl p-6 sm:p-8 shadow-2xl border border-gray-700">
-              <div className="flex items-center space-x-4">
-                <LoaderIcon />
-                <span className="text-gray-300 font-medium text-sm sm:text-base">Veriler yükleniyor...</span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Error State */}
-        {errors.submit && (
-          <div className="bg-gradient-to-r from-red-900/50 to-red-800/50 border border-red-600/50 text-red-300 px-4 sm:px-6 py-3 sm:py-4 rounded-xl mb-4 sm:mb-6 shadow-sm">
-            <div className="flex items-center space-x-2">
-              <span className="text-lg sm:text-xl">⚠️</span>
-              <span className="font-medium text-sm sm:text-base">{errors.submit}</span>
-            </div>
-          </div>
-        )}
-
-        {/* Form */}
-        {!dataLoading && (
-          <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
-            {/* Basic Information */}
-            <div className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden">
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-4 sm:px-6 py-4">
-                <h2 className="text-lg sm:text-xl font-bold text-white flex items-center space-x-2">
-                  <span className="text-xl sm:text-2xl">📋</span>
-                  <span>Temel Bilgiler</span>
-                </h2>
-              </div>
-              
-              <div className="p-4 sm:p-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                  <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-300">
-                      Takım Adı *
-                    </label>
-                    <input
-                      type="text"
-                      name="setName"
-                      value={formData.setName}
-                      onChange={handleInputChange}
-                      className={`w-full px-4 py-3 bg-gray-700 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-white placeholder-gray-400 ${
-                        errors.setName ? 'border-red-500 bg-red-900/20' : 'border-gray-600'
-                      }`}
-                      placeholder="Örn: Modern Salon Takımı"
-                      required
-                    />
-                    {errors.setName && <p className="text-sm text-red-400 flex items-center space-x-1">
-                      <span>⚠️</span>
-                      <span>{errors.setName}</span>
-                    </p>}
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-300">
-                      Kategori *
-                    </label>
-                    <select
-                      name="categoryId"
-                      value={formData.categoryId}
-                      onChange={handleInputChange}
-                      className={`w-full px-4 py-3 bg-gray-700 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-white ${
-                        errors.categoryId ? 'border-red-500 bg-red-900/20' : 'border-gray-600'
-                      }`}
-                      required
-                    >
-                      <option value="" className="bg-gray-700">Kategori seçin</option>
-                      {categories.map(category => (
-                        <option key={category.categoryId} value={category.categoryId} className="bg-gray-700">
-                          📁 {category.categoryName}
-                        </option>
-                      ))}
-                    </select>
-                    {errors.categoryId && <p className="text-sm text-red-400 flex items-center space-x-1">
-                      <span>⚠️</span>
-                      <span>{errors.categoryId}</span>
-                    </p>}
-                    {selectedCategory && (
-                      <div className="mt-3 p-4 bg-gradient-to-r from-blue-900/30 to-indigo-900/30 rounded-xl border border-blue-600/30">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                          <div>
-                            <span className="font-semibold text-blue-300">Kategori:</span>
-                            <p className="text-gray-300">{selectedCategory.categoryName}</p>
-                          </div>
-                          <div>
-                            <span className="font-semibold text-blue-300">Seviye:</span>
-                            <p className="text-gray-300">{selectedCategory.categoryLevel}</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-gray-300">
-                      Fiyat (₺) *
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        name="price"
-                        value={formData.price}
-                        onChange={handleInputChange}
-                        min="0"
-                        step="0.01"
-                        className={`w-full px-4 py-3 pl-12 bg-gray-700 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-white placeholder-gray-400 ${
-                          errors.price ? 'border-red-500 bg-red-900/20' : 'border-gray-600'
-                        }`}
-                        placeholder="0.00"
-                        required
-                      />
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <span className="text-gray-400 text-lg">₺</span>
-                      </div>
-                    </div>
-                    {errors.price && <p className="text-sm text-red-400 flex items-center space-x-1">
-                      <span>⚠️</span>
-                      <span>{errors.price}</span>
-                    </p>}
-                  </div>
-
-                  <div className="flex items-center">
-                    <label className="flex items-center space-x-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        name="isActive"
-                        checked={formData.isActive}
-                        onChange={handleInputChange}
-                        className="w-5 h-5 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
-                      />
-                      <span className="text-sm font-medium text-gray-300">Aktif olarak yayınla</span>
-                    </label>
-                  </div>
+        <form onSubmit={handleSubmit} className="space-y-8">
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left Col: Info */}
+            <div className="space-y-8">
+              <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-2xl p-6 space-y-6">
+                <h2 className="text-xl font-semibold text-pink-300">Takım Bilgileri</h2>
+                
+                <div className="space-y-2">
+                  <label className="text-sm text-slate-400">Takım Adı</label>
+                  <input type="text" required className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 outline-none focus:border-pink-500"
+                    value={formData.setName} onChange={e => setFormData({...formData, setName: e.target.value})} placeholder="Örn: Royal Yatak Odası" />
                 </div>
 
-                <div className="mt-6 space-y-2">
-                  <label className="block text-sm font-semibold text-gray-300">
-                    Açıklama
+                <div className="space-y-2">
+                  <label className="text-sm text-slate-400">Kategori</label>
+                  <select required className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 outline-none focus:border-pink-500"
+                    value={formData.categoryId} onChange={e => setFormData({...formData, categoryId: e.target.value})}>
+                    <option value="">Seçiniz...</option>
+                    {categories.filter(cat => cat.level === 1).map(cat => <option key={cat.categoryId} value={cat.categoryId}>{cat.categoryName}</option>)}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm text-slate-400">Açıklama</label>
+                  <textarea rows={3} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 outline-none focus:border-pink-500 resize-none"
+                    value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <input type="checkbox" checked={formData.isActive} onChange={e => setFormData({...formData, isActive: e.target.checked})} className="w-5 h-5 accent-pink-500 bg-slate-900 border-slate-700 rounded" />
+                  <span>Yayında</span>
+                </div>
+              </div>
+
+              {/* Images */}
+              <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-2xl p-6 space-y-6">
+                <h2 className="text-xl font-semibold text-pink-300">Görseller</h2>
+                <div className="grid grid-cols-3 gap-3">
+                  <label className="aspect-square rounded-xl border-2 border-dashed border-slate-600 hover:border-pink-500 flex flex-col items-center justify-center cursor-pointer text-slate-400 hover:text-pink-400 transition">
+                    <span className="text-2xl">+</span>
+                    <span className="text-xs">Ekle</span>
+                    <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageChange} />
                   </label>
-                  <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    rows={4}
-                    className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none text-white placeholder-gray-400"
-                    placeholder="Takım hakkında detaylar..."
-                  />
+                  {previews.map((src, idx) => (
+                    <div key={idx} className="relative aspect-square rounded-xl overflow-hidden bg-black group border border-slate-700">
+                      <Image src={src} alt="Preview" fill className="object-cover" />
+                      <button type="button" onClick={() => removeImage(idx)} className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition">
+                        Sil
+                      </button>
+                      {idx === 0 && <span className="absolute top-1 left-1 bg-pink-600 text-[10px] px-2 py-0.5 rounded">Kapak</span>}
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
 
-            {/* Furniture Selection */}
-            <div className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden">
-              <div className="bg-gradient-to-r from-orange-600 to-red-600 px-6 py-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-bold text-white flex items-center space-x-2">
-                    <FurnitureIcon />
-                    <span>Mobilyalar (Opsiyonel)</span>
-                  </h2>
-                  <button
-                    type="button"
-                    onClick={() => setShowFurnitureModal(true)}
-                    className="flex items-center space-x-2 px-4 py-2 bg-white bg-opacity-20 text-white rounded-lg hover:bg-opacity-30 transition-all duration-200"
-                  >
-                    <PlusIcon />
-                    <span>Mobilya Ekle</span>
-                  </button>
-                </div>
+            {/* Right Col: Items */}
+            <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-2xl p-6 flex flex-col h-full">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-pink-300">Takım İçeriği</h2>
+                <button type="button" onClick={() => setShowFurnitureModal(true)} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm transition">
+                  + Mobilya Ekle
+                </button>
               </div>
 
-              <div className="p-6">
-                {selectedFurniture.length === 0 ? (
-                  <div className="text-center py-12 border-2 border-dashed border-gray-600 rounded-xl bg-gray-700/30">
-                    <div className="flex flex-col items-center space-y-3">
-                      <div className="w-16 h-16 bg-gray-600 rounded-full flex items-center justify-center">
-                        <FurnitureIcon />
+              <div className="flex-1 overflow-y-auto space-y-3 min-h-[300px]">
+                {selectedItems.length === 0 ? (
+                  <div className="h-full flex items-center justify-center text-slate-500 border-2 border-dashed border-slate-700 rounded-xl">
+                    Henüz mobilya eklenmedi
+                  </div>
+                ) : (
+                  selectedItems.map((item) => (
+                    <div key={item.id} className="bg-slate-900 p-3 rounded-xl flex items-center justify-between border border-slate-700">
+                      <div className="flex items-center gap-3">
+                        <div className="relative w-12 h-12 bg-black rounded-lg overflow-hidden border border-slate-600 flex-shrink-0">
+                          {item.image ? (
+                            <Image src={getImageUrl(item.image) || ''} alt={item.name} fill className="object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-slate-500 text-xs">IMG</div>
+                          )}
+                        </div>
+                        <span className="font-medium text-sm">{item.name}</span>
                       </div>
-                      <div>
-                        <p className="text-gray-300 font-medium">Henüz mobilya eklenmedi</p>
-                        <button
-                          type="button"
-                          onClick={() => setShowFurnitureModal(true)}
-                          className="mt-2 text-orange-400 hover:text-orange-300 font-medium transition-colors"
-                        >
-                          İlk mobilyayı ekleyin
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center bg-slate-800 rounded-lg h-8">
+                          <button type="button" onClick={() => updateQuantity(item.id, -1)} className="px-2 hover:bg-slate-700 rounded-l-lg h-full flex items-center text-slate-400 hover:text-white">-</button>
+                          <span className="px-2 text-sm text-center min-w-[20px]">{item.quantity}</span>
+                          <button type="button" onClick={() => updateQuantity(item.id, 1)} className="px-2 hover:bg-slate-700 rounded-r-lg h-full flex items-center text-slate-400 hover:text-white">+</button>
+                        </div>
+                        <button type="button" onClick={() => removeFurniture(item.id)} className="text-red-400 hover:text-red-300 p-1">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                         </button>
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {selectedFurniture.map((item, index) => (
-                      <div key={item.furnitureId} className="group relative bg-gradient-to-r from-gray-700 to-gray-800 rounded-xl border border-gray-600 p-5 hover:shadow-lg transition-all duration-200">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-gray-200 mb-1">{item.furniture?.furnitureName}</h3>
-                            <p className="text-sm text-gray-400 mb-2">{item.furniture?.furnitureType}</p>
-                            <div className="flex items-center space-x-2">
-                              <MoneyIcon />
-                              <span className="text-sm text-gray-300">
-                                ₺{Number(item.furniture?.price)?.toLocaleString('tr-TR')} × {item.quantity} = 
-                                <span className="font-semibold text-green-400 ml-1">
-                                  ₺{((Number(item.furniture?.price) || 0) * item.quantity).toLocaleString('tr-TR')}
-                                </span>
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-3">
-                            <div className="flex items-center space-x-2 bg-gray-700 rounded-lg border border-gray-600 p-1">
-                              <button
-                                type="button"
-                                onClick={() => updateFurnitureQuantity(item.furnitureId, item.quantity - 1)}
-                                className="w-8 h-8 flex items-center justify-center text-gray-300 hover:text-white hover:bg-gray-600 rounded transition-colors"
-                              >
-                                -
-                              </button>
-                              <span className="w-8 text-center font-medium text-gray-200">{item.quantity}</span>
-                              <button
-                                type="button"
-                                onClick={() => updateFurnitureQuantity(item.furnitureId, item.quantity + 1)}
-                                className="w-8 h-8 flex items-center justify-center text-gray-300 hover:text-white hover:bg-gray-600 rounded transition-colors"
-                              >
-                                +
-                              </button>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => updateFurnitureQuantity(item.furnitureId, 0)}
-                              className="text-red-400 hover:text-red-300 p-2 hover:bg-red-500/20 rounded-lg transition-all duration-200 border border-red-500/30"
-                              title="Mobilyayı kaldır"
-                            >
-                              <DeleteIcon />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  ))
                 )}
-
-                {/* Price Summary - sadece mobilya varsa göster */}
-                {selectedFurniture.length > 0 && (
-                  <div className="mt-6 bg-gradient-to-r from-green-900/30 to-emerald-900/30 rounded-xl p-6 border border-green-600/30">
-                    <h3 className="font-semibold text-green-300 mb-4 flex items-center space-x-2">
-                      <MoneyIcon />
-                      <span>Fiyat Özeti</span>
-                    </h3>
-                    <div className="space-y-3">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-300">Toplam Mobilya Fiyatı:</span>
-                        <span className="font-medium text-gray-200">₺{totalIndividualPrice.toLocaleString('tr-TR')}</span>
-                      </div>
-                      {setPrice > 0 && (
-                        <>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-300">Takım Fiyatı:</span>
-                            <span className="font-medium text-gray-200">₺{setPrice.toLocaleString('tr-TR')}</span>
-                          </div>
-                          <div className="flex justify-between text-lg font-bold border-t border-green-600/30 pt-3">
-                            <span className="text-gray-200">{savings > 0 ? 'Tasarruf:' : 'Fark:'}</span>
-                            <span className={savings > 0 ? 'text-green-400' : 'text-red-400'}>
-                              {savings > 0 ? '-' : '+'}₺{Math.abs(savings).toLocaleString('tr-TR')}
-                            </span>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Colors */}
-            {colors.length > 0 && (
-              <div className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden">
-                <div className="bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-4">
-                  <h2 className="text-xl font-bold text-white flex items-center space-x-2">
-                    <ColorIcon />
-                    <span>Renkler (Opsiyonel)</span>
-                  </h2>
-                </div>
-                
-                <div className="p-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {colors.map(color => (
-                      <label key={color.colorId} className="group relative cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={selectedColors.includes(color.colorId)}
-                          onChange={(e) => toggleColor(color.colorId)}
-                          className="sr-only"
-                        />
-                        <div className={`p-4 rounded-xl border-2 transition-all duration-200 ${
-                          selectedColors.includes(color.colorId)
-                            ? 'border-purple-500 bg-purple-900/30 shadow-md transform scale-105'
-                            : 'border-gray-600 hover:border-gray-500 hover:shadow-sm bg-gray-700/50'
-                        }`}>
-                          <div className="flex items-center space-x-3">
-                            <div
-                              className="w-8 h-8 rounded-full border-2 border-gray-600 shadow-md"
-                              style={{ backgroundColor: color.colorCode || '#6B7280' }}
-                            />
-                            <div className="flex-1">
-                              <span className="text-sm font-medium text-gray-300">
-                                {color.colorName}
-                              </span>
-                              {color.colorCode && (
-                                <p className="text-xs text-gray-500">
-                                  {color.colorCode}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                          {selectedColors.includes(color.colorId) && (
-                            <div className="absolute top-2 right-2 w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center">
-                              <span className="text-white text-xs">✓</span>
-                            </div>
-                          )}
-                        </div>
-                      </label>
-                    ))}
-                  </div>
-                  {selectedColors.length > 0 && (
-                    <div className="mt-6 p-4 bg-gradient-to-r from-purple-900/30 to-pink-900/30 rounded-xl border border-purple-600/30">
-                      <p className="text-sm font-medium text-purple-300 flex items-center space-x-2">
-                        <span>🎨</span>
-                        <span>Seçilen renkler: {selectedColors.length} adet</span>
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Properties */}
-            {properties.length > 0 && (
-              <div className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden">
-                <div className="bg-gradient-to-r from-green-600 to-teal-600 px-6 py-4">
-                  <h2 className="text-xl font-bold text-white flex items-center space-x-2">
-                    <PropertyIcon />
-                    <span>Özellikler (Opsiyonel)</span>
-                  </h2>
-                </div>
-                
-                <div className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {properties.map(property => {
-                      const existingProperty = selectedProperties.find(sp => sp.propertyId === property.propertyId)
-                      return (
-                        <div key={property.propertyId} className="space-y-2">
-                          <label className="block text-sm font-semibold text-gray-300">
-                            {property.propertyName}
-                          </label>
-                          <input
-                            type="text"
-                            value={existingProperty?.propertyValue || ''}
-                            onChange={(e) => updateProperty(property.propertyId, e.target.value)}
-                            placeholder={`${property.propertyName} değeri`}
-                            className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 text-white placeholder-gray-400"
-                          />
-                        </div>
-                      )
-                    })}
-                  </div>
-                  {selectedPropertiesWithDetails.length > 0 && (
-                    <div className="mt-6 p-4 bg-gradient-to-r from-green-900/30 to-teal-900/30 rounded-xl border border-green-600/30">
-                      <p className="text-sm font-medium text-green-300 flex items-center space-x-2">
-                        <PropertyIcon />
-                        <span>Tanımlanan özellikler: {selectedPropertiesWithDetails.length} adet</span>
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Images */}
-            <div className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden">
-              <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4">
-                <h2 className="text-xl font-bold text-white flex items-center space-x-2">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  <span>Görseller</span>
-                </h2>
-              </div>
-              
-              <div className="p-6 space-y-6">
-                {/* Modern Upload Area */}
-                <div className="relative">
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                    id="furniture-set-image-upload"
-                  />
-                  <label
-                    htmlFor="furniture-set-image-upload"
-                    className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-600 rounded-2xl bg-gradient-to-br from-gray-700/50 to-gray-800/50 hover:from-indigo-600/10 hover:to-purple-600/10 hover:border-indigo-500/50 transition-all duration-300 cursor-pointer group"
-                  >
-                    <div className="w-16 h-16 mb-4 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-                      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                      </svg>
-                    </div>
-                    <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-indigo-300 transition-colors">
-                      Görselleri Yükle
-                    </h3>
-                    <p className="text-gray-400 text-center text-sm mb-3">
-                      Dosyaları buraya sürükleyip bırakın veya seçmek için tıklayın
-                    </p>
-                    <div className="flex items-center space-x-4 text-xs text-gray-500">
-                      <span>📎 Çoklu seçim</span>
-                      <span>📏 Maks 100MB</span>
-                      <span>🖼️ JPG, PNG, GIF, WebP</span>
-                    </div>
-                  </label>
-                </div>
-
-                {/* Modern Images Grid */}
-                {images.length > 0 && (
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-semibold text-white">
-                        Yüklenen Görseller
-                      </h3>
-                      <div className="text-sm text-gray-400">
-                        {images.filter(img => img.imageType === 'main').length} ana, {images.filter(img => img.imageType === 'gallery').length} galeri
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {images.map((image) => (
-                        <div key={image.tempId} className="group relative bg-gray-700 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                          <div className="aspect-square relative overflow-hidden">
-                            <Image
-                              src={image.preview}
-                              alt={`Preview ${image.sortOrder}`}
-                              fill
-                              className="object-cover"
-                            />
-                            
-                            {/* Image Type Badge */}
-                            <div className={`absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-bold shadow-lg backdrop-blur-sm ${
-                              image.imageType === 'main'
-                                ? 'bg-yellow-500/90 text-white border border-yellow-400/50' 
-                                : 'bg-blue-500/90 text-white border border-blue-400/50'
-                            }`}>
-                              {image.imageType === 'main' ? '⭐ Ana Görsel' : '📸 Galeri'}
-                            </div>
-                            
-                            {/* Sort Order Badge */}
-                            <div className="absolute top-3 right-3 w-8 h-8 bg-black/70 backdrop-blur-sm text-white rounded-full flex items-center justify-center text-sm font-bold border border-white/20">
-                              {image.sortOrder}
-                            </div>
-                            
-                            {/* Delete Button */}
-                            <button
-                              type="button"
-                              onClick={() => removeImage(image.tempId)}
-                              className="absolute bottom-3 right-3 p-2 bg-red-500/90 hover:bg-red-600 text-white rounded-full shadow-lg backdrop-blur-sm transition-all duration-200 opacity-0 group-hover:opacity-100"
-                              title="Görseli kaldır"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
-                          </div>
-                          
-                          <div className="p-4 space-y-3">
-                            <div className="flex items-center justify-between">
-                              <div className="text-sm font-medium text-gray-300 truncate" title={image.file.name}>
-                                {image.file.name}
-                              </div>
-                              <span className="text-xs text-gray-500">
-                                {(image.file.size / 1024 / 1024).toFixed(1)}MB
-                              </span>
-                            </div>
-                            
-                            {/* Image Type Controls */}
-                            <div className="flex space-x-2">
-                              <button
-                                type="button"
-                                onClick={() => changeImageType(image.tempId, 'main')}
-                                className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all duration-200 ${
-                                  image.imageType === 'main'
-                                    ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-400/30' 
-                                    : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
-                                }`}
-                              >
-                                ⭐ Ana
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => changeImageType(image.tempId, 'gallery')}
-                                className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-all duration-200 ${
-                                  image.imageType === 'gallery'
-                                    ? 'bg-blue-500/20 text-blue-300 border border-blue-400/30' 
-                                    : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
-                                }`}
-                              >
-                                📸 Galeri
-                              </button>
-                            </div>
-                            
-                            {/* Modern Sort Controls */}
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-1">
-                                <button
-                                  type="button"
-                                  onClick={() => moveImageUp(image.tempId)}
-                                  disabled={image.sortOrder === 1}
-                                  className="p-2 rounded-lg bg-gray-600 hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                  title="Yukarı taşı"
-                                >
-                                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                                  </svg>
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => moveImageDown(image.tempId)}
-                                  disabled={image.sortOrder === images.length}
-                                  className="p-2 rounded-lg bg-gray-600 hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                  title="Aşağı taşı"
-                                >
-                                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                  </svg>
-                                </button>
-                              </div>
-                              
-                              <input
-                                type="number"
-                                min="1"
-                                max={images.length}
-                                value={image.sortOrder}
-                                onChange={(e) => updateSortOrder(image.tempId, parseInt(e.target.value))}
-                                className="w-16 px-2 py-1 text-sm border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-600 text-white text-center"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Modern Empty State */}
-                {images.length === 0 && (
-                  <div className="text-center py-12 border-2 border-dashed border-gray-600 rounded-2xl bg-gradient-to-br from-gray-700/30 to-gray-800/30">
-                    <div className="flex flex-col items-center space-y-4">
-                      <div className="w-20 h-20 bg-gradient-to-r from-gray-600 to-gray-700 rounded-full flex items-center justify-center">
-                        <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="text-gray-300 font-medium text-lg">Henüz görsel yüklenmedi</p>
-                        <p className="text-sm text-gray-500 mt-1">
-                          Yukarıdaki yükleme alanını kullanarak görseller ekleyebilirsiniz
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Submit Button */}
-            <div className="flex justify-end space-x-4 pt-6">
-              <button
-                type="button"
-                onClick={() => router.back()}
-                className="px-6 py-3 border border-gray-600 text-gray-300 rounded-xl hover:bg-gray-700 transition-all duration-200 font-medium"
-              >
-                İptal
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex items-center space-x-2 px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium shadow-lg"
-              >
-                {loading ? <LoaderIcon /> : <SaveIcon />}
-                <span>{loading ? 'Oluşturuluyor...' : 'Takımı Oluştur'}</span>
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
-
-      {/* Furniture Selection Modal */}
-      {showFurnitureModal && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-gray-800 rounded-2xl max-w-4xl w-full max-h-96 overflow-hidden shadow-2xl border border-gray-700">
-            <div className="bg-gradient-to-r from-orange-600 to-red-600 px-6 py-4 flex items-center justify-between">
-              <h3 className="text-xl font-bold text-white flex items-center space-x-2">
-                <FurnitureIcon />
-                <span>Mobilya Seç</span>
-              </h3>
-              <button
-                onClick={() => setShowFurnitureModal(false)}
-                className="text-white hover:text-gray-200 p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition-all duration-200"
-              >
-                <span className="text-xl">×</span>
-              </button>
-            </div>
-            <div className="p-6 overflow-y-auto max-h-80">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {furnitureList
-                  .filter(furniture => !selectedFurniture.find(item => item.furnitureId === furniture.furnitureId))
-                  .map(furniture => (
-                  <div
-                    key={furniture.furnitureId}
-                    className="group border border-gray-600 rounded-xl p-4 hover:border-orange-500 hover:shadow-md cursor-pointer transition-all duration-200 bg-gradient-to-r from-gray-700 to-gray-800"
-                    onClick={() => addFurniture(furniture)}
-                  >
-                    <h4 className="font-semibold text-gray-200 group-hover:text-orange-400 transition-colors">
-                      {furniture.furnitureName}
-                    </h4>
-                    <p className="text-sm text-gray-400 mt-1">{furniture.furnitureType}</p>
-                    <div className="flex items-center space-x-2 mt-2">
-                      <MoneyIcon />
-                      <span className="text-sm font-medium text-green-400">
-                        ₺{Number(furniture.price).toLocaleString('tr-TR')}
-                      </span>
-                    </div>
-                  </div>
-                ))}
               </div>
             </div>
           </div>
-        </div>
-      )}
+
+          <div className="flex justify-end gap-4 pt-4 border-t border-slate-800">
+            <button type="button" onClick={() => router.back()} className="px-6 py-3 bg-slate-800 rounded-xl hover:bg-slate-700">İptal</button>
+            <button type="submit" disabled={loading} className="px-8 py-3 bg-pink-600 rounded-xl hover:bg-pink-700 font-medium shadow-lg shadow-pink-600/20 disabled:opacity-50">
+              {loading ? 'Kaydediliyor...' : 'Takımı Oluştur'}
+            </button>
+          </div>
+
+        </form>
+
+        {/* Modal */}
+        {showFurnitureModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+            <div className="bg-slate-800 w-full max-w-2xl rounded-2xl border border-slate-700 shadow-2xl flex flex-col max-h-[80vh]">
+              <div className="p-6 border-b border-slate-700 flex justify-between items-center gap-4">
+                <h3 className="text-xl font-bold whitespace-nowrap">Mobilya Seç</h3>
+                
+                {/* Category Filter */}
+                <select 
+                  className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm outline-none focus:border-pink-500 w-full max-w-xs"
+                  value={selectedCategoryFilter || ''}
+                  onChange={(e) => setSelectedCategoryFilter(e.target.value ? parseInt(e.target.value) : null)}
+                >
+                  <option value="">Tüm Kategoriler</option>
+                  {categories.map(cat => (
+                    <option key={cat.categoryId} value={cat.categoryId} disabled={cat.level === 1} className={cat.level === 1 ? 'bg-slate-800 text-slate-500 font-bold' : ''}>
+                      {cat.level === 1 ? `📂 ${cat.categoryName}` : `   ↳ ${cat.categoryName}`}
+                    </option>
+                  ))}
+                </select>
+
+                <button onClick={() => setShowFurnitureModal(false)} className="text-slate-400 hover:text-white">✕</button>
+              </div>
+              
+              <div className="p-6 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {filteredFurnitureList.length === 0 ? (
+                  <div className="col-span-2 text-center text-slate-500 py-8">
+                    Bu kategoride mobilya bulunamadı.
+                  </div>
+                ) : (
+                  filteredFurnitureList.map(item => {
+                    const itemImage = item.images?.[0]?.image?.filePath
+                    return (
+                      <button key={item.furnitureId} onClick={() => addFurnitureToSet(item)}
+                        className="flex items-center gap-3 p-3 bg-slate-900 border border-slate-700 rounded-xl hover:border-pink-500 hover:bg-slate-800 transition text-left group">
+                        <div className="relative w-12 h-12 bg-black rounded-lg overflow-hidden border border-slate-600 flex-shrink-0">
+                          {itemImage ? (
+                            <Image src={getImageUrl(itemImage) || ''} alt={item.furnitureName} fill className="object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-slate-500 text-xs">IMG</div>
+                          )}
+                        </div>
+                        <div>
+                          <div className="font-bold group-hover:text-pink-400 text-sm line-clamp-1">{item.furnitureName}</div>
+                          <div className="text-xs text-slate-500">{item.furnitureType}</div>
+                        </div>
+                      </button>
+                    )
+                  })
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+      </div>
     </div>
   )
 }

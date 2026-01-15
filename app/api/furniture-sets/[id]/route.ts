@@ -719,7 +719,7 @@ export async function PUT(
     }
 
     if (price !== undefined) {
-      if (price === null || isNaN(parseFloat(price)) || parseFloat(price) <= 0) {
+      if (price === null || isNaN(parseFloat(price)) || parseFloat(price) < 0) {
         validationErrors.push('A valid price must be entered')
       }
     }
