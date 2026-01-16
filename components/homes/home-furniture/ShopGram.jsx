@@ -1,7 +1,6 @@
 "use client";
 
-import { galleryItems } from "@/data/productGallery";
-
+import { useState, useEffect } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -23,7 +22,31 @@ const shopgramImgStyle = {
   display: "block",
   aspectRatio: "5/4",
 };
+
 export default function ShopGram() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchPopular() {
+      try {
+        const response = await fetch('/api/products/popular?limit=10');
+        const data = await response.json();
+        if (data.success) {
+          setProducts(data.data);
+        }
+      } catch (error) {
+        console.error("Error fetching popular products for ShopGram:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchPopular();
+  }, []);
+
+  if (loading) return null;
+  if (products.length === 0) return null;
+
   return (
     <section className="pb-0 flat-spacing-18">
       <div className="container-full px-0">
@@ -38,36 +61,34 @@ export default function ShopGram() {
           className="swiper tf-sw-shop-gallery"
           slidesPerView={5}
           breakpoints={{
-            768: { slidesPerView: 5 }, // data-tablet
-            576: { slidesPerView: 3 }, // data-mobile
+            1200: { slidesPerView: 5 },
+            992: { slidesPerView: 4 },
+            768: { slidesPerView: 3 }, // data-tablet
+            576: { slidesPerView: 2 }, // data-mobile
             0: { slidesPerView: 2 }, // data-mobile
           }}
           spaceBetween={0} // data-space-lg
-          //   pagination={{clickable:true, clickable: true }} // for pagination
-          //   modules={[Pagination]}
         >
-          {galleryItems.map((item, index) => (
-            <SwiperSlide key={index}>
-              <Link  href={item.href}>
-              <div
-                className="gallery-item hover-img rounded-0 wow fadeInUp"
-                data-wow-delay={item.delay}
-              >
-               
-                <div style={shopgramStyle}>
-                  <Image
-                    className="lazyload img-hover"
-                    data-src={item.src}
-                    alt={item.alt}
-                    src={item.src}
-                    width={500}
-                    height={500}
-                    style={shopgramImgStyle}
-                  />
+          {products.map((item, index) => (
+            <SwiperSlide key={`${item.type}-${item.id}`}>
+              <Link href={item.type === 'furniture_set' ? `/product-detail-furniture-set/${item.id}` : `/product-detail-furniture/${item.id}`}>
+                <div
+                  className="gallery-item hover-img rounded-0 wow fadeInUp"
+                  data-wow-delay={`${index * 0.1}s`}
+                >
+                  <div style={shopgramStyle}>
+                    <Image
+                      className="lazyload img-hover"
+                      alt={item.title}
+                      src={item.imgSrc}
+                      width={500}
+                      height={500}
+                      style={shopgramImgStyle}
+                    />
+                  </div>
+                  {/* Hover'da ürün adını göstermek isterseniz buraya eklenebilir */}
                 </div>
-              
-              </div>
-               </Link>
+              </Link>
             </SwiperSlide>
           ))}
         </Swiper>

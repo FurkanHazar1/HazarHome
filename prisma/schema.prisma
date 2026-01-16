@@ -92,6 +92,8 @@ model Furniture {
   description      String?
   price            Decimal                   @db.Decimal(12, 2)
   isActive         Boolean                   @default(true) @map("is_active")
+  isPopular        Boolean                   @default(false) @map("is_popular")
+  popularOrder     Int?                      @map("popular_order")
   createdAt        DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
   
   // Relations
@@ -102,6 +104,7 @@ model Furniture {
   furnitureSets    FurnitureSetAndFurniture[]
 
   @@index([isActive], map: "idx_furniture_active")
+  @@index([isPopular], map: "idx_furniture_popular")
   @@index([categoryId], map: "idx_furniture_category")
   @@index([furnitureType], map: "idx_furniture_type")
   @@map("furnitures")
@@ -158,8 +161,10 @@ model FurnitureSet {
   description            String?
   price                  Decimal                    @db.Decimal(12, 2)
   setName                String?                    @map("set_name") @db.VarChar(150)
-  createdAt              DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
   isActive               Boolean                    @default(true) @map("is_active")
+  isPopular              Boolean                    @default(false) @map("is_popular")
+  popularOrder           Int?                       @map("popular_order")
+  createdAt              DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
   
   // Relations
   category               Category                   @relation(fields: [categoryId], references: [categoryId])
@@ -168,6 +173,7 @@ model FurnitureSet {
   furnitureSetProperties FurnitureSetProperty[]
   furnitureSetItems      FurnitureSetAndFurniture[]
 
+  @@index([isPopular], map: "idx_furniture_sets_popular")
   @@map("furniture_sets")
 }
 
