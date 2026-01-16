@@ -57,33 +57,23 @@ export default function FurnitureDetailsPopup({ product }) {
               </div>
             </div>
             <div className="col-md-4">
-              <div className="tf-product-info-wrap position-relative" style={{ 
-                maxHeight: '540px', // Ana görselin yüksekliği ile eşleştir (4:3 oranı)
-                overflowY: 'auto',
-                paddingRight: '15px'
-              }}>
+              <div className="tf-product-info-wrap position-relative">
                 <div className="tf-zoom-main" />
-                <div className="tf-product-info-list other-image-zoom" style={{
-                  padding: '15px 0', // Üst-alt padding küçült
-                  fontSize: '14px' // Genel font boyutunu küçült
-                }}>
-                  <div className="tf-product-info-title">
-                    <h5 style={{ fontSize: '20px', marginBottom: '10px' }}>{product.title}</h5>
+                <div className="tf-product-info-list other-image-zoom">
+                  <div className="tf-product-info-title mb-3">
+                    <h2 className="fw-6" style={{ fontSize: '24px', marginBottom: '10px' }}>{product.title}</h2>
                   </div>
                   
-                
-                  
-                  {/* Price block removed */}
-
                   {/* Ürün Açıklaması */}
                   {product.description && (
-                    <div className="tf-product-info-description" style={{ marginBottom: '15px' }}>
-                      <p className="fw-6 text_black-2" style={{ 
-                        fontSize: '13px', 
-                        lineHeight: '1.4',
-                        maxHeight: '60px',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
+                    <div className="tf-product-info-description mb-4">
+                      <p className="text_black-2" style={{ 
+                        fontSize: '14px', 
+                        lineHeight: '1.6',
+                        display: '-webkit-box',
+                        WebkitLineClamp: '10',
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden'
                       }}>{product.description}</p>
                     </div>
                   )}
@@ -233,27 +223,26 @@ export default function FurnitureDetailsPopup({ product }) {
 
 
                   {/* Miktar ve Satın Al */}
-                  <div className="tf-product-info-quantity" style={{ marginBottom: '12px' }}>
-                    <div className="quantity-title fw-6" style={{ fontSize: '13px', marginBottom: '6px' }}>Miktar</div>
+                  <div className="tf-product-info-quantity mb-3">
+                    <div className="quantity-title fw-6 mb-2" style={{ fontSize: '14px' }}>Miktar</div>
                     <Quantity setQuantity={setQuantity} />
                   </div>
 
                   <div className="tf-product-info-buy-button">
-                    <form onSubmit={(e) => e.preventDefault()} className="">
-                      <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-                        <a
+                    <form onSubmit={(e) => e.preventDefault()}>
+                      <div className="d-flex flex-column gap-12">
+                        <button
+                          type="button"
                           onClick={() => {
-                            // Tekil furniture için normal ID kullan
                             const productToAdd = {
                               id: product.id,
                               title: product.title,
                               price: product.price,
                               imgSrc: product.imgSrc || (product.images && product.images[0]) || '/images/default-product.jpg',
-                              type: 'furniture', // Tip bilgisi ekle
+                              type: 'furniture',
                               category: product.category || product.categoryName || 'Mobilya'
                             };
                             
-                            // Seçilen özellikler
                             const options = {
                               color: currentColor?.name || null,
                               size: currentSize || null
@@ -261,79 +250,36 @@ export default function FurnitureDetailsPopup({ product }) {
                             
                             addProductToCart(productToAdd, quantity, options);
                           }}
-                          className="tf-btn animate-hover-btn justify-content-center fw-6 flex-grow-1 custom-cream-btn"
+                          className="tf-btn animate-hover-btn justify-content-center fw-6 custom-cream-btn w-100"
                           style={{ 
-                            fontSize: '14px',
-                            padding: '10px 16px',
-                            flex: '1',
+                            fontSize: '16px',
+                            padding: '12px 20px',
                             backgroundColor: '#F5F5DC',
                             border: '2px solid #F5F5DC',
                             color: '#8B4513',
-                            transition: 'all 0.3s ease',
-                            textDecoration: 'none',
-                            outline: 'none'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.target.style.setProperty('background-color', '#E6E6C8', 'important');
-                            e.target.style.setProperty('border-color', '#E6E6C8', 'important');
-                            e.target.style.setProperty('color', '#654321', 'important');
-                            e.target.style.transform = 'scale(1.02)';
-                            // Span elementine de aynı stilleri uygula
-                            const spanElement = e.target.querySelector('span');
-                            if (spanElement) {
-                              spanElement.style.setProperty('color', '#654321', 'important');
-                              spanElement.style.setProperty('background-color', 'transparent', 'important');
-                            }
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.setProperty('background-color', '#F5F5DC', 'important');
-                            e.target.style.setProperty('border-color', '#F5F5DC', 'important');
-                            e.target.style.setProperty('color', '#8B4513', 'important');
-                            e.target.style.transform = 'scale(1)';
-                            // Span elementinin rengini geri al
-                            const spanElement = e.target.querySelector('span');
-                            if (spanElement) {
-                              spanElement.style.setProperty('color', '#8B4513', 'important');
-                              spanElement.style.setProperty('background-color', 'transparent', 'important');
-                            }
+                            transition: 'all 0.3s ease'
                           }}
                         >
-                          <span style={{ 
-                            backgroundColor: 'transparent', 
-                            color: 'inherit',
-                            border: 'none',
-                            padding: '0',
-                            margin: '0'
-                          }}>Sepete Ekle</span>
-                        </a>
+                          <span>Sepete Ekle</span>
+                        </button>
                         
                         <a
-                          href={`https://wa.me/905335191329?text=${encodeURIComponent(`Merhaba! ${product.title} ürünü hakkında daha fazla bilgi almak istiyorum. Ürün linki: ${window.location.href}`)}`}
+                          href={`https://wa.me/905335191329?text=${encodeURIComponent(`Merhaba! ${product.title} ürünü hakkında daha fazla bilgi almak istiyorum. Ürün linki: ${typeof window !== 'undefined' ? window.location.href : ''}`)}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="tf-btn btn-outline animate-hover-btn justify-content-center fw-6"
+                          className="tf-btn btn-outline animate-hover-btn justify-content-center fw-6 w-100"
                           style={{ 
-                            fontSize: '14px',
-                            padding: '10px 16px',
-                            flex: '1',
+                            fontSize: '16px',
+                            padding: '12px 20px',
                             backgroundColor: 'transparent',
                             border: '2px solid #25D366',
                             color: '#25D366',
                             transition: 'all 0.3s ease'
                           }}
-                          onMouseEnter={(e) => {
-                            e.target.style.backgroundColor = '#25D366';
-                            e.target.style.color = 'white';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = 'transparent';
-                            e.target.style.color = '#25D366';
-                          }}
                         >
-                          <span>Daha Fazla Bilgi Al</span>
+                          <span>WhatsApp ile Bilgi Al</span>
                         </a>
                       </div>
-               
                     </form>
                   </div>
 

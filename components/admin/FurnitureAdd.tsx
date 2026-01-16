@@ -26,7 +26,8 @@ export default function FurnitureAdd() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [initialLoading, setInitialLoading] = useState(true)
-  
+  const [generatingDesc, setGeneratingDesc] = useState(false);
+
   // Data Sources
   const [categories, setCategories] = useState<Category[]>([])
   const [availableProperties, setAvailableProperties] = useState<Property[]>([])
@@ -45,6 +46,45 @@ export default function FurnitureAdd() {
   // Image State
   const [images, setImages] = useState<File[]>([])
   const [previews, setPreviews] = useState<string[]>([])
+
+  // AI Description Generator
+  const generateDescription = async () => {
+    if (!formData.furnitureName || !formData.categoryId) {
+      alert('Lütfen önce mobilya adını ve kategorisini seçin.');
+      return;
+    }
+
+    setGeneratingDesc(true);
+    try {
+      const selectedCat = categories.find(c => c.categoryId === parseInt(formData.categoryId));
+      const categoryName = selectedCat ? selectedCat.categoryName : '';
+
+      const propNames = selectedProperties.map(p => `${p.propertyName}: ${p.propertyValue || 'Var'}`);
+
+      const res = await fetch('/api/ai/generate-description', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productName: formData.furnitureName,
+          category: categoryName,
+          type: 'furniture',
+          properties: propNames
+        })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setFormData(prev => ({ ...prev, description: data.description }));
+      } else {
+        alert('Açıklama oluşturulamadı: ' + (data.error || 'Bilinmeyen hata'));
+      }
+    } catch (error) {
+      console.error('AI error:', error);
+      alert('Yapay zeka servisine bağlanırken hata oluştu.');
+    } finally {
+      setGeneratingDesc(false);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -247,12 +287,32 @@ export default function FurnitureAdd() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm text-slate-400 font-medium">Açıklama</label>
+              <div className="flex justify-between items-center">
+                <label className="text-sm text-slate-400 font-medium">Açıklama</label>
+                <button
+                  type="button"
+                  onClick={generateDescription}
+                  disabled={generatingDesc}
+                  className="text-xs flex items-center gap-1 bg-purple-600/20 text-purple-300 px-3 py-1.5 rounded-lg hover:bg-purple-600/30 transition border border-purple-500/30 disabled:opacity-50"
+                >
+                  {generatingDesc ? (
+                    <>
+                      <span className="animate-spin h-3 w-3 border-2 border-current border-t-transparent rounded-full"></span>
+                      Oluşturuluyor...
+                    </>
+                  ) : (
+                    <>
+                      ✨ Yapay Zeka ile Oluştur
+                    </>
+                  )}
+                </button>
+              </div>
               <textarea 
                 rows={4}
                 value={formData.description}
                 onChange={e => setFormData({...formData, description: e.target.value})}
                 className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none transition resize-none"
+                placeholder="Ürün açıklamasını buraya yazın veya yapay zeka ile oluşturun..."
               />
             </div>
 

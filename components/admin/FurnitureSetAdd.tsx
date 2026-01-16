@@ -8,6 +8,7 @@ import { compressImage } from '@/utils/imageCompression'
 export default function FurnitureSetAdd() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [generatingDesc, setGeneratingDesc] = useState(false)
   
   // Data Options
   const [categories, setCategories] = useState<any[]>([])
@@ -27,6 +28,45 @@ export default function FurnitureSetAdd() {
 
   // Selected Furniture Items
   const [selectedItems, setSelectedItems] = useState<{ id: number, name: string, quantity: number, image?: string }[]>([])
+
+  // AI Description Generator
+  const generateDescription = async () => {
+    if (!formData.setName || !formData.categoryId) {
+      alert('Lütfen önce takım adını ve kategorisini seçin.');
+      return;
+    }
+
+    setGeneratingDesc(true);
+    try {
+      const selectedCat = categories.find(c => c.categoryId === parseInt(formData.categoryId));
+      const categoryName = selectedCat ? selectedCat.categoryName : '';
+
+      const setContentText = selectedItems.map(item => `${item.quantity} adet ${item.name}`).join(', ');
+
+      const res = await fetch('/api/ai/generate-description', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productName: formData.setName,
+          category: categoryName,
+          type: 'furniture_set',
+          setContent: setContentText
+        })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setFormData(prev => ({ ...prev, description: data.description }));
+      } else {
+        alert('Açıklama oluşturulamadı: ' + (data.error || 'Bilinmeyen hata'));
+      }
+    } catch (error) {
+      console.error('AI error:', error);
+      alert('Yapay zeka servisine bağlanırken hata oluştu.');
+    } finally {
+      setGeneratingDesc(false);
+    }
+  };
 
   // Images
   const [images, setImages] = useState<File[]>([])
@@ -197,9 +237,30 @@ export default function FurnitureSetAdd() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm text-slate-400">Açıklama</label>
+                  <div className="flex justify-between items-center">
+                    <label className="text-sm text-slate-400">Açıklama</label>
+                    <button
+                      type="button"
+                      onClick={generateDescription}
+                      disabled={generatingDesc}
+                      className="text-xs flex items-center gap-1 bg-pink-600/20 text-pink-300 px-3 py-1.5 rounded-lg hover:bg-pink-600/30 transition border border-pink-500/30 disabled:opacity-50"
+                    >
+                      {generatingDesc ? (
+                        <>
+                          <span className="animate-spin h-3 w-3 border-2 border-current border-t-transparent rounded-full"></span>
+                          Oluşturuluyor...
+                        </>
+                      ) : (
+                        <>
+                          ✨ Yapay Zeka ile Oluştur
+                        </>
+                      )}
+                    </button>
+                  </div>
                   <textarea rows={3} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 outline-none focus:border-pink-500 resize-none"
-                    value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
+                    value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})}
+                    placeholder="Takım açıklamasını buraya yazın veya yapay zeka ile oluşturun..."
+                  />
                 </div>
 
                 <div className="flex items-center gap-3">

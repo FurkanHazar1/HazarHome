@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",
+    "@google/generative-ai": "^0.24.1",
     "@google/model-viewer": "^3.5.0",
     "@prisma/client": "^6.11.0",
     "assert": "^2.1.0",
