@@ -52,7 +52,15 @@ export default function FurnitureSetDetailsPopup({ product }) {
                     handleColor={handleColor}
                     currentColor={currentColor.value || ""}
                     firstImage={product.imgSrc}
-                     images={product.imageGallery ? [...(product.imageGallery.main || []), ...(product.imageGallery.gallery || []), ...(product.imageGallery.thumbnails || [])] : product.images}
+                    images={
+                      product.imageGallery 
+                        ? [
+                            ...(product.imageGallery.main || []), 
+                            ...(product.imageGallery.gallery || []), 
+                            ...(product.imageGallery.thumbnails || [])
+                          ] 
+                        : (product.images || [])
+                    }
                   />
                 </div>
               </div>

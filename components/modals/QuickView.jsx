@@ -344,6 +344,20 @@ export default function QuickView() {
                     </Link>
                   </h5>
                 </div>
+
+                {/* Ürün Açıklaması */}
+                {quickViewItem.description && (
+                  <div className="tf-product-info-description mb-3">
+                    <p className="text_black-2" style={{ 
+                      fontSize: '13px', 
+                      lineHeight: '1.5',
+                      display: '-webkit-box',
+                      WebkitLineClamp: '10',
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden'
+                    }}>{quickViewItem.description}</p>
+                  </div>
+                )}
           
                 {/* Price block removed */}
 

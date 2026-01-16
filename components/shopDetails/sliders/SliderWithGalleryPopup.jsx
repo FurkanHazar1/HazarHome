@@ -22,24 +22,48 @@ export default function SliderWithGalleryPopup({
   // Sabit px yerine yüzde ve aspect-ratio ile çerçeve kullanıyoruz
   // (ör: %100 genişlik, 4/3 oran)
 
+  // Image URL resolution helper
+  const getImageUrl = (img) => {
+    if (!img) return firstImage || "/images/products/placeholder.jpg";
+    
+    // If it's a string, return it (after ensuring it starts with /)
+    if (typeof img === 'string') {
+      return img.startsWith('/') ? img : `/${img}`;
+    }
+
+    // Handle API object structure
+    const path = img.image?.filePath || img.filePath || img.src || img.imgSrc;
+    if (!path) return firstImage || "/images/products/placeholder.jpg";
+
+    if (path.startsWith('http') || path.startsWith('/api/')) {
+      return path;
+    }
+
+    const normalizedPath = path.replace(/\\/g, '/');
+    if (normalizedPath.startsWith('/uploads/')) {
+      return normalizedPath;
+    } else if (normalizedPath.startsWith('uploads/')) {
+      return `/${normalizedPath}`;
+    } else {
+      return `/uploads/${normalizedPath}`;
+    }
+  };
+
   // Convert propImages to the expected format with id and dataValue
   const processedPropImages = propImages && propImages.length > 0 
     ? propImages.map((img, index) => {
-        // API veri yapısı desteklenmesi - görsel bilgileri farklı formatlarda olabilir
-        const imageSrc = img.image?.filePath 
-          ? (img.image.filePath.startsWith('/') ? img.image.filePath : `/${img.image.filePath}`)
-          : img.src || img.imgSrc || firstImage;
+        const imageSrc = getImageUrl(img);
           
         return {
           id: index + 1,
           src: imageSrc,
           alt: img.image?.altText || img.alt || "",
-          // Artık dinamik boyutlar yerine sabit boyutlar kullanıyoruz
           width: MAIN_IMAGE_WIDTH,
           height: MAIN_IMAGE_HEIGHT,
-          originalWidth: img.image?.width || 770,
-          originalHeight: img.image?.height || 1075,
-          dataValue: (currentColor && typeof currentColor === 'string' ? currentColor.toLowerCase() : "beige"),
+          originalWidth: img.image?.width || 1200,
+          originalHeight: img.image?.height || 1600,
+          // Only assign dataValue if specifically provided or matched with color
+          dataValue: img.color || img.image?.description || "",
         };
       })
     : [];
@@ -212,10 +236,12 @@ export default function SliderWithGalleryPopup({
                         alt={slide.alt || "image"}
                         src={slide.src}
                         fill={true}
+                        priority={index === 0}
+                        sizes="(max-width: 768px) 100vw, 720px"
                         style={{ 
                           objectFit: 'contain',
                           objectPosition: 'center',
-                          backgroundColor: '#88867eff'
+                          backgroundColor: '#f8f6f0'
                         }}
                       />
                     </div>
