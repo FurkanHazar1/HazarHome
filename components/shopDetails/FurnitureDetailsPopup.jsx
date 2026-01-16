@@ -73,21 +73,7 @@ export default function FurnitureDetailsPopup({ product }) {
                   
                 
                   
-                  <div className="tf-product-info-price" style={{ marginBottom: '15px' }}>
-                    <div className="price-on-sale" style={{ fontSize: '22px' }}>
-                      ₺{product.price?.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </div>
-                    {currentColor.oldPrice && (
-                      <>
-                        <div className="compare-at-price" style={{ fontSize: '16px' }}>
-                          ₺{currentColor.oldPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </div>
-                        <div className="badges-on-sale" style={{ fontSize: '12px', padding: '2px 6px' }}>
-                          <span>{Math.round(((currentColor.oldPrice - product.price) / currentColor.oldPrice) * 100)}</span>% OFF
-                        </div>
-                      </>
-                    )}
-                  </div>
+                  {/* Price block removed */}
 
                   {/* Ürün Açıklaması */}
                   {product.description && (
@@ -318,7 +304,7 @@ export default function FurnitureDetailsPopup({ product }) {
                             border: 'none',
                             padding: '0',
                             margin: '0'
-                          }}>Sepete Ekle - ₺{(product.price * quantity).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          }}>Sepete Ekle</span>
                         </a>
                         
                         <a

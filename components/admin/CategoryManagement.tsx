@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 
 interface Category {
   categoryId: number
@@ -107,14 +107,14 @@ export default function CategoryManagement() {
   }
 
   // Recursive options renderer for parent selection
-  const renderCategoryOptions = (cats: Category[], level = 0) => {
+  const renderCategoryOptions = (cats: Category[], level = 0): React.ReactNode => {
     return cats.map(cat => (
-      <>
-        <option key={cat.categoryId} value={cat.categoryId} disabled={cat.categoryId === editingCategory?.categoryId}>
+      <React.Fragment key={cat.categoryId}>
+        <option value={cat.categoryId} disabled={cat.categoryId === editingCategory?.categoryId}>
           {'\u00A0'.repeat(level * 4)} {level === 0 ? '📂' : '↳'} {cat.categoryName}
         </option>
         {cat.children && renderCategoryOptions(cat.children, level + 1)}
-      </>
+      </React.Fragment>
     ))
   }
 

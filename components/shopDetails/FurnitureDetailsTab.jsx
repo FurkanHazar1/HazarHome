@@ -302,17 +302,10 @@ export default function FurnitureDetailsTab({ product }) {
                                 <div className="info-card bg-light p-3 rounded">
                                   <h4 className="fs-16 fw-6 mb-2">Takım Bilgileri</h4>
                                   <p><strong>Toplam Parça:</strong> {product.setItems.length} adet</p>
-                                  <p><strong>Toplam Değer:</strong> ${product.setItems.reduce((sum, item) => sum + (item.price * item.quantity), 0).toLocaleString()}</p>
-                                  <p className="mb-0"><strong>Takım Fiyatı:</strong> <span className="text-success">${product.price.toLocaleString()}</span></p>
+                                  {/* Price and total value removed */}
                                 </div>
                               </div>
-                              <div className="col-md-6">
-                                <div className="discount-card bg-success text-white p-3 rounded">
-                                  <h4 className="fs-16 fw-6 mb-2">Takım Avantajı</h4>
-                                  <p className="mb-2">Tekil alıma göre tasarruf:</p>
-                                  <h3 className="display-6">${(product.setItems.reduce((sum, item) => sum + (item.price * item.quantity), 0) - product.price).toLocaleString()}</h3>
-                                </div>
-                              </div>
+                              {/* Advantage card removed */}
                             </div>
                           </div>
                           
@@ -337,8 +330,7 @@ export default function FurnitureDetailsTab({ product }) {
                                           <h4 className="fs-18 fw-6 mb-1">{item.name}</h4>
                                           <div className="item-meta">
                                             <span className="badge bg-primary me-2">x{item.quantity} Adet</span>
-                                            <span className="price fw-6 text-success">${item.price.toLocaleString()}</span>
-                                            <span className="total-price text-muted ms-2">(Toplam: ${(item.price * item.quantity).toLocaleString()})</span>
+                                            {/* Item price information removed */}
                                           </div>
                                         </div>
                                         {item.individualLink && (

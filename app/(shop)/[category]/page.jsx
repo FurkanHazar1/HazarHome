@@ -104,8 +104,9 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function CategoryPage({ params, searchParams }) {
-  const { category } = params;
-  const page = searchParams?.page ? parseInt(searchParams.page, 10) : 1;
+  const { category } = await params;
+  const resolvedSearchParams = await searchParams;
+  const page = resolvedSearchParams?.page ? parseInt(resolvedSearchParams.page, 10) : 1;
   const pageSize = 12;
   const categoryData = categoryMappings[category];
   const subCategoryData = getSubCategoryMapping()[category];

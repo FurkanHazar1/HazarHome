@@ -52,7 +52,7 @@ export default function Productcard23({ product }) {
         >
           {product.title}
         </Link>
-  <span className="price">{product.price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
+  {/* Price removed */}
   {/* Açıklama ve renk bilgisi kaldırıldı */}
         {product.sizes && (
           <div className="size-list">

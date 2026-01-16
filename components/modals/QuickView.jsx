@@ -345,9 +345,7 @@ export default function QuickView() {
                   </h5>
                 </div>
           
-                <div className="tf-product-info-price">
-                  <div className="price">{quickViewItem.price.toFixed(2)} TL</div>
-                </div>
+                {/* Price block removed */}
 
                 <div className="tf-product-info-variant-picker">
                   {/* Renk Seçimi */}
@@ -445,12 +443,10 @@ export default function QuickView() {
                     >
                       <span>
                         {isAddedToCartProducts(quickViewItem.id)
-                          ? "Ürün Sepete Eklendi- "
-                          : "Sepete Ekle- "}
+                          ? "Ürün Sepete Eklendi"
+                          : "Sepete Ekle"}
                       </span>
-                      <span className="tf-qty-price">
-                        {quickViewItem.price.toFixed(2)} TL
-                      </span>
+                      {/* Price removed */}
                     </a>
                 
                     

@@ -110,7 +110,7 @@ export const ProductCard = ({ product }) => {
         >
           {product.title}
         </Link>
-  <span className="price">{product.price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
+  {/* Price removed */}
   {/* Renk bilgisi kaldırıldı */}
       </div>
     </div>

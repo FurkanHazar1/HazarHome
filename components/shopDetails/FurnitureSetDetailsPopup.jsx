@@ -72,21 +72,7 @@ export default function FurnitureSetDetailsPopup({ product }) {
                    
                   </div>
                   
-                  <div className="tf-product-info-price" style={{ marginBottom: '15px' }}>
-                    <div className="price-on-sale" style={{ fontSize: '22px' }}>
-                      ₺{product.price?.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </div>
-                    {currentColor.oldPrice && (
-                      <>
-                        <div className="compare-at-price" style={{ fontSize: '16px' }}>
-                          ₺{currentColor.oldPrice.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </div>
-                        <div className="badges-on-sale" style={{ fontSize: '12px', padding: '2px 6px' }}>
-                          <span>{Math.round(((currentColor.oldPrice - product.price) / currentColor.oldPrice) * 100)}</span>% OFF
-                        </div>
-                      </>
-                    )}
-                  </div>
+                  {/* Price block removed */}
 
                   {/* Ürün Açıklaması */}
                   {product.description && (
@@ -178,63 +164,11 @@ export default function FurnitureSetDetailsPopup({ product }) {
                                 </div>
                               </div>
                             </div>
-                            <div className="item-price" style={{ 
-                              fontSize: '13px',
-                              fontWeight: '700',
-                              color: '#8B4513',
-                              backgroundColor: '#FFF8F0',
-                              padding: '6px 12px',
-                              borderRadius: '8px',
-                              border: '1px solid #F0E6D2'
-                            }}>
-                              ₺{(item.price || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </div>
+                            {/* Item price removed */}
                           </div>
                         ))}
                         
-                        {product.setItems.length > 1 && (
-                          <div className="set-total" style={{
-                            marginTop: '12px',
-                            paddingTop: '12px',
-                            borderTop: '2px solid #8B4513',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            backgroundColor: '#FFF8F0',
-                            padding: '12px',
-                            borderRadius: '8px',
-                            marginLeft: '-16px',
-                            marginRight: '-16px',
-                            marginBottom: '-16px'
-                          }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <span style={{ 
-                                fontSize: '14px', 
-                                fontWeight: '700',
-                                color: '#8B4513'
-                              }}>
-                                Toplam Değer:
-                              </span>
-                              <span style={{
-                                fontSize: '10px',
-                                color: '#8B4513',
-                                backgroundColor: 'rgba(139, 69, 19, 0.1)',
-                                padding: '2px 6px',
-                                borderRadius: '6px',
-                                fontWeight: '600'
-                              }}>
-                                Ayrı satış
-                              </span>
-                            </div>
-                            <span style={{ 
-                              fontSize: '15px',
-                              fontWeight: '800',
-                              color: '#8B4513'
-                            }}>
-                              ₺{product.setItems.reduce((total, item) => total + ((item.price || 0) * (item.quantity || 1)), 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </span>
-                          </div>
-                        )}
+                        {/* Total value block removed */}
                       </div>
                     </div>
                   )}
@@ -452,7 +386,7 @@ export default function FurnitureSetDetailsPopup({ product }) {
                             border: 'none',
                             padding: '0',
                             margin: '0'
-                          }}>Takımı Sepete Ekle - ₺{(product.price * quantity).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          }}>Takımı Sepete Ekle</span>
                         </a>
                         
                         <a

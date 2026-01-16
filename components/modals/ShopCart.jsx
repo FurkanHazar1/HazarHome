@@ -50,8 +50,7 @@ export default function ShopCart() {
         message += `   Boyut: ${product.selectedSize}\n`;
       }
       
-      message += `   Birim Fiyat: ${product.price.toFixed(2)} ₺\n`;
-      message += `   Toplam: ${(product.price * product.quantity).toFixed(2)} ₺\n`;
+      // Price info removed from WhatsApp message
       
       // Kategori bilgisi varsa ekle
       if (product.category) {
@@ -78,7 +77,7 @@ export default function ShopCart() {
       message += `\n`;
     });
     
-    message += ` GENEL TOPLAM: ${totalPrice.toFixed(2)} ₺\n\n`;
+    // Grand total removed from WhatsApp message
     message += ` Detayları konuşmak ve siparişi onaylamak için arayabilir misiniz?\n`;
     
     // WhatsApp URL'si oluştur
@@ -130,9 +129,7 @@ export default function ShopCart() {
                             {elm.title}
                            
                           </Link>
-                          <div className="price fw-6">
-                            ${elm.price?.toFixed(2)}
-                          </div>
+                          {/* Price removed */}
                           <div className="tf-mini-cart-btns">
                             <div className="wg-quantity small">
                               <span
@@ -201,12 +198,7 @@ export default function ShopCart() {
              
                 </div>
                 <div className="tf-mini-cart-bottom-wrap">
-                  <div className="tf-cart-totals-discounts">
-                    <div className="tf-cart-total">Toplam</div>
-                    <div className="tf-totals-total-value fw-6">
-                      {totalPrice.toFixed(2)} ₺
-                    </div>
-                  </div>
+                  {/* Total value removed */}
                   <div className="tf-cart-tax">
                     Kargo Ücretsizdir
                   </div>
