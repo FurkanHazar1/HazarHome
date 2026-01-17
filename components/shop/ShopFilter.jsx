@@ -35,10 +35,6 @@ import Slider from "rc-slider";
 import { products1 } from "@/data/products";
 import Link from "next/link";
 export default function ShopFilter({ setProducts, products = products1 }) {
-  const [price, setPrice] = useState([10, 20]);
-  const handlePrice = (value) => {
-    setPrice(value);
-  };
   const [selectedColors, setSelectedColors] = useState([]);
   const handleSelectColor = (color) => {
     if (selectedColors.includes(color)) {
@@ -77,14 +73,6 @@ export default function ShopFilter({ setProducts, products = products1 }) {
   useEffect(() => {
     let filteredArrays = [];
 
-    filteredArrays = [
-      ...filteredArrays,
-      [
-        ...products.filter(
-          (elm) => elm.price >= price[0] && elm.price <= price[1]
-        ),
-      ],
-    ];
     // console.log(filteredByPrice, "filteredByPrice");
     if (selectedColors.length) {
       filteredArrays = [
@@ -138,7 +126,6 @@ export default function ShopFilter({ setProducts, products = products1 }) {
     );
     setProducts(commonItems);
   }, [
-    price,
     selectedColors,
     selectedBrands,
     selectedAvailabilities,
@@ -150,7 +137,6 @@ export default function ShopFilter({ setProducts, products = products1 }) {
     setSelectedBrands([]);
     setSelectedAvailabilities([]);
     setSelectedSizes([]);
-    setPrice([10, 20]);
   };
   return (
     <div className="offcanvas offcanvas-start canvas-filter" id="filterShop">
@@ -243,45 +229,6 @@ export default function ShopFilter({ setProducts, products = products1 }) {
                     </li>
                   ))}
                 </ul>
-              </div>
-            </div>
-            <div className="widget-facet wrap-price">
-              <div
-                className="facet-title"
-                data-bs-target="#price"
-                data-bs-toggle="collapse"
-                aria-expanded="true"
-                aria-controls="price"
-              >
-                <span>Price</span>
-                <span className="icon icon-arrow-up" />
-              </div>
-              <div id="price" className="collapse show">
-                <div className="widget-price filter-price">
-                  <Slider
-                    formatLabel={() => ``}
-                    range
-                    max={22}
-                    min={5}
-                    defaultValue={price}
-                    onChange={(value) => handlePrice(value)}
-                    id="slider"
-                  />
-                  <div className="box-title-price">
-                    <span className="title-price">Price :</span>
-                    <div className="caption-price">
-                      <div>
-                        <span>$</span>
-                        <span className="min-price">{price[0]}</span>
-                      </div>
-                      <span>-</span>
-                      <div>
-                        <span>$</span>
-                        <span className="max-price">{price[1]}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
             <div className="widget-facet">

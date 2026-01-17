@@ -1,0 +1,18 @@
+
+// Mobile optimization: Hide quick actions on grid view, show on list view
+@media (max-width: 768px) {
+  .card-product:not(.list-layout) {
+    .list-product-btn {
+      display: none !important;
+    }
+  }
+
+  // Ensure shop controls are visible
+  .tf-shop-control {
+    display: flex !important;
+    flex-wrap: wrap;
+  }
+  .tf-control-layout {
+    display: flex !important;
+  }
+}

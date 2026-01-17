@@ -1,5 +1,9 @@
 export const layouts = [
-
+  {
+    className: "sw-layout-1",
+    dataValueGrid: "1",
+    iconClass: "icon-list",
+  },
   {
     className: "sw-layout-2",
     dataValueGrid: "2",
@@ -22,6 +26,4 @@ export const sortingOptions = [
 
   { text: "Alfabetik, A-Z" },
   { text: "Alfabetik, Z-A" },
-  { text: "Fiyata göre, düşükten yükseğe" },
-  { text: "Fiyata göre, yüksekte düşüğe" },
 ];
