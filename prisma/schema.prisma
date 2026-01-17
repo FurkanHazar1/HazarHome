@@ -273,6 +273,22 @@ model FeaturePin {
 }
 
 // Authentication Models
+model HeroSlide {
+  id              Int      @id @default(autoincrement())
+  title           String   @db.VarChar(200)
+  subtitle        String?  @db.VarChar(200)
+  imageUrl        String   @map("image_url") @db.VarChar(500)
+  link            String   @db.VarChar(500)
+  buttonText      String   @default("İncele") @map("button_text") @db.VarChar(50)
+  backgroundColor String?  @default("bg_light-grey-3") @map("background_color") @db.VarChar(50)
+  isActive        Boolean  @default(true) @map("is_active")
+  sortOrder       Int      @default(0) @map("sort_order")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("hero_slides")
+}
+
 model Account {
   id                String  @id @default(cuid())
   userId            String  @map("user_id")
