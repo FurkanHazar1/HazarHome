@@ -1,24 +1,16 @@
-
 "use client";
 import React, { useEffect, useState } from "react";
-
-
-// Lookbook dropdown taşma önleyici stil
-const lookbookDropdownMenuStyle = {
-  position: "absolute",
-  left: "50%",
-  top: "100%",
-  transform: "translateX(-50%)",
-  maxWidth: "100%",
-  overflowWrap: "break-word",
-  zIndex: 9999,
-};
 import { Swiper, SwiperSlide } from "swiper/react";
 import Image from "next/image";
 import LookbookComponent from "@/components/common/LookbookComponent";
-import { lookbookProducts } from "@/data/products";
 import { Navigation, Pagination } from "swiper/modules";
+
+
+
 export default function Lookbook() {
+  const [features, setFeatures] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   // Responsive image style state
   const [imageStyle, setImageStyle] = useState({
     width: '100vw',
@@ -32,7 +24,7 @@ export default function Lookbook() {
       if (window.innerWidth <= 768) {
         setImageStyle({
           width: '100%',
-          height: '60vw',
+          height: '500px',
           objectFit: 'cover',
           objectPosition: 'center',
         });
@@ -49,6 +41,30 @@ export default function Lookbook() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    fetch('/api/features?active=true')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setFeatures(data);
+        }
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Failed to load lookbook features', err);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) {
+    return <div className="min-h-[500px] flex items-center justify-center">Yükleniyor...</div>;
+  }
+
+  if (features.length === 0) {
+    return null; // Don't show anything if no lookbooks
+  }
+
   return (
     <section className="flat-spacing-27 pb-0">
       <div className="flat-title wow fadeInUp" data-wow-delay="0s">
@@ -58,18 +74,16 @@ export default function Lookbook() {
         <Swiper
           dir="ltr"
           className="swiper tf-sw-lookbook slideshow-lookbook-furniture"
-          slidesPerView={1.4} // Mapping data-preview to slidesPerView
-          spaceBetween={15} // Mapping data-space-md to spaceBetween
+          slidesPerView={1.4}
+          spaceBetween={15}
           breakpoints={{
             768: {
-              // Mapping for tablet view
-              slidesPerView: 1.4, // Mapping data-tablet to slidesPerView
-              spaceBetween: 30, // Mapping data-space-lg to spaceBetween
+              slidesPerView: 1.4,
+              spaceBetween: 30,
             },
             1024: {
-              // Mapping for larger screens
-              slidesPerView: 1.4, // Same as data-preview for large screens
-              spaceBetween: 30, // Mapping data-space-lg to spaceBetween
+              slidesPerView: 1.4,
+              spaceBetween: 30,
             },
           }}
           modules={[Navigation, Pagination]}
@@ -79,147 +93,92 @@ export default function Lookbook() {
           }}
           pagination={{ clickable: true, el: ".spd164" }}
         >
-          <SwiperSlide className="swiper-slide">
-            <div className="wrap-lookbook lookbook-1">
-              <div className="image" style={{ overflow: "hidden" }}>
-                <Image
-                  className="lazyload"
-                  data-src="/uploads/images/furniture-sets/yatak-odasi/4/image_1.jpg"
-                  alt="image-lookbook"
-                  src="/uploads/images/furniture-sets/yatak-odasi/4/image_1.jpg"
-                  width={2153}
-                  height={1059}
-                  style={imageStyle}
-                />
-              </div>
-              <div className="lookbook-item item-1">
-                <div className="inner">
-                  <div className="btn-group dropdown dropup dropdown-center">
-                    <button
-                      className="tf-pin-btn"
-                      data-bs-toggle="dropdown"
-                      aria-expanded="false"
-                    >
-                      <span />
-                    </button>
-                    <ul className="dropdown-menu p-0 border-0" style={lookbookDropdownMenuStyle}>
-                      <LookbookComponent product={lookbookProducts[0]} />
-                    </ul>
-                  </div>
+          {features.map((feature, index) => (
+            <SwiperSlide key={feature.featureId || index} className="swiper-slide">
+              <div className={`wrap-lookbook lookbook-${(index % 2) + 1}`}>
+                <div className="image" style={{ overflow: "hidden", position: 'relative' }}>
+                  <Image
+                    className="lazyload"
+                    alt={feature.title || "Lookbook"}
+                    src={feature.image?.filePath ? `/${feature.image.filePath}` : '/images/slider/slider-1.jpg'}
+                    width={feature.image?.width || 2153}
+                    height={feature.image?.height || 1059}
+                    style={imageStyle}
+                  />
+                  
+                  {/* Pins */}
+                  {feature.pins?.map((pin, pinIndex) => {
+                    // Determine product data
+                    let productData = null;
+                    if (pin.furniture) {
+                      productData = {
+                        href: `/product-detail-furniture/${pin.furniture.furnitureId}`,
+                        imgSrc: pin.furniture.images?.[0]?.image?.filePath ? `/${pin.furniture.images[0].image.filePath}` : '/images/products/furniture_1.jpg',
+                        title: pin.furniture.furnitureName,
+                        price: Number(pin.furniture.price),
+                        width: 600,
+                        height: 600
+                      };
+                    } else if (pin.furnitureSet) {
+                      productData = {
+                        href: `/product-detail-furniture-set/${pin.furnitureSet.setId}`,
+                        imgSrc: pin.furnitureSet.furnitureSetImages?.[0]?.image?.filePath ? `/${pin.furnitureSet.furnitureSetImages[0].image.filePath}` : '/images/products/furniture_1.jpg',
+                        title: pin.furnitureSet.setName,
+                        price: Number(pin.furnitureSet.price),
+                        width: 600,
+                        height: 600
+                      };
+                    }
+
+                    if (!productData) return null;
+
+                    const isNearTop = pin.yPosition < 30;
+                    const isLeft = pin.xPosition < 50;
+                    const dropdownStyle = {
+                      position: "absolute",
+                      // Smart positioning to prevent overflow
+                      left: isLeft ? '0' : 'auto',
+                      right: isLeft ? 'auto' : '0',
+                      transform: 'none',
+                      minWidth: '280px', // Ensure enough width
+                      width: 'max-content',
+                      maxWidth: '90vw',
+                      zIndex: 9999,
+                      margin: isNearTop ? '10px 0' : '0 0 10px 0'
+                    };
+
+                    return (
+                      <div 
+                        key={pinIndex} 
+                        className="lookbook-item"
+                        style={{
+                            top: `${pin.yPosition}%`,
+                            left: `${pin.xPosition}%`,
+                            position: 'absolute',
+                            transform: 'translate(-50%, -50%)'
+                        }}
+                      >
+                        <div className="inner">
+                          <div className={`btn-group dropdown ${isNearTop ? '' : 'dropup'}`}>
+                            <button
+                              className="tf-pin-btn"
+                              data-bs-toggle="dropdown"
+                              aria-expanded="false"
+                            >
+                              <span />
+                            </button>
+                            <ul className="dropdown-menu p-0 border-0" style={dropdownStyle}>
+                              <LookbookComponent product={productData} className={isNearTop ? "position-top" : ""} />
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-              <div className="lookbook-item item-2">
-                <div className="inner">
-                  <div className="btn-group dropdown dropup dropdown-center">
-                    <button
-                      className="tf-pin-btn"
-                      data-bs-toggle="dropdown"
-                      aria-expanded="false"
-                    >
-                      <span />
-                    </button>
-                    <ul className="dropdown-menu p-0 border-0" style={lookbookDropdownMenuStyle}>
-                      <LookbookComponent product={lookbookProducts[1]} />
-                    </ul>
-                  </div>
-                </div>
-              </div>
-              <div className="lookbook-item item-3">
-                <div className="inner">
-                  <div className="btn-group dropdown dropup dropdown-center">
-                    <button
-                      className="tf-pin-btn"
-                      data-bs-toggle="dropdown"
-                      aria-expanded="false"
-                    >
-                      <span />
-                    </button>
-                    <ul className="dropdown-menu p-0 border-0" style={lookbookDropdownMenuStyle}>
-                      <LookbookComponent product={lookbookProducts[2]} />
-                    </ul>
-                  </div>
-                </div>
-              </div>
-              <div className="lookbook-item item-4">
-                <div className="inner">
-                  <div className="btn-group dropdown dropup dropdown-center">
-                    <button
-                      className="tf-pin-btn"
-                      data-bs-toggle="dropdown"
-                      aria-expanded="false"
-                    >
-                      <span />
-                    </button>
-                    <ul className="dropdown-menu p-0 border-0" style={lookbookDropdownMenuStyle}>
-                      <LookbookComponent product={lookbookProducts[3]} />
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </SwiperSlide>
-          <SwiperSlide className="swiper-slide">
-            <div className="wrap-lookbook lookbook-2">
-              <div className="image" style={{ overflow: "hidden" }}>
-                <Image
-                  className="lazyload"
-                  data-src="/uploads/images/furniture-sets/oturma-odasi/21/image_1.jpg"
-                  alt="image-lookbook"
-                  src="/uploads/images/furniture-sets/oturma-odasi/21/image_1.jpg"
-                  width={2153}
-                  height={1059}
-                  style={imageStyle}
-                />
-              </div>
-              <div className="lookbook-item item-1">
-                <div className="inner">
-                  <div className="btn-group dropdown dropup dropdown-center">
-                    <button
-                      className="tf-pin-btn"
-                      data-bs-toggle="dropdown"
-                      aria-expanded="false"
-                    >
-                      <span />
-                    </button>
-                    <ul className="dropdown-menu p-0 border-0" style={lookbookDropdownMenuStyle}>
-                      <LookbookComponent product={lookbookProducts[8]} />
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </SwiperSlide>
-          <SwiperSlide className="swiper-slide">
-            <div className="wrap-lookbook lookbook-3">
-              <div className="image" style={{ overflow: "hidden" }}>
-                <Image
-                  className="lazyload"
-                  data-src="/uploads/images/furniture-sets/yemek-odasi/5/image_1.jpg"
-                  alt="image-lookbook"
-                  src="/uploads/images/furniture-sets/yemek-odasi/5/image_1.jpg"
-                  width={1435}
-                  height={706}
-                  style={imageStyle}
-                />
-              </div>
-              <div className="lookbook-item item-1">
-                <div className="inner">
-                  <div className="btn-group dropdown dropup dropdown-center">
-                    <button
-                      className="tf-pin-btn"
-                      data-bs-toggle="dropdown"
-                      aria-expanded="false"
-                    >
-                      <span />
-                    </button>
-                    <ul className="dropdown-menu p-0 border-0" style={lookbookDropdownMenuStyle}>
-                      <LookbookComponent product={lookbookProducts[9]} />
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </SwiperSlide>
+            </SwiperSlide>
+          ))}
 
           <div className="nav-sw style-2 nav-next-slider nav-next-lookbook box-icon w_46 round snbp164">
             <span className="icon icon-arrow-left" />

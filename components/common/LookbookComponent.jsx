@@ -5,27 +5,30 @@ import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 
-export default function LookbookComponent({ product = lookbookProducts[0] }) {
+export default function LookbookComponent({ product = lookbookProducts[0], className = "" }) {
   const { setQuickViewItem } = useContextElement();
   return (
     <li>
-      <div className="lookbook-product" style={{ maxWidth: 240 }}>
+      <div className={`lookbook-product ${className}`}>
         <Link href={product.href} className="image">
           <Image
             className="lazyload"
-            data-src={product.imgSrc}
             alt="lookbook-item"
             src={product.imgSrc}
-            width={product.width}
-            height={product.height}
+            fill
+            sizes="(max-width: 768px) 60px, 100px"
+            style={{ objectFit: 'cover', borderRadius: '4px' }}
           />
         </Link>
         <div className="content-wrap">
           <div className="product-title">
-              <a href={product.href}>{product.title}</a>
+            <Link href={product.href}>{product.title}</Link>
           </div>
-          <div className="price">${product.price.toFixed(2)}</div>
+          <div className="price">{product.price} TL</div>
         </div>
+        <Link href={product.href} className="">
+           <i className="icon-arrow1-top-left" />
+        </Link>
       </div>
     </li>
   );

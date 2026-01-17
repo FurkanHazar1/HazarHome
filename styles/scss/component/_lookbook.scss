@@ -1,3 +1,6 @@
+
+/* Cleaned up Lookbook Styles - Positioning is now handled dynamically via API/Inline Styles */
+
 .tf-lookbook {
     display: flex;
 }
@@ -59,10 +62,10 @@
         }
     }
     .dropdown-menu {
-        margin: 20px 0 !important;
-        top: unset !important;
-        bottom: 23px !important;
-        transform: translateX(-46%) !important;
+        margin: 20px 0;
+        top: unset;
+        bottom: 23px;
+        transform: translateX(-46%);
     }
     
 }
@@ -129,54 +132,10 @@
             color: var(--white);
         }
     }
-    &::after {
-        position: absolute;
-        content: '';
-        width: 16px;
-        height: 16px;
-        transform: translate(-50%,50%) rotate(45deg);
-        background-color: var(--white);
-        bottom: 0;
-        left: 50%;
-        z-index: 2;
-    }
 }
 
 .tf-pin_btn:hover:after, .tf-pin_btn:hover:before {
     animation: ripple 3s infinite;
-}
-
-
-
-.lookbook-1 {
-    .item-1 {
-        top: 85%;
-        left: 62%;
-    }
-    .item-2 {
-        top: 63%;
-        left: 45%;
-    }
-}
-.lookbook-2 {
-    .item-1 {
-        top: 20%;
-        left: 62%;
-    }
-}
-.lookbook-3{
-    .item-1 {
-        top: 42%;
-        left: 58%;
-    }
-    .item-2 {
-        top: 83%;
-        left: 40%;
-    }
-    .item-3 {
-        top: 52%;
-        left: 30%;
-    }
 }
 
 .tf-sw-lookbook{
@@ -194,81 +153,46 @@
     }
 }
 
-.lookbook-kid{
-    position: relative;
-    .lookbook-item{
-        position: absolute;
-        .tf-pin-btn{
-            background-color: var(--white);
+@media (max-width: 768px) {
+    .lookbook-item {
+        width: 18px !important;
+        height: 18px !important;
+        .tf-pin-btn {
+            width: 18px !important;
+            height: 18px !important;
+            span {
+                width: 6px !important;
+                height: 6px !important;
+            }
         }
     }
-    .item-1{
-        left: 24%;
-        top: 32%;
-    }
-    .item-2{
-        left: 24%;
-        top: 78%;
-    }
-    .item-3{
-        left: 50%;
-        top: 70%;
-    }
-}
-
-.lookbook-dog{
-    position: relative;
-    .lookbook-item{
-        position: absolute;
-        .tf-pin-btn{
-            background-color: var(--white);
+    .lookbook-product {
+        width: auto !important;
+        min-width: unset !important;
+        max-width: 90vw !important;
+        gap: 12px !important;
+        padding: 10px !important;
+        .content-wrap {
+            .product-title a {
+                font-size: 14px !important;
+                line-height: 20px !important;
+            }
+            .price {
+                font-size: 14px;
+                line-height: 18px;
+            }
         }
-    }
-    .item-1{
-        left: 37%;
-        top: 32%;
-    }
-    .item-2{
-        left: 53%;
-        top: 70%;
-    }
-    .item-3{
-        left: 64%;
-        top: 25%;
-    }
-}
-
-
-.slideshow-lookbook-furniture{
-    .lookbook-1{
-        .item-1{
-            left: 30%;
-            top: 75%;
+        .image {
+            width: 60px !important; /* Fixed width for consistency */
+            height: 60px !important;
+            max-width: 60px !important;
+            flex-shrink: 0;
+            position: relative;
         }
-        .item-2{
-            left: 90%;
-            top: 60%;
+        > a {
+            width: 30px;
+            height: 30px;
+            font-size: 12px;
         }
-         .item-3{
-            left: 10%;
-            top: 75%;
-        }
-         .item-4{
-            left: 40%;
-            top: 40%;
-        }
-    }
-    .lookbook-2{
-        .item-1{
-            left: 30%;
-            top: 75%;
-        }
-    }
-    .lookbook-3{
-        .item-1{
-            left: 30%;
-            top: 75%;
-        }
-
     }
 }

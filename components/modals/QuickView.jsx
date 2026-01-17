@@ -117,38 +117,53 @@ export default function QuickView() {
                     if (quickViewItem.images && Array.isArray(quickViewItem.images)) {
                       console.log('Found direct images array:', quickViewItem.images);
                       
-                      // Önce main tipindeki resmi bul ve ekle
-                      const mainImage = quickViewItem.images.find(img => img.imageType === 'main');
-                      if (mainImage) {
-                        const imageSrc = mainImage.url || mainImage.filePath || mainImage.src;
-                        if (imageSrc) {
-                          const finalSrc = imageSrc.startsWith('/uploads/') ? imageSrc : 
-                                          imageSrc.startsWith('http') ? imageSrc : `/uploads/${imageSrc}`;
-                          images.push({
-                            src: finalSrc,
-                            alt: mainImage.altText || mainImage.alt || quickViewItem.title || 'Ana Ürün Resmi',
-                            type: 'main'
+                      // HANDLE STRING ARRAY (Simple paths)
+                      if (quickViewItem.images.length > 0 && typeof quickViewItem.images[0] === 'string') {
+                          quickViewItem.images.forEach((imgStr, index) => {
+                              if (imgStr) {
+                                  images.push({
+                                      src: imgStr,
+                                      alt: quickViewItem.title || 'Ürün Resmi',
+                                      type: index === 0 ? 'main' : 'gallery'
+                                  });
+                              }
                           });
-                        }
-                      }
-                      
-                      // Sonra diğer resimleri ekle (main hariç)
-                      quickViewItem.images.forEach((img, index) => {
-                        if (img.imageType !== 'main') { // Main resmi zaten ekledik
-                          const imageSrc = img.url || img.filePath || img.src;
-                          if (imageSrc) {
-                            const finalSrc = imageSrc.startsWith('/uploads/') ? imageSrc : 
-                                            imageSrc.startsWith('http') ? imageSrc : `/uploads/${imageSrc}`;
-                            if (!images.some(existingImg => existingImg.src === finalSrc)) {
+                      } 
+                      // HANDLE OBJECT ARRAY (Database objects)
+                      else {
+                          // Önce main tipindeki resmi bul ve ekle
+                          const mainImage = quickViewItem.images.find(img => img.imageType === 'main');
+                          if (mainImage) {
+                            const imageSrc = mainImage.url || mainImage.filePath || mainImage.src;
+                            if (imageSrc) {
+                              const finalSrc = imageSrc.startsWith('/uploads/') ? imageSrc : 
+                                              imageSrc.startsWith('http') ? imageSrc : `/uploads/${imageSrc}`;
                               images.push({
                                 src: finalSrc,
-                                alt: img.altText || img.alt || quickViewItem.title || 'Ürün Resmi',
-                                type: img.imageType || img.type || 'gallery'
+                                alt: mainImage.altText || mainImage.alt || quickViewItem.title || 'Ana Ürün Resmi',
+                                type: 'main'
                               });
                             }
                           }
-                        }
-                      });
+                          
+                          // Sonra diğer resimleri ekle (main hariç)
+                          quickViewItem.images.forEach((img, index) => {
+                            if (img.imageType !== 'main') { // Main resmi zaten ekledik
+                              const imageSrc = img.url || img.filePath || img.src;
+                              if (imageSrc) {
+                                const finalSrc = imageSrc.startsWith('/uploads/') ? imageSrc : 
+                                                imageSrc.startsWith('http') ? imageSrc : `/uploads/${imageSrc}`;
+                                if (!images.some(existingImg => existingImg.src === finalSrc)) {
+                                  images.push({
+                                    src: finalSrc,
+                                    alt: img.altText || img.alt || quickViewItem.title || 'Ürün Resmi',
+                                    type: img.imageType || img.type || 'gallery'
+                                  });
+                                }
+                              }
+                            }
+                          });
+                      }
                     } else {
                       // Fallback: imgSrc ve imgHoverSrc kullan
                       if (quickViewItem.imgSrc) {

@@ -78,6 +78,7 @@ model Image {
   // Relations
   furnitureImages    FurnitureImage[]
   furnitureSetImages FurnitureSetImage[]
+  features           Feature[]
 
   @@index([isActive], map: "idx_images_active")
   @@index([sortOrder], map: "idx_images_sort")
@@ -102,6 +103,7 @@ model Furniture {
   properties       FurnitureProperty[]
   images           FurnitureImage[]
   furnitureSets    FurnitureSetAndFurniture[]
+  featurePins      FeaturePin[]
 
   @@index([isActive], map: "idx_furniture_active")
   @@index([isPopular], map: "idx_furniture_popular")
@@ -172,6 +174,7 @@ model FurnitureSet {
   furnitureSetImages     FurnitureSetImage[]
   furnitureSetProperties FurnitureSetProperty[]
   furnitureSetItems      FurnitureSetAndFurniture[]
+  featurePins            FeaturePin[]
 
   @@index([isPopular], map: "idx_furniture_sets_popular")
   @@map("furniture_sets")
@@ -232,6 +235,41 @@ model FurnitureSetAndFurniture {
   furniture      Furniture    @relation(fields: [furnitureId], references: [furnitureId])
 
   @@map("furniture_sets__and_furniture")
+}
+
+// Features (Lookbook/Hotspots)
+model Feature {
+  featureId   Int          @id @default(autoincrement()) @map("feature_id")
+  title       String?      @db.VarChar(200)
+  description String?
+  imageId     Int?         @map("image_id")
+  isActive    Boolean      @default(true) @map("is_active")
+  sortOrder   Int          @default(0) @map("sort_order")
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  // Relations
+  image       Image?       @relation(fields: [imageId], references: [imageId], onDelete: SetNull)
+  pins        FeaturePin[]
+
+  @@index([isActive], map: "idx_features_active")
+  @@index([sortOrder], map: "idx_features_order")
+  @@map("features")
+}
+
+model FeaturePin {
+  pinId          Int           @id @default(autoincrement()) @map("pin_id")
+  featureId      Int           @map("feature_id")
+  furnitureId    Int?          @map("furniture_id")
+  furnitureSetId Int?          @map("furniture_set_id")
+  xPosition      Float         @map("x_position") // Percentage 0-100
+  yPosition      Float         @map("y_position") // Percentage 0-100
+  
+  // Relations
+  feature        Feature       @relation(fields: [featureId], references: [featureId], onDelete: Cascade)
+  furniture      Furniture?    @relation(fields: [furnitureId], references: [furnitureId], onDelete: Cascade)
+  furnitureSet   FurnitureSet? @relation(fields: [furnitureSetId], references: [setId], onDelete: Cascade)
+
+  @@map("feature_pins")
 }
 
 // Authentication Models

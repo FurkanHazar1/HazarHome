@@ -5505,25 +5505,28 @@
       text-align: center;
     }
   }
-  .slider-wrap-lookbook {
-    .nav-sw {
-      display: none;
+ /* YENİ KOD */
+.slider-wrap-lookbook {
+  .nav-sw {
+    display: none;
+  }
+  .sw-dots {
+    justify-content: center;
+  }
+  .card-product {
+    display: block;        /* flex yerine block yaparak görselin üstte kalmasını sağlayın */
+    // gap: 10px;          /* block yapınca gap gereksiz olabilir */
+    .card-product-wrapper {
+      max-width: 100%;     /* 100px yerine %100 yaparak genişliği serbest bırakın */
+      width: auto;         /* Otomatik genişlik */
+      margin-bottom: 10px; /* Görsel ile metin arasına boşluk */
     }
-    .sw-dots {
-      justify-content: center;
-    }
-    .card-product {
-      display: flex;
-      gap: 10px;
-      .card-product-wrapper {
-        max-width: 100px;
-      }
-      .card-product-info {
-        place-self: flex-start;
-        padding-top: 0px;
-      }
+    .card-product-info {
+      place-self: unset;   /* flex özelliğini kaldırın */
+      padding-top: 10px;
     }
   }
+}
   .lookbook-sw {
     .navigation-sw-dot {
       width: 24px;
@@ -5627,7 +5630,8 @@
   }
   .lookbook-product {
     gap: 10px;
-    width: 260px;
+    width: auto;
+    
   }
   .tf-img-with-text.style-3 {
     .tf-content-wrap {
@@ -5656,29 +5660,6 @@
     }
     &.style-2 {
       line-height: 36px;
-    }
-  }
-  .lookbook-product {
-    .content-wrap {
-      .product-title {
-        a {
-          font-size: 14px;
-          line-height: 18px;
-        }
-      }
-      .price {
-        font-size: 14px;
-        line-height: 18px;
-      }
-    }
-    .image {
-      width: 52px;
-      height: 60px;
-    }
-    > a {
-      width: 30px;
-      height: 30px;
-      font-size: 12px;
     }
   }
   .wrap-mobile {
