@@ -5514,15 +5514,19 @@
     justify-content: center;
   }
   .card-product {
-    display: block;        /* flex yerine block yaparak görselin üstte kalmasını sağlayın */
-    // gap: 10px;          /* block yapınca gap gereksiz olabilir */
+    display: block;
     .card-product-wrapper {
-      max-width: 100%;     /* 100px yerine %100 yaparak genişliği serbest bırakın */
-      width: auto;         /* Otomatik genişlik */
-      margin-bottom: 10px; /* Görsel ile metin arasına boşluk */
+      max-width: 100%;
+      width: 100%;
+      margin-bottom: 10px;
+      img {
+        width: 100%;
+        height: auto;
+        object-fit: contain;
+      }
     }
     .card-product-info {
-      place-self: unset;   /* flex özelliğini kaldırın */
+      place-self: unset;
       padding-top: 10px;
     }
   }

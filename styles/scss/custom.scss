@@ -278,7 +278,7 @@ html[dir="rtl"] {
   @media (max-width: 700px) {
     .lookbook-product {
       flex-direction: column;
-      width: 160px;
+      width: auto;
     }
   }
 }

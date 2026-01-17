@@ -11,37 +11,6 @@ export default function Lookbook() {
   const [features, setFeatures] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Responsive image style state
-  const [imageStyle, setImageStyle] = useState({
-    width: '100vw',
-    height: '100vh',
-    objectFit: 'cover',
-    objectPosition: 'center',
-  });
-
-  useEffect(() => {
-    function handleResize() {
-      if (window.innerWidth <= 768) {
-        setImageStyle({
-          width: '100%',
-          height: '500px',
-          objectFit: 'cover',
-          objectPosition: 'center',
-        });
-      } else {
-        setImageStyle({
-          width: '100vw',
-          height: '100vh',
-          objectFit: 'cover',
-          objectPosition: 'center',
-        });
-      }
-    }
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
   useEffect(() => {
     fetch('/api/features?active=true')
       .then(res => res.json())
@@ -74,16 +43,16 @@ export default function Lookbook() {
         <Swiper
           dir="ltr"
           className="swiper tf-sw-lookbook slideshow-lookbook-furniture"
-          slidesPerView={1.4}
-          spaceBetween={15}
+          slidesPerView={'auto'}
+          spaceBetween={20}
           breakpoints={{
             768: {
-              slidesPerView: 1.4,
-              spaceBetween: 30,
+              slidesPerView: 'auto',
+              spaceBetween: 20,
             },
             1024: {
-              slidesPerView: 1.4,
-              spaceBetween: 30,
+              slidesPerView: 'auto',
+              spaceBetween: 20,
             },
           }}
           modules={[Navigation, Pagination]}
@@ -94,16 +63,16 @@ export default function Lookbook() {
           pagination={{ clickable: true, el: ".spd164" }}
         >
           {features.map((feature, index) => (
-            <SwiperSlide key={feature.featureId || index} className="swiper-slide">
-              <div className={`wrap-lookbook lookbook-${(index % 2) + 1}`}>
-                <div className="image" style={{ overflow: "hidden", position: 'relative' }}>
+            <SwiperSlide key={feature.featureId || index} className="swiper-slide" style={{ width: 'auto' }}>
+              <div className={`wrap-lookbook lookbook-${(index % 2) + 1}`} style={{ width: 'auto' }}>
+                <div className="image" style={{ position: 'relative', width: 'fit-content' }}>
                   <Image
-                    className="lazyload"
+                    className="lazyload lookbook-main-img"
                     alt={feature.title || "Lookbook"}
                     src={feature.image?.filePath ? `/${feature.image.filePath}` : '/images/slider/slider-1.jpg'}
                     width={feature.image?.width || 2153}
                     height={feature.image?.height || 1059}
-                    style={imageStyle}
+                    style={{ width: 'auto', height: 'var(--lookbook-img-height, 70vh)', display: 'block', maxWidth: 'none' }}
                   />
                   
                   {/* Pins */}

@@ -15,16 +15,19 @@ export default function LookbookComponent({ product = lookbookProducts[0], class
             className="lazyload"
             alt="lookbook-item"
             src={product.imgSrc}
-            fill
-            sizes="(max-width: 768px) 60px, 100px"
-            style={{ objectFit: 'cover', borderRadius: '4px' }}
+            width={product.width || 100}
+            height={product.height || 100}
+            sizes="(max-width: 768px) 250px, 250px"
+            style={{ maxHeight: '100%', width: 'auto', height: 'auto',borderRadius: '4px' }}
+            unoptimized={false}
+            quality={85}
           />
         </Link>
         <div className="content-wrap">
           <div className="product-title">
             <Link href={product.href}>{product.title}</Link>
           </div>
-          <div className="price">{product.price} TL</div>
+          <div className="price">{typeof product.price === 'number' ? product.price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : product.price} TL</div>
         </div>
         <Link href={product.href} className="">
            <i className="icon-arrow1-top-left" />
