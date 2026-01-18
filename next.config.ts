@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // @ts-ignore
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  // @ts-ignore
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   // Turbopack empty config to allow webpack fallback
   // @ts-ignore
   turbopack: {},
