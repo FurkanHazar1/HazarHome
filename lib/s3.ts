@@ -10,8 +10,9 @@ const s3Client = new S3Client({
   },
 })
 
-const BUCKET_NAME = process.env.AWS_BUCKET_NAME || ''
-const CLOUDFRONT_URL = process.env.AWS_CLOUDFRONT_URL || ''
+const BUCKET_NAME = process.env.NEXT_PUBLIC_AWS_BUCKET_NAME || process.env.AWS_BUCKET_NAME || ''
+const CLOUDFRONT_URL = process.env.NEXT_PUBLIC_AWS_CLOUDFRONT_URL || process.env.AWS_CLOUDFRONT_URL || ''
+const REGION = process.env.NEXT_PUBLIC_AWS_REGION || process.env.AWS_REGION || 'us-east-1'
 
 /**
  * Uploads a file buffer to AWS S3 (Server-side)
@@ -92,8 +93,8 @@ export function getImageUrl(key: string): string {
   }
   
   if (!BUCKET_NAME) {
-    console.warn('⚠️ AWS_BUCKET_NAME is not defined. Image URLs will be broken.')
+    return `/${cleanKey}` // Fallback to local if no bucket defined
   }
 
-  return `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'eu-central-1'}.amazonaws.com/${cleanKey}`
+  return `https://${BUCKET_NAME}.s3.${REGION}.amazonaws.com/${cleanKey}`
 }
