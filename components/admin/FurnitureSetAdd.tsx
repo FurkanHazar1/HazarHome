@@ -114,6 +114,20 @@ export default function FurnitureSetAdd() {
     })
   }
 
+  const moveImage = (index: number, direction: 'left' | 'right') => {
+    const newImages = [...images]
+    const newPreviewsTemp = [...previews]
+    const targetIndex = direction === 'left' ? index - 1 : index + 1
+
+    if (targetIndex >= 0 && targetIndex < newImages.length) {
+      [newImages[index], newImages[targetIndex]] = [newImages[targetIndex], newImages[index]];
+      [newPreviewsTemp[index], newPreviewsTemp[targetIndex]] = [newPreviewsTemp[targetIndex], newPreviewsTemp[index]];
+      
+      setImages(newImages)
+      setPreviews(newPreviewsTemp)
+    }
+  }
+
   const addFurnitureToSet = (item: any) => {
     if (selectedItems.find(i => i.id === item.furnitureId)) return
     const imagePath = item.images?.[0]?.image?.filePath
@@ -300,10 +314,21 @@ export default function FurnitureSetAdd() {
                   {previews.map((src, idx) => (
                     <div key={idx} className="relative aspect-square rounded-xl overflow-hidden bg-black group border border-slate-700">
                       <Image src={src} alt="Preview" fill className="object-cover" />
-                      <button type="button" onClick={() => removeImage(idx)} className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition">
-                        Sil
-                      </button>
-                      {idx === 0 && <span className="absolute top-1 left-1 bg-pink-600 text-[10px] px-2 py-0.5 rounded">Kapak</span>}
+                      
+                      {/* Sort Badge */}
+                      <div className="absolute top-2 left-2 w-6 h-6 bg-black/70 rounded-full flex items-center justify-center text-xs font-bold border border-white/20 z-10">
+                        {idx + 1}
+                      </div>
+
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                        <div className="flex gap-2">
+                          <button type="button" onClick={() => moveImage(idx, 'left')} disabled={idx === 0} className="p-1 bg-white/20 rounded hover:bg-white/40 disabled:opacity-30">⬅️</button>
+                          <button type="button" onClick={() => moveImage(idx, 'right')} disabled={idx === previews.length - 1} className="p-1 bg-white/20 rounded hover:bg-white/40 disabled:opacity-30">➡️</button>
+                        </div>
+                        <button type="button" onClick={() => removeImage(idx)} className="text-xs bg-red-500 px-3 py-1 rounded-full text-white hover:bg-red-600 transition">Sil</button>
+                      </div>
+                      
+                      {idx === 0 && <div className="absolute bottom-0 left-0 right-0 bg-pink-600 text-white text-[10px] font-bold text-center py-1">KAPAK</div>}
                     </div>
                   ))}
                 </div>
