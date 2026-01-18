@@ -15,7 +15,6 @@ const nextConfig: NextConfig = {
 
   // SCSS support
   sassOptions: {
-  sassOptions: {
     includePaths: ['./styles/scss', './public/scss'],
     prependData: ``,
   },
