@@ -10,17 +10,15 @@ export default function LookbookComponent({ product = lookbookProducts[0], class
   return (
     <li>
       <div className={`lookbook-product ${className}`}>
-        <Link href={product.href} className="image">
+        <Link href={product.href} className="image" style={{ borderRadius: '8px', overflow: 'hidden' }}>
           <Image
-            className="lazyload"
             alt="lookbook-item"
             src={product.imgSrc}
             width={product.width || 100}
             height={product.height || 100}
             sizes="(max-width: 768px) 250px, 250px"
-            style={{ maxHeight: '100%', width: 'auto', height: 'auto',borderRadius: '4px' }}
-            unoptimized={false}
-            quality={85}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            priority={true}
           />
         </Link>
         <div className="content-wrap">

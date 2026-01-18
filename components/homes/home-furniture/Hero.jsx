@@ -100,12 +100,14 @@ export default function Hero() {
                   className="hero-image-fixed"
                   src={toPublicUrl(slide.imageUrl)}
                   alt={slide.title}
-                  width={1000}
-                  height={600}
-                  priority={true}
+                  width={1200}
+                  height={800}
+                  priority={index === 0}
+                  loading={index === 0 ? undefined : "lazy"}
                   style={{
-                    height: 'auto', 
-                    objectFit: 'contain' 
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover'
                   }}
                 />
               </div>
