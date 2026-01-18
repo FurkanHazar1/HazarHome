@@ -8,47 +8,54 @@ import Link from "next/link";
 import FurnitureSetDetailsPopup from "@/components/shopDetails/FurnitureSetDetailsPopup";
 import { getCategoryById } from "@/lib/category-mapping";
 import { notFound } from "next/navigation";
+import { prisma } from "@/lib/prisma";
 
-export const metadata = {
-  title:
-    "Furniture Set Detail || HazarHome - Mobilya ve Ev Dekorasyonu",
-  description: "HazarHome - Kaliteli Mobilya ve Ev Dekorasyonu Takımları",
-};
+export const revalidate = 3600; // Cache for 1 hour
 
-import ProductSinglePrevNext from "@/components/common/ProductSinglePrevNext";
-
-// API'den ürün verisini çek
+// Fetch data directly from DB
 async function getProduct(id) {
   try {
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-    
-    // Önce furniture_set olarak dene
-    let response = await fetch(`${baseUrl}/api/products/${id}?type=furniture_set&includeInactive=false&groupImagesByType=true`, {
-      cache: 'no-store'
-    });
-    
-    if (response.ok) {
-      const result = await response.json();
-      if (result.success && result.data) {
-        return result.data;
+    const setId = parseInt(id);
+    if (isNaN(setId)) return null;
+
+    const product = await prisma.furnitureSet.findUnique({
+      where: { setId },
+      include: {
+        category: true,
+        furnitureSetImages: {
+          include: { image: true },
+          orderBy: { sortOrder: 'asc' }
+        },
+        furnitureSetItems: {
+          include: {
+            furniture: {
+              include: {
+                images: { include: { image: true }, take: 1 }
+              }
+            }
+          }
+        }
       }
-    }
-    
-    // Furniture_set bulunamazsa, furniture olarak dene (özellikle "Takım" türündeki)
-    response = await fetch(`${baseUrl}/api/products/${id}?type=furniture&includeInactive=false&groupImagesByType=true`, {
-      cache: 'no-store'
     });
-    
-    if (response.ok) {
-      const result = await response.json();
-      if (result.success && result.data && result.data.furnitureType === "Takım") {
-        return result.data;
-      }
-    }
-    
-    return null;
+
+    if (!product) return null;
+
+    // Transform to match component expectations
+    return {
+      ...product,
+      id: product.setId,
+      title: product.setName,
+      imgSrc: product.furnitureSetImages?.[0]?.image?.filePath,
+      categorySlug: product.category?.categoryName?.toLowerCase() || 'furniture-set',
+      setItems: product.furnitureSetItems.map(item => ({
+        id: item.furnitureId,
+        name: item.furniture?.furnitureName,
+        quantity: item.quantity,
+        image: item.furniture?.images?.[0]?.image?.filePath
+      }))
+    };
   } catch (error) {
-    console.error('Error fetching product:', error);
+    console.error('Error fetching set directly:', error);
     return null;
   }
 }

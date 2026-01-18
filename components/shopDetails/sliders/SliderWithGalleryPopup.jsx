@@ -120,11 +120,10 @@ export default function SliderWithGalleryPopup({
               }}
             >
               <Image
-                className="lazyload"
-                data-src={slide.src}
                 alt={slide.alt || ""}
                 src={slide.src}
                 fill={true}
+                loading="lazy"
                 style={{
                   objectFit: 'contain',
                   objectPosition: 'center',
@@ -198,15 +197,13 @@ export default function SliderWithGalleryPopup({
                       borderRadius: '18px'
                     }}>
                       <Image
-                        className="tf-image-zoom-magnifier ls-is-cached lazyloaded"
-                        data-zoom={slide.src}
-                        data-src={slide.src}
-                        ref={ref}
                         alt={slide.alt || "image"}
                         src={slide.src}
                         fill={true}
                         priority={index === 0}
+                        loading={index === 0 ? undefined : "lazy"}
                         sizes="(max-width: 768px) 100vw, 720px"
+                        unoptimized={true}
                         style={{ 
                           objectFit: 'contain',
                           objectPosition: 'center',

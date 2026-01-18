@@ -6,8 +6,10 @@ import { useContextElement } from "@/context/Context";
 import CountdownComponent from "../common/Countdown";
 import { getColorHex } from "@/utils/colorUtils";
 import React from "react";
+import { toPublicUrl } from "@/lib/image-helpers";
+
 export const ProductCard = ({ product }) => {
-  const [currentImage, setCurrentImage] = useState(product.imgSrc);
+  const [currentImage, setCurrentImage] = useState(toPublicUrl(product.imgSrc));
   const [currentColor, setCurrentColor] = useState(null);
   const { setQuickViewItem } = useContextElement();
   const {
@@ -19,7 +21,7 @@ export const ProductCard = ({ product }) => {
   } = useContextElement();
   
   useEffect(() => {
-    setCurrentImage(product.imgSrc);
+    setCurrentImage(toPublicUrl(product.imgSrc));
     setCurrentColor(null); // Renk seçimi kaldırıldı
   }, [product]);
 
@@ -36,21 +38,23 @@ export const ProductCard = ({ product }) => {
         >
           <Image
             className="img-product"
-            data-src={product.imgSrc}
+            data-src={toPublicUrl(product.imgSrc)}
             src={currentImage}
             alt="image-product"
             width={720}
             height={540}
+            unoptimized={true}
           />
           <Image
             className="img-hover"
             data-src={
-              product.imgHoverSrc ? product.imgHoverSrc : product.imgSrc
+              product.imgHoverSrc ? toPublicUrl(product.imgHoverSrc) : toPublicUrl(product.imgSrc)
             }
-            src={product.imgHoverSrc ? product.imgHoverSrc : product.imgSrc}
+            src={product.imgHoverSrc ? toPublicUrl(product.imgHoverSrc) : toPublicUrl(product.imgSrc)}
             alt="image-product"
             width={720}
             height={540}
+            unoptimized={true}
           />
         </Link>
         {product.soldOut ? (

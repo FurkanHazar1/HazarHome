@@ -1,4 +1,30 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Performance Optimizations */
+.swiper-slide, .img-product, .hero-image-fixed, .tf-product-media-main, .tf-product-media-thumbs {
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  -webkit-transform: translate3d(0,0,0);
+  perspective: 1000;
+  will-change: transform;
+}
+
+.properties-list, .set-items-list {
+  contain: content;
+}
+
+img {
+  content-visibility: auto;
+}
+
+/* Smooth Scrolling for the whole page */
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 
 :root {
   --background: #ffffff;

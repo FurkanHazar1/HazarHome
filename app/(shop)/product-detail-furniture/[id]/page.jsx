@@ -8,33 +8,56 @@ import Link from "next/link";
 import FurnitureDetailsPopup from "@/components/shopDetails/FurnitureDetailsPopup";
 import { getCategoryById } from "@/lib/category-mapping";
 import { notFound } from "next/navigation";
+import { prisma } from "@/lib/prisma";
 
-export const metadata = {
-  title:
-    "Furniture Detail || HazarHome - Mobilya ve Ev Dekorasyonu",
-  description: "HazarHome - Kaliteli Mobilya ve Ev Dekorasyonu Ürünleri",
-};
+export const revalidate = 3600; // Cache for 1 hour
 
-import ProductSinglePrevNext from "@/components/common/ProductSinglePrevNext";
-
-// API'den ürün verisini çek
+// Fetch data directly from DB
 async function getProduct(id) {
   try {
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-    const response = await fetch(`${baseUrl}/api/products/${id}?type=furniture&includeInactive=false&groupImagesByType=true`, {
-      cache: 'no-store'
-    });
-    
-    if (response.ok) {
-      const result = await response.json();
-      if (result.success && result.data) {
-        return result.data;
+    const furnitureId = parseInt(id);
+    if (isNaN(furnitureId)) return null;
+
+    const product = await prisma.furniture.findUnique({
+      where: { furnitureId },
+      include: {
+        category: true,
+        images: {
+          include: {
+            image: true
+          },
+          orderBy: { sortOrder: 'asc' }
+        },
+        properties: {
+          include: {
+            property: true
+          }
+        },
+        colors: {
+          include: {
+            color: true
+          }
+        }
       }
-    }
-    
-    return null;
+    });
+
+    if (!product) return null;
+
+    // Transform to match component expectations
+    return {
+      ...product,
+      id: product.furnitureId,
+      title: product.furnitureName,
+      imgSrc: product.images?.[0]?.image?.filePath,
+      categorySlug: product.category?.categoryName?.toLowerCase() || 'furniture',
+      colors: product.colors.map(c => ({
+        id: c.colorId,
+        name: c.color.colorName,
+        value: c.color.colorCode
+      }))
+    };
   } catch (error) {
-    console.error('Error fetching product:', error);
+    console.error('Error fetching product directly:', error);
     return null;
   }
 }
