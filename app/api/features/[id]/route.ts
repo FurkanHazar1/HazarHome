@@ -118,7 +118,7 @@ export async function PUT(
       data = await request.json()
     }
 
-    let { title, description, imageId, isActive, sortOrder, pins } = data
+    let { title, description, imageId, isActive, sortOrder, pins, s3Key } = data
 
     // Parse pins if string
     if (typeof pins === 'string') {
@@ -130,7 +130,27 @@ export async function PUT(
     }
 
     // Handle image upload if provided
-    if (imageFile && imageFile.size > 0) {
+    if (s3Key) {
+      // Get existing feature to find old image
+      const existingFeature = await prisma.feature.findUnique({
+        where: { featureId },
+        include: { image: true }
+      })
+
+      if (existingFeature?.imageId) {
+        await deleteImage(existingFeature.imageId)
+      }
+
+      const newImage = await prisma.image.create({
+        data: {
+          fileName: s3Key.split('/').pop() || 'image.webp',
+          filePath: s3Key,
+          fileType: 'webp',
+          altText: title || 'Feature image'
+        }
+      })
+      imageId = newImage.imageId
+    } else if (imageFile && imageFile.size > 0) {
       // Get existing feature to find old image
       const existingFeature = await prisma.feature.findUnique({
         where: { featureId },

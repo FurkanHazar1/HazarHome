@@ -348,7 +348,8 @@ export async function PUT(
         properties: formData.get('properties') as string,
         removeImageIds: formData.get('removeImageIds') as string,
         updateImageOrder: formData.get('updateImageOrder') as string,
-        imageTypeMappings: formData.get('imageTypeMappings') as string
+        imageTypeMappings: formData.get('imageTypeMappings') as string,
+        uploadedImages: formData.get('uploadedImages') as string // NEW: Direct S3 metadata
       }
 
       const files = formData.getAll('newImages') as File[]
@@ -369,7 +370,8 @@ export async function PUT(
       properties,
       removeImageIds,
       updateImageOrder,
-      imageTypeMappings
+      imageTypeMappings,
+      uploadedImages // NEW
     } = data
 
     // Parse JSON strings with debugging
@@ -378,6 +380,7 @@ export async function PUT(
     let parsedRemoveImageIds = removeImageIds
     let parsedUpdateImageOrder = updateImageOrder
     let parsedImageTypeMappings = imageTypeMappings
+    let parsedUploadedImages = uploadedImages
 
     if (typeof colorIds === 'string') {
       parsedColorIds = colorIds ? JSON.parse(colorIds) : undefined
@@ -393,6 +396,9 @@ export async function PUT(
     }
     if (typeof imageTypeMappings === 'string') {
       parsedImageTypeMappings = imageTypeMappings ? JSON.parse(imageTypeMappings) : {}
+    }
+    if (typeof uploadedImages === 'string') {
+      parsedUploadedImages = uploadedImages ? JSON.parse(uploadedImages) : []
     }
 
     console.log('🔍 DEBUG - Parsed data:')
@@ -627,10 +633,39 @@ export async function PUT(
       }
     }
 
-    // 3. Process new image files if provided (Updated to use processImageFiles correctly)
-    let newImageResults: any[] = []
-    let imageUploadResults: any[] = []
+    // 3. Process already uploaded S3 images (Direct Upload)
+    let directS3Results: any[] = []
+    if (parsedUploadedImages && Array.isArray(parsedUploadedImages)) {
+      for (const img of parsedUploadedImages) {
+        try {
+          const imageRecord = await prisma.image.create({
+            data: {
+              fileName: img.fileName,
+              filePath: img.s3Key,
+              altText: img.altText || `${furnitureName} - Image`,
+              fileSize: img.fileSize,
+              fileType: 'webp'
+            }
+          })
 
+          await prisma.furnitureImage.create({
+            data: {
+              furnitureId: furnitureId,
+              imageId: imageRecord.imageId,
+              imageType: img.imageType || 'gallery',
+              sortOrder: img.sortOrder || 1,
+              isActive: true
+            }
+          })
+          directS3Results.push({ ...img, success: true })
+        } catch (s3Error) {
+          console.error('Error saving direct S3 image to DB during update:', s3Error)
+        }
+      }
+    }
+
+    // 4. Process new image files if provided (Traditional Fallback)
+    let imageUploadResults: any[] = []
     if (imageFiles.length > 0) {
       try {
         const categorySlug = slugifyCategory(existingFurniture.category?.categoryName || 'unknown')

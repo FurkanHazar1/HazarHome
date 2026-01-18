@@ -181,36 +181,61 @@ export default function FurnitureAdd() {
     setLoading(true)
 
     try {
-      // Find category name to use as Furniture Type
+      // 1. Upload images directly to S3 using Presigned URLs
+      const uploadedImagesMetadata = []
+      
+      for (let i = 0; i < images.length; i++) {
+        const file = images[i]
+        const imageType = i === 0 ? 'main' : 'gallery'
+        const sortOrder = i + 1
+
+        // Get Presigned URL
+        const presignedRes = await fetch('/api/images/presigned', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fileName: file.name,
+            fileType: file.type,
+            itemType: 'furnitures',
+            categoryName: categories.find(c => c.categoryId === parseInt(formData.categoryId))?.categoryName || 'uncategorized'
+          })
+        })
+
+        const { uploadUrl, s3Key } = await presignedRes.json()
+
+        // Upload directly to S3
+        await fetch(uploadUrl, {
+          method: 'PUT',
+          body: file,
+          headers: { 'Content-Type': file.type }
+        })
+
+        uploadedImagesMetadata.push({
+          s3Key,
+          fileName: file.name,
+          fileSize: file.size,
+          imageType,
+          sortOrder,
+          altText: `${formData.furnitureName} - Görsel ${sortOrder}`
+        })
+      }
+
+      // 2. Save furniture data with S3 keys
       const selectedCat = categories.find(c => c.categoryId === parseInt(formData.categoryId))
       const derivedType = selectedCat ? selectedCat.categoryName : 'Genel'
 
-      const data = new FormData()
-      data.append('furnitureName', formData.furnitureName)
-      data.append('furnitureType', derivedType) // Auto-filled
-      data.append('categoryId', formData.categoryId)
-      data.append('description', formData.description)
-      data.append('isActive', String(formData.isActive))
-      data.append('price', '0')
-
-      // Properties
-      data.append('properties', JSON.stringify(selectedProperties))
-
-      // Images (Order is preserved in the array)
-      images.forEach((file) => {
-        data.append('images', file)
-      })
-
-      // Image mappings (first one is main)
-      const mappings: any = {}
-      images.forEach((file, idx) => {
-        mappings[file.name] = idx === 0 ? 'main' : 'gallery'
-      })
-      data.append('imageTypeMappings', JSON.stringify(mappings))
+      const payload = {
+        ...formData,
+        furnitureType: derivedType,
+        price: '0', // Fixed price as per original logic
+        properties: selectedProperties,
+        uploadedImages: uploadedImagesMetadata
+      }
 
       const res = await fetch('/api/furniture', {
         method: 'POST',
-        body: data
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       })
 
       const result = await res.json()

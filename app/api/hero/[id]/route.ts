@@ -31,7 +31,7 @@ export async function PUT(
       data = await request.json()
     }
 
-    const { title, subtitle, link, buttonText, backgroundColor, isActive, sortOrder } = data
+    const { title, subtitle, link, buttonText, backgroundColor, isActive, sortOrder, s3Key } = data
     let { imageUrl } = data
 
     // Check if hero slide exists
@@ -43,7 +43,13 @@ export async function PUT(
       return NextResponse.json({ error: 'Hero slide not found' }, { status: 404 })
     }
 
-    if (imageFile && imageFile.size > 0) {
+    if (s3Key) {
+      // If we have a new direct S3 key, delete old one
+      if (existingSlide.imageUrl && existingSlide.imageUrl !== s3Key) {
+        await deleteFromS3(existingSlide.imageUrl)
+      }
+      imageUrl = s3Key
+    } else if (imageFile && imageFile.size > 0) {
       // Delete old image from S3 if it exists
       if (existingSlide.imageUrl) {
         await deleteFromS3(existingSlide.imageUrl)

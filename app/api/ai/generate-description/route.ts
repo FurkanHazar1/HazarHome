@@ -34,8 +34,6 @@ export async function POST(req: NextRequest) {
     `;
 
     const genAI = new GoogleGenerativeAI(apiKey);
-
-    // 'gemini-1.5-flash' is the most cost-effective and stable model.
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     console.log('Gemini API isteği gönderiliyor...');

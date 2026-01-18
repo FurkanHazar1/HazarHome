@@ -1,8 +1,9 @@
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
 // AWS S3 Client Initialization
 const s3Client = new S3Client({
-  region: process.env.AWS_REGION || 'eu-central-1', // Default to Frankfurt
+  region: process.env.AWS_REGION || 'eu-central-1',
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
@@ -13,7 +14,7 @@ const BUCKET_NAME = process.env.AWS_BUCKET_NAME || ''
 const CLOUDFRONT_URL = process.env.AWS_CLOUDFRONT_URL || ''
 
 /**
- * Uploads a file buffer to AWS S3
+ * Uploads a file buffer to AWS S3 (Server-side)
  */
 export async function uploadToS3(
   buffer: Buffer,
@@ -25,16 +26,38 @@ export async function uploadToS3(
     Key: key,
     Body: buffer,
     ContentType: contentType,
-    CacheControl: 'public, max-age=31536000, immutable', // Cache for 1 year (CloudFront optimization)
+    CacheControl: 'public, max-age=31536000, immutable',
   })
 
   try {
     await s3Client.send(command)
-    // Return the CloudFront URL if available, otherwise S3 URL (though S3 direct access is usually blocked)
     return key
   } catch (error) {
     console.error('S3 Upload Error:', error)
     throw new Error('Failed to upload image to storage')
+  }
+}
+
+/**
+ * Generates a pre-signed URL for direct upload from the client (Client-side bypass)
+ */
+export async function createPresignedUploadUrl(
+  key: string,
+  contentType: string
+): Promise<string> {
+  const command = new PutObjectCommand({
+    Bucket: BUCKET_NAME,
+    Key: key,
+    ContentType: contentType,
+    CacheControl: 'public, max-age=31536000, immutable',
+  })
+
+  try {
+    // URL expires in 1 hour
+    return await getSignedUrl(s3Client, command, { expiresIn: 3600 })
+  } catch (error) {
+    console.error('S3 Presigned URL Error:', error)
+    throw new Error('Failed to generate upload ticket')
   }
 }
 
@@ -51,7 +74,6 @@ export async function deleteFromS3(key: string): Promise<void> {
     await s3Client.send(command)
   } catch (error) {
     console.error('S3 Delete Error:', error)
-    // Don't throw here, just log. We don't want to break the whole flow if deletion fails.
   }
 }
 
@@ -60,17 +82,18 @@ export async function deleteFromS3(key: string): Promise<void> {
  */
 export function getImageUrl(key: string): string {
   if (!key) return ''
-  if (key.startsWith('http')) return key // Already a full URL
+  if (key.startsWith('http')) return key
   
-  // Remove leading slash if present
   const cleanKey = key.startsWith('/') ? key.substring(1) : key
 
   if (CLOUDFRONT_URL) {
-    // Ensure CLOUDFRONT_URL doesn't end with slash and key doesn't start with slash
     const baseUrl = CLOUDFRONT_URL.endsWith('/') ? CLOUDFRONT_URL.slice(0, -1) : CLOUDFRONT_URL
     return `${baseUrl}/${cleanKey}`
   }
   
-  // Fallback (Not recommended for production, but useful for debug)
-  return `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${cleanKey}`
+  if (!BUCKET_NAME) {
+    console.warn('⚠️ AWS_BUCKET_NAME is not defined. Image URLs will be broken.')
+  }
+
+  return `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'eu-central-1'}.amazonaws.com/${cleanKey}`
 }

@@ -127,20 +127,30 @@ export default function HeroManagement() {
     if (!file) return
 
     setUploading(true)
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('type', 'hero')
-
     try {
-      const res = await fetch('/api/images', {
+      // 1. Get Presigned URL
+      const presignedRes = await fetch('/api/images/presigned', {
         method: 'POST',
-        body: formData
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileName: file.name,
+          fileType: file.type,
+          itemType: 'hero'
+        })
       })
-      const data = await res.json()
+
+      const { uploadUrl, s3Key } = await presignedRes.json()
+
+      // 2. Upload directly to S3
+      await fetch(uploadUrl, {
+        method: 'PUT',
+        body: file,
+        headers: { 'Content-Type': file.type }
+      })
       
-      if (data.success) {
-        setFormData(prev => ({ ...prev, imageUrl: data.image.filePath }))
-      }
+      // Store the S3 Key in formData
+      setFormData(prev => ({ ...prev, imageUrl: s3Key }))
+      
     } catch (error) {
       console.error('Image upload failed', error)
       alert('Resim yüklenemedi')
@@ -158,10 +168,16 @@ export default function HeroManagement() {
       
       const method = isEditing ? 'PUT' : 'POST'
 
+      const payload = {
+        ...formData,
+        // If the imageUrl is an S3 Key (newly uploaded), we pass it as s3Key to the backend
+        s3Key: formData.imageUrl
+      }
+
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       })
 
       if (res.ok) {

@@ -108,7 +108,7 @@ export async function POST(request: Request) {
       data = await request.json()
     }
 
-    let { title, description, imageId, isActive, sortOrder, pins } = data
+    let { title, description, imageId, isActive, sortOrder, pins, s3Key } = data
 
     // Parse pins if string
     if (typeof pins === 'string') {
@@ -120,7 +120,18 @@ export async function POST(request: Request) {
     }
 
     // Handle image upload if provided
-    if (imageFile && imageFile.size > 0) {
+    if (s3Key) {
+      // Use the already uploaded S3 Key
+      const newImage = await prisma.image.create({
+        data: {
+          fileName: s3Key.split('/').pop() || 'image.webp',
+          filePath: s3Key,
+          fileType: 'webp',
+          altText: title || 'Feature image'
+        }
+      })
+      imageId = newImage.imageId
+    } else if (imageFile && imageFile.size > 0) {
       const uploadResult = await uploadSingleImage(imageFile, 'features')
       
       const newImage = await prisma.image.create({

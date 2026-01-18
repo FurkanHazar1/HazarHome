@@ -371,7 +371,8 @@ export async function POST(request: Request) {
       colorIds = [], // Optional colors
       properties = [],
       furnitureItems = [], // Required furniture items
-      imageTypeMappings
+      imageTypeMappings,
+      uploadedImages // NEW: Direct S3 metadata
     } = data
 
     // Parse JSON strings
@@ -379,6 +380,7 @@ export async function POST(request: Request) {
     let parsedProperties = properties
     let parsedFurnitureItems = furnitureItems
     let parsedImageTypeMappings = imageTypeMappings
+    let parsedUploadedImages = uploadedImages
 
     if (typeof colorIds === 'string') {
       parsedColorIds = colorIds ? JSON.parse(colorIds) : []
@@ -391,6 +393,9 @@ export async function POST(request: Request) {
     }
     if (typeof imageTypeMappings === 'string') {
       parsedImageTypeMappings = imageTypeMappings ? JSON.parse(imageTypeMappings) : {}
+    }
+    if (typeof uploadedImages === 'string') {
+      parsedUploadedImages = uploadedImages ? JSON.parse(uploadedImages) : []
     }
 
     // Enhanced validations
@@ -620,19 +625,51 @@ export async function POST(request: Request) {
       timeout: 30000
     })
 
-    // Process images after successful furniture set creation (now we have the ID)
+    // 4. Handle Image Records
     let imageResults: any[] = []
+
+    // 4a. Process already uploaded S3 images (Direct Upload)
+    if (parsedUploadedImages && Array.isArray(parsedUploadedImages)) {
+      for (const img of parsedUploadedImages) {
+        try {
+          const imageRecord = await prisma.image.create({
+            data: {
+              fileName: img.fileName,
+              filePath: img.s3Key,
+              altText: img.altText || `${setName} - Image`,
+              fileSize: img.fileSize,
+              fileType: 'webp'
+            }
+          })
+
+          await prisma.furnitureSetImage.create({
+            data: {
+              furnitureSetId: furnitureSet.setId,
+              imageId: imageRecord.imageId,
+              imageType: img.imageType || 'gallery',
+              sortOrder: img.sortOrder || 1,
+              isActive: true
+            }
+          })
+          imageResults.push({ ...img, success: true })
+        } catch (s3Error) {
+          console.error('Error saving direct S3 image to DB for set:', s3Error)
+        }
+      }
+    }
+
+    // 4b. Process traditional file uploads (Fallback)
     if (imageFiles.length > 0) {
       try {
-        imageResults = await processImageFiles(
+        const fileResults = await processImageFiles(
           imageFiles, 
-          furnitureSet.setId, // Now we have the actual ID
+          furnitureSet.setId,
           categorySlug,
-          'furniture-sets' // Use furniture-sets type
+          'furniture-sets'
         )
+        imageResults = [...imageResults, ...fileResults]
       } catch (imageProcessError) {
         console.warn('Image processing error after furniture set creation:', imageProcessError)
-        // Image error doesn't prevent furniture set creation, just warns
       }
     }
 

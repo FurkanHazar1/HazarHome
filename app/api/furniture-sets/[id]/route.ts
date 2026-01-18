@@ -483,7 +483,8 @@ export async function PUT(
         furnitureItems: formData.get('furnitureItems') as string,
         removeImageIds: formData.get('removeImageIds') as string,
         updateImageOrder: formData.get('updateImageOrder') as string,
-        imageTypeMappings: formData.get('imageTypeMappings') as string
+        imageTypeMappings: formData.get('imageTypeMappings') as string,
+        uploadedImages: formData.get('uploadedImages') as string // NEW
       }
 
       const files = formData.getAll('newImages') as File[]
@@ -504,7 +505,8 @@ export async function PUT(
       furnitureItems,
       removeImageIds,
       updateImageOrder,
-      imageTypeMappings
+      imageTypeMappings,
+      uploadedImages // NEW
     } = data
 
     // Parse JSON strings
@@ -514,6 +516,7 @@ export async function PUT(
     let parsedRemoveImageIds = removeImageIds
     let parsedUpdateImageOrder = updateImageOrder
     let parsedImageTypeMappings = imageTypeMappings
+    let parsedUploadedImages = uploadedImages
 
     if (typeof colorIds === 'string') {
       parsedColorIds = colorIds ? JSON.parse(colorIds) : undefined
@@ -532,6 +535,9 @@ export async function PUT(
     }
     if (typeof imageTypeMappings === 'string') {
       parsedImageTypeMappings = imageTypeMappings ? JSON.parse(imageTypeMappings) : {}
+    }
+    if (typeof uploadedImages === 'string') {
+      parsedUploadedImages = uploadedImages ? JSON.parse(uploadedImages) : []
     }
 
     // Check if furniture set exists
@@ -831,7 +837,38 @@ export async function PUT(
       }
     }
 
-    // 3. Process new image files if provided
+    // 3. Process already uploaded S3 images (Direct Upload)
+    let directS3Results: any[] = []
+    if (parsedUploadedImages && Array.isArray(parsedUploadedImages)) {
+      for (const img of parsedUploadedImages) {
+        try {
+          const imageRecord = await prisma.image.create({
+            data: {
+              fileName: img.fileName,
+              filePath: img.s3Key,
+              altText: img.altText || `${setName} - Image`,
+              fileSize: img.fileSize,
+              fileType: 'webp'
+            }
+          })
+
+          await prisma.furnitureSetImage.create({
+            data: {
+              furnitureSetId: setId,
+              imageId: imageRecord.imageId,
+              imageType: img.imageType || 'gallery',
+              sortOrder: img.sortOrder || 1,
+              isActive: true
+            }
+          })
+          directS3Results.push({ ...img, success: true })
+        } catch (s3Error) {
+          console.error('Error saving direct S3 image to DB during set update:', s3Error)
+        }
+      }
+    }
+
+    // 4. Process new image files if provided (Fallback)
     let newImageResults: any[] = []
     if (imageFiles.length > 0) {
       try {

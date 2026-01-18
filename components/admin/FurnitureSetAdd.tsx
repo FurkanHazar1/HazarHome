@@ -155,34 +155,60 @@ export default function FurnitureSetAdd() {
     setLoading(true)
     
     try {
-      const data = new FormData()
-      data.append('setName', formData.setName)
-      data.append('categoryId', formData.categoryId)
-      data.append('description', formData.description)
-      data.append('isActive', String(formData.isActive))
-      data.append('price', '0') // Fiyatsız kayıt
+      // 1. Upload images directly to S3
+      const uploadedImagesMetadata = []
+      const currentCategory = categories.find(c => c.categoryId === parseInt(formData.categoryId))?.categoryName || 'uncategorized'
 
-      // Furniture Items
-      const items = selectedItems.map((item, idx) => ({
-        furnitureId: item.id,
-        quantity: item.quantity,
-        sortOrder: idx + 1
-      }))
-      data.append('furnitureItems', JSON.stringify(items))
+      for (let i = 0; i < images.length; i++) {
+        const file = images[i]
+        const imageType = i === 0 ? 'main' : 'gallery'
+        const sortOrder = i + 1
 
-      // Images
-      images.forEach(file => data.append('images', file))
-      
-      // Mappings
-      const mappings: any = {}
-      images.forEach((file, idx) => {
-        mappings[file.name] = idx === 0 ? 'main' : 'gallery'
-      })
-      data.append('imageTypeMappings', JSON.stringify(mappings))
+        const presignedRes = await fetch('/api/images/presigned', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fileName: file.name,
+            fileType: file.type,
+            itemType: 'furniture-sets',
+            categoryName: currentCategory
+          })
+        })
+
+        const { uploadUrl, s3Key } = await presignedRes.json()
+
+        await fetch(uploadUrl, {
+          method: 'PUT',
+          body: file,
+          headers: { 'Content-Type': file.type }
+        })
+
+        uploadedImagesMetadata.push({
+          s3Key,
+          fileName: file.name,
+          fileSize: file.size,
+          imageType,
+          sortOrder,
+          altText: `${formData.setName} - Görsel ${sortOrder}`
+        })
+      }
+
+      // 2. Save furniture set data
+      const payload = {
+        ...formData,
+        price: '0',
+        furnitureItems: selectedItems.map((item, idx) => ({
+          furnitureId: item.id,
+          quantity: item.quantity,
+          sortOrder: idx + 1
+        })),
+        uploadedImages: uploadedImagesMetadata
+      }
 
       const res = await fetch('/api/furniture-sets', {
         method: 'POST',
-        body: data
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       })
 
       if (res.ok) router.push('/admin/furniture-sets')
@@ -190,6 +216,7 @@ export default function FurnitureSetAdd() {
 
     } catch (error) {
       console.error(error)
+      alert('Sistemsel bir hata oluştu')
     } finally {
       setLoading(false)
     }

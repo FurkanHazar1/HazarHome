@@ -32,128 +32,52 @@ export default function FeatureEditor({ initialData, isNew = false }: FeatureEdi
   const [isActive, setIsActive] = useState(initialData?.isActive ?? true)
   const [selectedImage, setSelectedImage] = useState<any>(initialData?.image || null)
   const [pins, setPins] = useState<Pin[]>(initialData?.pins || [])
+  const [uploading, setUploading] = useState(false)
 
   // Image Selection Modal State
-  const [isImageModalOpen, setIsImageModalOpen] = useState(false)
-  const [imageSearchQuery, setImageSearchQuery] = useState('')
-  const [imageSearchResults, setImageSearchResults] = useState<any[]>([])
-  const [selectedProductImages, setSelectedProductImages] = useState<any[]>([])
-  const [selectedProductForImages, setSelectedProductForImages] = useState<any>(null)
+  // ...
+  
+  // --- DIRECT UPLOAD ---
+  const handleDirectImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
 
-  // Pin Product Selection Modal State
-  const [isProductModalOpen, setIsProductModalOpen] = useState(false)
-  const [productSearchQuery, setProductSearchQuery] = useState('')
-  const [productSearchResults, setProductSearchResults] = useState<any[]>([])
-  const [currentPinIndex, setCurrentPinIndex] = useState<number | null>(null)
-
-  // Image Ref for calculating coordinates
-  const imageContainerRef = useRef<HTMLDivElement>(null)
-
-  // --- SEARCH HELPERS ---
-  const searchProducts = async (query: string, setResults: (data: any[]) => void) => {
-    if (!query) {
-      setResults([])
-      return
-    }
+    setUploading(true)
     try {
-      const [furnRes, setsRes] = await Promise.all([
-        fetch(`/api/furniture?search=${encodeURIComponent(query)}&limit=5`),
-        fetch(`/api/furniture-sets?search=${encodeURIComponent(query)}&limit=5`)
-      ])
-      const furnData = await furnRes.json()
-      const setsData = await setsRes.json()
+      // 1. Get Presigned URL
+      const presignedRes = await fetch('/api/images/presigned', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileName: file.name,
+          fileType: file.type,
+          itemType: 'features'
+        })
+      })
 
-      const results = [
-        ...(furnData.data || []).map((i: any) => ({ ...i, type: 'furniture', label: 'Mobilya', name: i.furnitureName })),
-        ...(setsData.data || []).map((i: any) => ({ ...i, type: 'set', label: 'Takım', name: i.setName }))
-      ]
-      setResults(results)
+      const { uploadUrl, s3Key } = await presignedRes.json()
+
+      // 2. Upload directly to S3
+      await fetch(uploadUrl, {
+        method: 'PUT',
+        body: file,
+        headers: { 'Content-Type': file.type }
+      })
+      
+      // We'll pass this s3Key to the backend on submit
+      // For the preview, we need a local URL
+      setSelectedImage({
+        filePath: s3Key, // Temp storage of key
+        isNewS3: true,
+        previewUrl: URL.createObjectURL(file)
+      })
+      
     } catch (error) {
-      console.error(error)
+      console.error('Image upload failed', error)
+      alert('Görsel yüklenemedi.')
+    } finally {
+      setUploading(false)
     }
-  }
-
-  const handleImageSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const q = e.target.value
-    setImageSearchQuery(q)
-    searchProducts(q, setImageSearchResults)
-  }
-
-  const handleProductSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const q = e.target.value
-    setProductSearchQuery(q)
-    searchProducts(q, setProductSearchResults)
-  }
-
-  const fetchProductImages = async (item: any) => {
-    setSelectedProductForImages(item)
-    // Fetch detailed item to get images
-    const endpoint = item.type === 'furniture' 
-      ? `/api/furniture/${item.furnitureId}` 
-      : `/api/furniture-sets/${item.setId}`
-    
-    try {
-      const res = await fetch(endpoint)
-      const response = await res.json()
-      
-      const images = item.type === 'furniture'
-        ? response.data?.images?.map((r: any) => r.image)
-        : response.data?.furnitureSetImages?.map((r: any) => r.image)
-      
-      setSelectedProductImages(images || [])
-    } catch (e) {
-      console.error(e)
-    }
-  }
-
-  // --- PIN LOGIC ---
-  const handleImageClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!imageContainerRef.current) return
-
-    const rect = imageContainerRef.current.getBoundingClientRect()
-    const x = ((e.clientX - rect.left) / rect.width) * 100
-    const y = ((e.clientY - rect.top) / rect.height) * 100
-
-    const newPin: Pin = {
-      xPosition: x,
-      yPosition: y,
-    }
-
-    setPins([...pins, newPin])
-    // Automatically open product selector for the new pin
-    setCurrentPinIndex(pins.length) // Index of the new pin
-    setIsProductModalOpen(true)
-    setProductSearchQuery('')
-    setProductSearchResults([])
-  }
-
-  const updatePinProduct = (item: any) => {
-    if (currentPinIndex === null) return
-
-    const updatedPins = [...pins]
-    const pin = updatedPins[currentPinIndex]
-
-    if (item.type === 'furniture') {
-      pin.furnitureId = item.furnitureId
-      pin.furnitureSetId = undefined
-      pin.furniture = item
-      pin.furnitureSet = undefined
-    } else {
-      pin.furnitureSetId = item.setId
-      pin.furnitureId = undefined
-      pin.furnitureSet = item
-      pin.furniture = undefined
-    }
-
-    setPins(updatedPins)
-    setIsProductModalOpen(false)
-    setCurrentPinIndex(null)
-  }
-
-  const removePin = (index: number) => {
-    const updatedPins = [...pins]
-    updatedPins.splice(index, 1)
-    setPins(updatedPins)
   }
 
   // --- SUBMIT ---
@@ -171,7 +95,8 @@ export default function FeatureEditor({ initialData, isNew = false }: FeatureEdi
         description,
         sortOrder: parseInt(sortOrder.toString()),
         isActive,
-        imageId: selectedImage.imageId,
+        imageId: selectedImage.isNewS3 ? undefined : selectedImage.imageId,
+        s3Key: selectedImage.isNewS3 ? selectedImage.filePath : undefined,
         pins: pins.map(p => ({
           xPosition: p.xPosition,
           yPosition: p.yPosition,
@@ -202,6 +127,17 @@ export default function FeatureEditor({ initialData, isNew = false }: FeatureEdi
       setLoading(false)
     }
   }
+
+  // Helper for image URLs in the editor
+  const getFeatureImageUrl = (img: any) => {
+    if (!img) return ''
+    if (img.isNewS3) return img.previewUrl
+    return toPublicUrl(img.filePath)
+  }
+
+  // Fixed import
+  import { toPublicUrl } from '@/lib/image-utils'
+
 
   return (
     <div className="max-w-6xl mx-auto pb-20">
@@ -298,26 +234,34 @@ export default function FeatureEditor({ initialData, isNew = false }: FeatureEdi
             {selectedImage ? (
               <div className="relative aspect-video rounded-lg overflow-hidden bg-slate-900 border border-slate-600 group">
                 <Image 
-                  src={`/${selectedImage.filePath}`} 
+                  src={getFeatureImageUrl(selectedImage)} 
                   alt="Selected" 
                   fill 
                   className="object-cover"
                 />
-                <button 
-                  onClick={() => setIsImageModalOpen(true)}
-                  className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
-                >
-                  <span className="bg-white text-slate-900 px-3 py-1 rounded font-medium text-sm">Değiştir</span>
-                </button>
+                <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition gap-2">
+                  <button onClick={() => setIsImageModalOpen(true)} className="bg-white text-slate-900 px-3 py-1 rounded font-medium text-sm">Üründen Seç</button>
+                  <label className="bg-indigo-600 text-white px-3 py-1 rounded font-medium text-sm cursor-pointer hover:bg-indigo-500 transition">
+                    Bilgisayardan Yükle
+                    <input type="file" className="hidden" accept="image/*" onChange={handleDirectImageUpload} disabled={uploading} />
+                  </label>
+                </div>
+                {uploading && <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-xs">Yükleniyor...</div>}
               </div>
             ) : (
-              <button 
-                onClick={() => setIsImageModalOpen(true)}
-                className="w-full aspect-video rounded-lg border-2 border-dashed border-slate-600 hover:border-indigo-500 hover:bg-slate-700/50 transition flex flex-col items-center justify-center gap-2 text-slate-400 hover:text-white"
-              >
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                <span>Görsel Seç</span>
-              </button>
+              <div className="space-y-3">
+                <button 
+                  onClick={() => setIsImageModalOpen(true)}
+                  className="w-full aspect-video rounded-lg border-2 border-dashed border-slate-600 hover:border-indigo-500 hover:bg-slate-700/50 transition flex flex-col items-center justify-center gap-2 text-slate-400 hover:text-white"
+                >
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                  <span>Üründen Görsel Seç</span>
+                </button>
+                <label className="w-full py-3 rounded-lg border-2 border-dashed border-slate-600 hover:border-indigo-500 hover:bg-slate-700/50 transition flex flex-col items-center justify-center gap-2 text-slate-400 hover:text-white cursor-pointer">
+                  {uploading ? 'Yükleniyor...' : 'Veya Bilgisayardan Yükle'}
+                  <input type="file" className="hidden" accept="image/*" onChange={handleDirectImageUpload} disabled={uploading} />
+                </label>
+              </div>
             )}
             <p className="text-xs text-slate-500 mt-2">Bu görsel Lookbook arka planı olarak kullanılacaktır.</p>
           </div>
@@ -339,7 +283,7 @@ export default function FeatureEditor({ initialData, isNew = false }: FeatureEdi
                   onClick={handleImageClick}
                  >
                     <Image 
-                      src={`/${selectedImage.filePath}`} 
+                      src={getFeatureImageUrl(selectedImage)} 
                       alt="Editor" 
                       fill 
                       className="object-contain"
@@ -451,7 +395,7 @@ export default function FeatureEditor({ initialData, isNew = false }: FeatureEdi
                             setIsImageModalOpen(false)
                           }}
                          >
-                           <Image src={`/${img.filePath}`} alt="Select" fill className="object-cover" />
+                          <Image src={toPublicUrl(img.filePath)} alt="Select" fill className="object-cover" />
                            <div className="absolute inset-0 bg-indigo-500/20 opacity-0 group-hover:opacity-100 transition"></div>
                          </div>
                        )) : (

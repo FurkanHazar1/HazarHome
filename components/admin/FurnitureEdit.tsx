@@ -162,42 +162,61 @@ export default function FurnitureEdit({ furnitureId }: { furnitureId: number }) 
     setSaving(true)
 
     try {
-      const data = new FormData()
-      data.append('furnitureName', formData.furnitureName)
-      data.append('furnitureType', formData.furnitureType)
-      data.append('categoryId', formData.categoryId)
-      data.append('description', formData.description)
-      data.append('price', formData.price)
-      data.append('isActive', String(formData.isActive))
+      // 1. Upload new images directly to S3
+      const uploadedImagesMetadata = []
+      const currentCategory = categories.find(c => c.categoryId === parseInt(formData.categoryId))?.categoryName || 'uncategorized'
 
-      // Properties
-      data.append('properties', JSON.stringify(selectedProperties))
+      for (let i = 0; i < newImages.length; i++) {
+        const file = newImages[i]
+        const sortOrder = existingImages.length + i + 1
+        const imageType = sortOrder === 1 ? 'main' : 'gallery'
 
-      // Removed images
-      if (removedImageIds.length > 0) {
-        data.append('removeImageIds', JSON.stringify(removedImageIds))
+        const presignedRes = await fetch('/api/images/presigned', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fileName: file.name,
+            fileType: file.type,
+            itemType: 'furnitures',
+            categoryName: currentCategory,
+            itemId: furnitureId
+          })
+        })
+
+        const { uploadUrl, s3Key } = await presignedRes.json()
+
+        await fetch(uploadUrl, {
+          method: 'PUT',
+          body: file,
+          headers: { 'Content-Type': file.type }
+        })
+
+        uploadedImagesMetadata.push({
+          s3Key,
+          fileName: file.name,
+          fileSize: file.size,
+          imageType,
+          sortOrder,
+          altText: `${formData.furnitureName} - Görsel ${sortOrder}`
+        })
       }
 
-      // New images - PUT API expects 'newImages'
-      newImages.forEach(file => data.append('newImages', file))
-
-      // Update Order & Mappings
-      const orderUpdates = existingImages.map((img, idx) => ({
-        imageId: img.image.imageId,
-        sortOrder: idx + 1
-      }))
-      data.append('updateImageOrder', JSON.stringify(orderUpdates))
-
-      const mappings: any = {}
-      newImages.forEach((file, idx) => {
-        const totalIndex = existingImages.length + idx
-        mappings[file.name] = totalIndex === 0 ? 'main' : 'gallery'
-      })
-      data.append('imageTypeMappings', JSON.stringify(mappings))
+      // 2. Prepare payload
+      const payload = {
+        ...formData,
+        properties: selectedProperties,
+        removeImageIds: removedImageIds,
+        updateImageOrder: existingImages.map((img, idx) => ({
+          imageId: img.image.imageId,
+          sortOrder: idx + 1
+        })),
+        uploadedImages: uploadedImagesMetadata
+      }
 
       const res = await fetch(`/api/furniture/${furnitureId}`, {
         method: 'PUT',
-        body: data
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       })
 
       if (res.ok) {

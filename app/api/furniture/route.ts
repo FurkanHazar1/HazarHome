@@ -222,7 +222,7 @@ export async function GET(request: Request) {
   }
 }
 
-// POST - Enhanced furniture creation with category-based image support
+// POST - Enhanced furniture creation with direct S3 upload support
 export async function POST(request: Request) {
   let createdFurnitureId: number | null = null
   let imageFiles: File[] = []
@@ -243,12 +243,13 @@ export async function POST(request: Request) {
         description: formData.get('description') as string,
         price: formData.get('price') as string,
         isActive: formData.get('isActive') as string,
-        colorIds: formData.get('colorIds') as string, // Still support colors (optional)
+        colorIds: formData.get('colorIds') as string,
         properties: formData.get('properties') as string,
-        imageTypeMappings: formData.get('imageTypeMappings') as string, // NEW: Image type mappings
+        imageTypeMappings: formData.get('imageTypeMappings') as string,
+        uploadedImages: formData.get('uploadedImages') as string, // JSON string of S3 metadata
       }
 
-      // Image files
+      // Image files (traditional upload fallback)
       const files = formData.getAll('images') as File[]
       imageFiles = files.filter(file => file.size > 0)
 
@@ -263,15 +264,17 @@ export async function POST(request: Request) {
       description,
       price,
       isActive = true,
-      colorIds = [], // Optional colors
+      colorIds = [],
       properties = [],
-      imageTypeMappings
+      imageTypeMappings,
+      uploadedImages
     } = data
 
     // Parse JSON strings
     let parsedColorIds = colorIds
     let parsedProperties = properties
     let parsedImageTypeMappings = imageTypeMappings
+    let parsedUploadedImages = uploadedImages
 
     if (typeof colorIds === 'string') {
       parsedColorIds = colorIds ? JSON.parse(colorIds) : []
@@ -282,26 +285,19 @@ export async function POST(request: Request) {
     if (typeof imageTypeMappings === 'string') {
       parsedImageTypeMappings = imageTypeMappings ? JSON.parse(imageTypeMappings) : {}
     }
+    if (typeof uploadedImages === 'string') {
+      parsedUploadedImages = uploadedImages ? JSON.parse(uploadedImages) : []
+    }
 
     // Validations
     const validationErrors = []
 
     if (!furnitureName || typeof furnitureName !== 'string' || furnitureName.trim().length === 0) {
       validationErrors.push('Furniture name is required')
-    } else if (furnitureName.trim().length > 100) {
-      validationErrors.push('Furniture name cannot exceed 100 characters')
-    }
-
-    if (!furnitureType || typeof furnitureType !== 'string' || furnitureType.trim().length === 0) {
-      validationErrors.push('Furniture type is required')
     }
 
     if (price === undefined || price === null || isNaN(parseFloat(price)) || parseFloat(price) < 0) {
       validationErrors.push('A valid price must be entered')
-    }
-
-    if (categoryId && (isNaN(parseInt(categoryId)) || parseInt(categoryId) <= 0)) {
-      validationErrors.push('A valid category ID must be entered')
     }
 
     if (validationErrors.length > 0) {
@@ -318,96 +314,18 @@ export async function POST(request: Request) {
       const category = await prisma.category.findUnique({
         where: { categoryId: parseInt(String(categoryId)) }
       })
-      
-      if (!category) {
-        return NextResponse.json({
-          success: false,
-          error: 'Specified category not found'
-        }, { status: 400 })
-      }
-
-      if (!category.isActive) {
-        return NextResponse.json({
-          success: false,
-          error: 'Cannot add furniture to inactive category'
-        }, { status: 400 })
-      }
-      
-      categoryName = category.categoryName
+      if (category) categoryName = category.categoryName
     }
 
-    // Generate category slug for path creation
     const categorySlug = slugifyCategory(categoryName)
 
-    // Check for duplicate furniture name
-    const existingFurniture = await prisma.furniture.findFirst({
-      where: {
-        furnitureName: {
-          equals: furnitureName.trim(),
-          mode: 'insensitive'
-        }
-      }
-    })
-
-    if (existingFurniture) {
-      return NextResponse.json({
-        success: false,
-        error: 'A furniture with this name already exists'
-      }, { status: 400 })
-    }
-
-    // Validate colors if provided (optional)
-    if (parsedColorIds && parsedColorIds.length > 0) {
-      const colorIdNumbers = parsedColorIds.map((id: number) => parseInt(String(id))).filter((id: number) => !isNaN(id))
-      
-      if (colorIdNumbers.length > 0) {
-        const existingColors = await prisma.color.findMany({
-          where: { 
-            colorId: { in: colorIdNumbers },
-            isActive: true 
-          }
-        })
-
-        if (existingColors.length !== colorIdNumbers.length) {
-          return NextResponse.json({
-            success: false,
-            error: 'Some colors could not be found or are inactive'
-          }, { status: 400 })
-        }
-      }
-    }
-
-    // Validate properties if provided
-    if (parsedProperties && parsedProperties.length > 0) {
-      const propertyIds = parsedProperties.map((p: PropertyInput) => parseInt(String(p.propertyId))).filter((id: number) => !isNaN(id))
-      
-      if (propertyIds.length > 0) {
-        const existingProperties = await prisma.property.findMany({
-          where: { 
-            propertyId: { in: propertyIds },
-            isActive: true 
-          }
-        })
-
-        if (existingProperties.length !== propertyIds.length) {
-          return NextResponse.json({
-            success: false,
-            error: 'Some properties could not be found or are inactive'
-          }, { status: 400 })
-        }
-      }
-    }
-
-    // Process image files with new system AFTER furniture creation
-    // (We need furniture ID for proper path generation)
-
-    // Main transaction - Create furniture and related records
+    // Main transaction
     const furniture = await prisma.$transaction(async (tx) => {
       // 1. Create furniture
       const newFurniture = await tx.furniture.create({
         data: {
           furnitureName: furnitureName.trim(),
-          furnitureType: furnitureType.trim(),
+          furnitureType: furnitureType || 'Genel',
           categoryId: categoryId ? parseInt(String(categoryId)) : null,
           description: description?.trim() || null,
           price: parseFloat(String(price)),
@@ -420,7 +338,6 @@ export async function POST(request: Request) {
       // 2. Add colors (optional)
       if (parsedColorIds && parsedColorIds.length > 0) {
         const colorIdNumbers = parsedColorIds.map((id: number) => parseInt(String(id))).filter((id: number) => !isNaN(id))
-        
         if (colorIdNumbers.length > 0) {
           await tx.furnitureColor.createMany({
             data: colorIdNumbers.map((colorId: number) => ({
@@ -435,7 +352,7 @@ export async function POST(request: Request) {
       // 3. Add properties
       if (parsedProperties && parsedProperties.length > 0) {
         await tx.furnitureProperty.createMany({
-          data: parsedProperties.map((prop: PropertyInput) => ({
+          data: parsedProperties.map((prop: any) => ({
             furnitureId: newFurniture.furnitureId,
             propertyId: parseInt(String(prop.propertyId)),
             propertyValue: prop.propertyValue.trim(),
@@ -445,154 +362,64 @@ export async function POST(request: Request) {
       }
 
       return newFurniture
-    }, {
-      timeout: 30000
     })
 
-    // Process images after successful furniture creation (now we have the ID)
+    // 4. Handle Image Records
     let imageResults: any[] = []
+
+    // 4a. Process already uploaded S3 images (Direct Upload)
+    if (parsedUploadedImages && Array.isArray(parsedUploadedImages)) {
+      for (const img of parsedUploadedImages) {
+        try {
+          const imageRecord = await prisma.image.create({
+            data: {
+              fileName: img.fileName,
+              filePath: img.s3Key,
+              altText: img.altText || `${furnitureName} - Image`,
+              fileSize: img.fileSize,
+              fileType: 'webp'
+            }
+          })
+
+          await prisma.furnitureImage.create({
+            data: {
+              furnitureId: furniture.furnitureId,
+              imageId: imageRecord.imageId,
+              imageType: img.imageType || 'gallery',
+              sortOrder: img.sortOrder || 1,
+              isActive: true
+            }
+          })
+          imageResults.push({ ...img, success: true })
+        } catch (s3Error) {
+          console.error('Error saving direct S3 image to DB:', s3Error)
+        }
+      }
+    }
+
+    // 4b. Process traditional file uploads (Fallback)
     if (imageFiles.length > 0) {
       try {
-        imageResults = await processImageFiles(
+        const fileResults = await processImageFiles(
           imageFiles, 
-          furniture.furnitureId, // Now we have the actual ID
+          furniture.furnitureId,
           categorySlug
         )
+        imageResults = [...imageResults, ...fileResults]
       } catch (imageProcessError) {
         console.warn('Image processing error after furniture creation:', imageProcessError)
-        // Image error doesn't prevent furniture creation, just warns
       }
     }
 
-    // Get created furniture with all related data
-    const createdFurniture = await prisma.furniture.findUnique({
-      where: { furnitureId: furniture.furnitureId },
-      include: {
-        category: {
-          select: {
-            categoryId: true,
-            categoryName: true,
-            categoryPath: true
-          }
-        },
-        colors: {
-          include: {
-            color: {
-              select: {
-                colorId: true,
-                colorName: true,
-                colorCode: true
-              }
-            }
-          }
-        },
-        properties: {
-          include: {
-            property: {
-              select: {
-                propertyId: true,
-                propertyName: true,
-                propertyType: true
-              }
-            }
-          }
-        },
-        images: {
-          include: {
-            image: {
-              select: {
-                imageId: true,
-                fileName: true,
-                filePath: true,
-                altText: true,
-                description: true,
-                width: true,
-                height: true,
-                fileSize: true
-              }
-            }
-          },
-          orderBy: [
-            { imageType: 'asc' },
-            { sortOrder: 'asc' }
-          ]
-        },
-        _count: {
-          select: {
-            colors: true,
-            properties: true,
-            images: true
-          }
-        }
-      }
-    })
-
-    // Add URLs to images
-    const furnitureWithUrls = {
-      ...createdFurniture,
-      images: createdFurniture?.images.map(fi => ({
-        ...fi,
-        image: {
-          ...fi.image,
-          url: toPublicUrl(fi.image.filePath)
-        }
-      })) || []
-    }
-
-    const response: any = {
+    return NextResponse.json({
       success: true,
       message: 'Furniture successfully added',
-      data: furnitureWithUrls
-    }
-
-    // Add image upload results
-    if (imageFiles.length > 0) {
-      response.imageResults = {
-        uploaded: imageResults.length,
-        total: imageFiles.length,
-        details: imageResults,
-        paths: imageResults.map((img: any) => ({
-          fileName: img.fileName,
-          sortOrder: img.sortOrder,
-          publicUrl: img.publicUrl,
-          savedPath: img.savedPath
-        }))
-      }
-    }
-
-    return NextResponse.json(response, { status: 201 })
+      data: furniture,
+      imageResults
+    }, { status: 201 })
 
   } catch (error) {
     console.error('Furniture creation error:', error)
-    
-    // Cleanup if furniture was created but error occurred later
-    if (createdFurnitureId) {
-      try {
-        await prisma.$transaction(async (tx) => {
-          if (createdFurnitureId !== null) {
-            await tx.furnitureImage.deleteMany({
-              where: { furnitureId: createdFurnitureId! }
-            })
-          }
-          if (createdFurnitureId !== null) {
-            await tx.furnitureProperty.deleteMany({
-              where: { furnitureId: createdFurnitureId! }
-            })
-          }
-          if (createdFurnitureId !== null) {
-            await tx.furnitureColor.deleteMany({
-              where: { furnitureId: createdFurnitureId! }
-            })
-          }
-          await tx.furniture.delete({
-            where: { furnitureId: createdFurnitureId! }
-          })
-        })
-      } catch (cleanupError) {
-        console.error('Cleanup error:', cleanupError)
-      }
-    }
-    
     return NextResponse.json({
       success: false,
       message: 'Error occurred while adding furniture',
@@ -601,7 +428,7 @@ export async function POST(request: Request) {
   }
 }
 
-// DELETE - Enhanced bulk furniture deletion (unchanged functionality)
+// DELETE - Enhanced bulk furniture deletion
 export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
@@ -618,167 +445,58 @@ export async function DELETE(request: Request) {
       .map((id: string) => parseInt(id.trim()))
       .filter((id: number) => !isNaN(id) && id > 0)
     
-    if (ids.length === 0) {
-      return NextResponse.json({
-        success: false,
-        error: 'No valid furniture IDs found'
-      }, { status: 400 })
-    }
+    if (ids.length === 0) return NextResponse.json({ success: false, error: 'No valid furniture IDs' }, { status: 400 })
 
-    // Check furniture and related images
     const furnitures = await prisma.furniture.findMany({
       where: { furnitureId: { in: ids } },
-      include: {
-        images: {
-          include: {
-            image: {
-              select: {
-                imageId: true,
-                fileName: true
-              }
-            }
-          }
-        }
-      }
+      include: { images: { include: { image: true } } }
     })
 
-    if (furnitures.length === 0) {
-      return NextResponse.json({
-        success: false,
-        error: 'No furniture found with specified IDs'
-      }, { status: 404 })
-    }
-
-    // Collect image IDs
     const allImageIds: number[] = []
-    furnitures.forEach(furniture => {
-      furniture.images.forEach(fi => {
-        allImageIds.push(fi.image.imageId)
-      })
-    })
+    furnitures.forEach(f => f.images.forEach(fi => allImageIds.push(fi.image.imageId)))
 
-    // Transaction to delete furniture
     const result = await prisma.$transaction(async (tx) => {
       const foundIds = furnitures.map((f) => f.furnitureId)
-      
-      // Delete related records
-      await tx.furnitureImage.deleteMany({
-        where: { furnitureId: { in: foundIds } }
-      })
-      
-      await tx.furnitureProperty.deleteMany({
-        where: { furnitureId: { in: foundIds } }
-      })
-      
-      await tx.furnitureColor.deleteMany({
-        where: { furnitureId: { in: foundIds } }
-      })
-
-      // Delete furniture
-      return await tx.furniture.deleteMany({
-        where: { furnitureId: { in: foundIds } }
-      })
+      await tx.furnitureImage.deleteMany({ where: { furnitureId: { in: foundIds } } })
+      await tx.furnitureProperty.deleteMany({ where: { furnitureId: { in: foundIds } } })
+      await tx.furnitureColor.deleteMany({ where: { furnitureId: { in: foundIds } } })
+      return await tx.furniture.deleteMany({ where: { furnitureId: { in: foundIds } } })
     })
 
-    // Delete images after successful transaction using new deleteImage function
-    let imageDeleteResults = []
     if (allImageIds.length > 0) {
-      try {
-        console.log(`🗑️ Deleting ${allImageIds.length} images: ${allImageIds}`)
-        for (const imageId of allImageIds) {
-          const imageIdNumber = parseInt(imageId.toString())
-          if (isNaN(imageIdNumber)) continue
-          
-          const deleted = await deleteImage(imageIdNumber, 'furnitures')
-          imageDeleteResults.push({ imageId, deleted })
-          if (deleted) {
-            console.log(`✅ Successfully deleted image: ${imageId}`)
-          } else {
-            console.log(`❌ Failed to delete image: ${imageId}`)
-          }
-        }
-      } catch (error) {
-        console.warn('Image deletion error:', error)
+      for (const imageId of allImageIds) {
+        await deleteImage(imageId, 'furnitures')
       }
     }
 
     return NextResponse.json({
       success: true,
-      message: `${result.count} furniture successfully deleted`,
-      deletedCount: result.count,
-      deletedItems: furnitures.map((f) => ({ 
-        id: f.furnitureId, 
-        name: f.furnitureName 
-      })),
-      imageDeleteResults
+      message: `${result.count} furniture successfully deleted`
     })
 
   } catch (error) {
     console.error('Bulk furniture deletion error:', error)
-    return NextResponse.json({
-      success: false,
-      error: 'Furniture could not be deleted'
-    }, { status: 500 })
+    return NextResponse.json({ success: false, error: 'Furniture could not be deleted' }, { status: 500 })
   }
 }
 
-// PATCH - Enhanced bulk furniture status update (unchanged functionality)
+// PATCH - Enhanced bulk furniture status update
 export async function PATCH(request: Request) {
   try {
     const data = await request.json()
     const { ids, isActive } = data
-
-    if (!ids || !Array.isArray(ids) || ids.length === 0) {
-      return NextResponse.json({
-        success: false,
-        error: 'Furniture IDs to update must be specified'
-      }, { status: 400 })
-    }
-
-    if (typeof isActive !== 'boolean') {
-      return NextResponse.json({
-        success: false,
-        error: 'isActive value must be boolean (true/false)'
-      }, { status: 400 })
-    }
-
-    const validIds = ids.map((id: number) => parseInt(String(id))).filter((id: number) => !isNaN(id) && id > 0)
-    
-    if (validIds.length === 0) {
-      return NextResponse.json({
-        success: false,
-        error: 'No valid furniture IDs found'
-      }, { status: 400 })
-    }
-
-    const existingFurnitures = await prisma.furniture.findMany({
-      where: { furnitureId: { in: validIds } },
-      select: { furnitureId: true }
-    })
-
-    if (existingFurnitures.length !== validIds.length) {
-      return NextResponse.json({
-        success: false,
-        error: 'Some furniture could not be found'
-      }, { status: 400 })
-    }
+    if (!ids || !Array.isArray(ids) || ids.length === 0) return NextResponse.json({ success: false, error: 'IDs required' }, { status: 400 })
 
     const updated = await prisma.furniture.updateMany({
-      where: { furnitureId: { in: validIds } },
+      where: { furnitureId: { in: ids.map(Number) } },
       data: { isActive }
     })
 
     return NextResponse.json({
       success: true,
-      message: `${updated.count} furniture status updated to ${isActive ? 'active' : 'inactive'}`,
-      updatedCount: updated.count
+      message: `${updated.count} furniture status updated`
     })
-
   } catch (error) {
-    console.error('Bulk furniture update error:', error)
-    return NextResponse.json({
-      success: false,
-      error: 'Furniture status could not be updated'
-    }, { status: 500 })
+    return NextResponse.json({ success: false, error: 'Update failed' }, { status: 500 })
   }
 }

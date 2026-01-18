@@ -23,15 +23,15 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: process.env.AWS_CLOUDFRONT_URL ? new URL(process.env.AWS_CLOUDFRONT_URL).hostname : '**.cloudfront.net',
-      },
-      {
-        protocol: 'https',
-        hostname: `${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com`,
+        hostname: '**.cloudfront.net',
       },
       {
         protocol: 'https',
         hostname: '**.amazonaws.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'hazarhome.com',
       }
     ],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],

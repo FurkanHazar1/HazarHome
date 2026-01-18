@@ -54,10 +54,12 @@ export async function POST(request: Request) {
       data = await request.json()
     }
 
-    const { title, subtitle, link, buttonText, backgroundColor, isActive, sortOrder } = data
+    const { title, subtitle, link, buttonText, backgroundColor, isActive, sortOrder, s3Key } = data
     let { imageUrl } = data
 
-    if (imageFile && imageFile.size > 0) {
+    if (s3Key) {
+      imageUrl = s3Key
+    } else if (imageFile && imageFile.size > 0) {
       const uploadResult = await uploadSingleImage(imageFile, 'hero')
       imageUrl = uploadResult.key
     }

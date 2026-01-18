@@ -136,41 +136,65 @@ export default function FurnitureSetEdit({ setId }: { setId: number }) {
     setSaving(true)
 
     try {
-      const data = new FormData()
-      data.append('setName', formData.setName)
-      data.append('categoryId', formData.categoryId)
-      data.append('description', formData.description)
-      data.append('price', formData.price) // Edit allows price
-      data.append('isActive', String(formData.isActive))
+      // 1. Upload new images directly to S3
+      const uploadedImagesMetadata = []
+      const currentCategory = categories.find(c => c.categoryId === parseInt(formData.categoryId))?.categoryName || 'uncategorized'
 
-      // Items
-      const items = selectedItems.map((item, idx) => ({
-        furnitureId: item.id,
-        quantity: item.quantity,
-        sortOrder: idx + 1
-      }))
-      data.append('furnitureItems', JSON.stringify(items))
+      for (let i = 0; i < newImages.length; i++) {
+        const file = newImages[i]
+        const sortOrder = existingImages.length + i + 1
+        const imageType = sortOrder === 1 ? 'main' : 'gallery'
 
-      // Images
-      if (removedImageIds.length > 0) data.append('removeImageIds', JSON.stringify(removedImageIds))
-      newImages.forEach(file => data.append('newImages', file))
+        const presignedRes = await fetch('/api/images/presigned', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fileName: file.name,
+            fileType: file.type,
+            itemType: 'furniture-sets',
+            categoryName: currentCategory,
+            itemId: setId
+          })
+        })
 
-      const orderUpdates = existingImages.map((img, idx) => ({
-        imageId: img.image.imageId,
-        sortOrder: idx + 1
-      }))
-      data.append('updateImageOrder', JSON.stringify(orderUpdates))
+        const { uploadUrl, s3Key } = await presignedRes.json()
 
-      const mappings: any = {}
-      newImages.forEach((file, idx) => {
-        const totalIndex = existingImages.length + idx
-        mappings[file.name] = totalIndex === 0 ? 'main' : 'gallery'
-      })
-      data.append('imageTypeMappings', JSON.stringify(mappings))
+        await fetch(uploadUrl, {
+          method: 'PUT',
+          body: file,
+          headers: { 'Content-Type': file.type }
+        })
+
+        uploadedImagesMetadata.push({
+          s3Key,
+          fileName: file.name,
+          fileSize: file.size,
+          imageType,
+          sortOrder,
+          altText: `${formData.setName} - Görsel ${sortOrder}`
+        })
+      }
+
+      // 2. Prepare payload
+      const payload = {
+        ...formData,
+        furnitureItems: selectedItems.map((item, idx) => ({
+          furnitureId: item.id,
+          quantity: item.quantity,
+          sortOrder: idx + 1
+        })),
+        removeImageIds: removedImageIds,
+        updateImageOrder: existingImages.map((img, idx) => ({
+          imageId: img.image.imageId,
+          sortOrder: idx + 1
+        })),
+        uploadedImages: uploadedImagesMetadata
+      }
 
       const res = await fetch(`/api/furniture-sets/${setId}`, {
         method: 'PUT',
-        body: data
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       })
 
       if (res.ok) router.push(`/admin/furniture-sets/${setId}`)
@@ -178,6 +202,7 @@ export default function FurnitureSetEdit({ setId }: { setId: number }) {
 
     } catch (error) {
       console.error(error)
+      alert('Sistemsel bir hata oluştu')
     } finally {
       setSaving(false)
     }
