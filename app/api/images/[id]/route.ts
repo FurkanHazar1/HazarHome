@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { toPublicUrl } from '@/lib/image-utils'
 
 // GET - Resim bilgisini getir
 export async function GET(
@@ -43,6 +44,7 @@ export async function GET(
       id: furnitureImage.id,
       fileName: furnitureImage.image.fileName,
       filePath: furnitureImage.image.filePath,
+      url: toPublicUrl(furnitureImage.image.filePath),
       sortOrder: furnitureImage.sortOrder,
       imageType: furnitureImage.imageType,
       furniture: {

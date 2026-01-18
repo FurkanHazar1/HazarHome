@@ -117,7 +117,7 @@ export default async function CategoryPage({ params, searchParams }) {
       <>
         <Topbar1 />
         <Header2 />
-        <div className="tf-page-title">
+        <div className="tf-page-title bg_grey-13" style={{ backgroundImage: 'none' }}>
           <div className="container-full">
             <div className="heading text-center">{categoryData.title}</div>
             <p className="text-center text-2 text_black-2 mt_5">
@@ -125,7 +125,9 @@ export default async function CategoryPage({ params, searchParams }) {
             </p>
           </div>
         </div>
-        <Subcollections categories={categoryData.categories} />
+        <div className="bg_white">
+          <Subcollections categories={categoryData.categories} />
+        </div>
         <ShopDefault category={categoryData.mainCategory} page={page} pageSize={pageSize} />
         <Footer1 />
       </>
@@ -148,7 +150,7 @@ export default async function CategoryPage({ params, searchParams }) {
       <>
         <Topbar1 />
         <Header2 />
-        <div className="tf-page-title">
+        <div className="tf-page-title bg_grey-13" style={{ backgroundImage: 'none' }}>
           <div className="container-full">
             <div className="heading text-center">{subCategoryData.title}</div>
             <p className="text-center text-2 text_black-2 mt_5">
@@ -157,7 +159,9 @@ export default async function CategoryPage({ params, searchParams }) {
           </div>
         </div>
         {/* Ana kategorinin tüm alt kategorilerini göster */}
-        {parentCategories && <Subcollections categories={parentCategories} />}
+        <div className="bg_white">
+          {parentCategories && <Subcollections categories={parentCategories} />}
+        </div>
         <ShopDefault 
           category={subCategoryData.parentCategory} 
           subCategory={category}

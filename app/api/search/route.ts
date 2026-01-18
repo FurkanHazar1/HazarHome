@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
+import { toPublicUrl } from '@/lib/image-utils';
 
-const prisma = new PrismaClient();
-
-export async function GET(request) {
+export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('q');
@@ -18,84 +17,25 @@ export async function GET(request) {
     const furnitureResults = await prisma.furniture.findMany({
       where: {
         OR: [
-          {
-            furnitureName: {
-              contains: query,
-              mode: 'insensitive'
-            }
-          },
-          {
-            description: {
-              contains: query,
-              mode: 'insensitive'
-            }
-          },
-          {
-            category: {
-              categoryName: {
-                contains: query,
-                mode: 'insensitive'
-              }
-            }
-          },
-          {
-            furnitureType: {
-              contains: query,
-              mode: 'insensitive'
-            }
-          },
-          {
-            colors: {
-              some: {
-                color: {
-                  colorName: {
-                    contains: query,
-                    mode: 'insensitive'
-                  }
-                }
-              }
-            }
-          },
-          {
-            properties: {
-              some: {
-                property: {
-                  propertyName: {
-                    contains: query,
-                    mode: 'insensitive'
-                  }
-                }
-              }
-            }
-          },
-          {
-            properties: {
-              some: {
-                propertyValue: {
-                  contains: query,
-                  mode: 'insensitive'
-                }
-              }
-            }
-          }
+          { furnitureName: { contains: query, mode: 'insensitive' } },
+          { description: { contains: query, mode: 'insensitive' } },
+          { category: { categoryName: { contains: query, mode: 'insensitive' } } },
+          { furnitureType: { contains: query, mode: 'insensitive' } },
+          { colors: { some: { color: { colorName: { contains: query, mode: 'insensitive' } } } } },
+          { properties: { some: { property: { propertyName: { contains: query, mode: 'insensitive' } } } } },
+          { properties: { some: { propertyValue: { contains: query, mode: 'insensitive' } } } }
         ]
       },
       include: {
         category: true,
         images: {
-          include: {
-            image: true
-          }
+          include: { image: true }
         },
         colors: {
-          include: {
-            color: true
-          }
+          include: { color: true }
         },
         properties: {
-          include: {
-            property: true
-          }
+          include: { property: true }
         }
       },
       take: 20
@@ -105,67 +45,23 @@ export async function GET(request) {
     const furnitureSetResults = await prisma.furnitureSet.findMany({
       where: {
         OR: [
-          {
-            setName: {
-              contains: query,
-              mode: 'insensitive'
-            }
-          },
-          {
-            description: {
-              contains: query,
-              mode: 'insensitive'
-            }
-          },
-          {
-            category: {
-              categoryName: {
-                contains: query,
-                mode: 'insensitive'
-              }
-            }
-          },
-          {
-            furnitureSetItems: {
-              some: {
-                furniture: {
-                  colors: {
-                    some: {
-                      color: {
-                        colorName: {
-                          contains: query,
-                          mode: 'insensitive'
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
+          { setName: { contains: query, mode: 'insensitive' } },
+          { description: { contains: query, mode: 'insensitive' } },
+          { category: { categoryName: { contains: query, mode: 'insensitive' } } },
+          { furnitureSetItems: { some: { furniture: { colors: { some: { color: { colorName: { contains: query, mode: 'insensitive' } } } } } } } }
         ]
       },
       include: {
         category: true,
         furnitureSetImages: {
-          include: {
-            image: true
-          }
+          include: { image: true }
         },
         furnitureSetItems: {
           include: {
             furniture: {
               include: {
-                colors: {
-                  include: {
-                    color: true
-                  }
-                },
-                properties: {
-                  include: {
-                    property: true
-                  }
-                }
+                colors: { include: { color: true } },
+                properties: { include: { property: true } }
               }
             }
           }
@@ -175,38 +71,34 @@ export async function GET(request) {
     });
 
     // Relevance scoring function
-    function calculateRelevanceScore(item, searchTerm, type) {
+    function calculateRelevanceScore(item: any, searchTerm: string, type: 'furniture' | 'furnitureSet') {
       let score = 0;
       const itemName = type === 'furniture' ? item.furnitureName : item.setName;
       const lowerName = (itemName || '').toLowerCase();
       const lowerDescription = (item.description || '').toLowerCase();
       const lowerSearchTerm = searchTerm.toLowerCase();
       
-      // İsim eşleşmeleri (en yüksek puan)
       if (lowerName === lowerSearchTerm) score += 100;
       else if (lowerName.startsWith(lowerSearchTerm)) score += 80;
       else if (lowerName.includes(lowerSearchTerm)) score += 60;
       
-      // Kategori eşleşmeleri
       if (item.category) {
         const categoryName = (item.category.categoryName || '').toLowerCase();
         if (categoryName.includes(lowerSearchTerm)) score += 40;
       }
       
-      // Renk eşleşmeleri
       if (type === 'furniture' && item.colors) {
-        item.colors.forEach(colorRelation => {
+        item.colors.forEach((colorRelation: any) => {
           if (colorRelation.color?.colorName.toLowerCase().includes(lowerSearchTerm)) {
             score += 25;
           }
         });
       }
       
-      // Mobilya seti renk eşleşmeleri
       if (type === 'furnitureSet' && item.furnitureSetItems) {
-        item.furnitureSetItems.forEach(setItem => {
+        item.furnitureSetItems.forEach((setItem: any) => {
           if (setItem.furniture.colors) {
-            setItem.furniture.colors.forEach(colorRelation => {
+            setItem.furniture.colors.forEach((colorRelation: any) => {
               if (colorRelation.color?.colorName.toLowerCase().includes(lowerSearchTerm)) {
                 score += 25;
               }
@@ -215,9 +107,8 @@ export async function GET(request) {
         });
       }
       
-      // Özellik eşleşmeleri (furniture için)
       if (type === 'furniture' && item.properties) {
-        item.properties.forEach(propRelation => {
+        item.properties.forEach((propRelation: any) => {
           if (propRelation.property?.propertyName.toLowerCase().includes(lowerSearchTerm)) {
             score += 20;
           }
@@ -227,14 +118,12 @@ export async function GET(request) {
         });
       }
       
-      // Mobilya tipi eşleşmeleri (furniture için)
       if (type === 'furniture' && item.furnitureType) {
         if (item.furnitureType.toLowerCase().includes(lowerSearchTerm)) {
           score += 35;
         }
       }
       
-      // Açıklama eşleşmeleri (en düşük puan)
       if (lowerDescription.includes(lowerSearchTerm)) score += 10;
       
       return score;
@@ -247,12 +136,10 @@ export async function GET(request) {
         return {
           id: item.furnitureId,
           title: item.furnitureName,
-          price: parseFloat(item.price),
+          price: parseFloat(String(item.price)),
           type: 'furniture',
           category: item.category?.categoryName || '',
-          imgSrc: item.images?.[0]?.image?.filePath 
-            ? `/${item.images[0].image.filePath}`
-            : '/images/products/placeholder.jpg',
+          imgSrc: toPublicUrl(item.images?.[0]?.image?.filePath),
           href: `/product-detail-furniture/${item.furnitureId}`,
           relevanceScore: score,
           colors: item.colors?.map(c => c.color?.colorName).filter(Boolean) || [],
@@ -267,26 +154,21 @@ export async function GET(request) {
         return {
           id: item.setId,
           title: item.setName,
-          price: parseFloat(item.price || 0),
+          price: parseFloat(String(item.price || 0)),
           type: 'furniture_set',
           category: item.category?.categoryName || '',
-          imgSrc: item.furnitureSetImages?.[0]?.image?.filePath 
-            ? `/${item.furnitureSetImages[0].image.filePath}`
-            : '/images/products/placeholder.jpg',
+          imgSrc: toPublicUrl(item.furnitureSetImages?.[0]?.image?.filePath),
           href: `/product-detail-furniture-set/${item.setId}`,
           relevanceScore: score,
           furnitureCount: item.furnitureSetItems?.length || 0,
-          furnitures: item.furnitureSetItems?.map(sf => sf.furniture.furnitureName).filter(Boolean) || []
+          furnitures: item.furnitureSetItems?.map((sf: any) => sf.furniture.furnitureName).filter(Boolean) || []
         };
       })
     ];
 
-    // Relevans puanına göre sırala ve en iyi 15 sonucu döndür
     const sortedResults = formattedResults
       .sort((a, b) => b.relevanceScore - a.relevanceScore)
       .slice(0, 15);
-
-    console.log(`Search completed: "${query}" - ${sortedResults.length} results`);
 
     return NextResponse.json({
       results: sortedResults,
@@ -304,7 +186,5 @@ export async function GET(request) {
       },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }

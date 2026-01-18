@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { toPublicUrl, uploadSingleImage, deleteImage } from '@/lib/image-utils'
 
 export async function GET(
   request: Request,
@@ -17,8 +18,22 @@ export async function GET(
         image: true,
         pins: {
           include: {
-            furniture: true,
-            furnitureSet: true
+            furniture: {
+              include: {
+                images: {
+                  where: { imageType: 'main' },
+                  include: { image: true }
+                }
+              }
+            },
+            furnitureSet: {
+              include: {
+                furnitureSetImages: {
+                  where: { imageType: 'main' },
+                  include: { image: true }
+                }
+              }
+            }
           }
         }
       }
@@ -28,7 +43,39 @@ export async function GET(
       return NextResponse.json({ error: 'Feature not found' }, { status: 404 })
     }
 
-    return NextResponse.json(feature)
+    // Process URLs
+    const processedFeature = {
+      ...feature,
+      image: feature.image ? {
+        ...feature.image,
+        url: toPublicUrl(feature.image.filePath)
+      } : null,
+      pins: feature.pins.map(pin => ({
+        ...pin,
+        furniture: pin.furniture ? {
+          ...pin.furniture,
+          images: pin.furniture.images.map(fi => ({
+            ...fi,
+            image: {
+              ...fi.image,
+              url: toPublicUrl(fi.image.filePath)
+            }
+          }))
+        } : null,
+        furnitureSet: pin.furnitureSet ? {
+          ...pin.furnitureSet,
+          furnitureSetImages: pin.furnitureSet.furnitureSetImages.map(fsi => ({
+            ...fsi,
+            image: {
+              ...fsi.image,
+              url: toPublicUrl(fsi.image.filePath)
+            }
+          }))
+        } : null
+      }))
+    }
+
+    return NextResponse.json(processedFeature)
   } catch (error) {
     console.error('Error fetching feature:', error)
     return NextResponse.json(
@@ -45,17 +92,68 @@ export async function PUT(
   try {
     const session = await getServerSession(authOptions)
 
-    // Debug Log
-    console.log('[PUT Feature] Session:', session ? `User: ${session.user?.email}, Role: ${session.user?.role}` : 'No Session')
-
     if (!session || (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = await params
-    const featureId = parseInt(id)
-    const body = await request.json()
-    const { title, description, imageId, isActive, sortOrder, pins } = body
+    const { id: idParam } = await params
+    const featureId = parseInt(idParam)
+    
+    const contentType = request.headers.get('content-type') || ''
+    let data: any = {}
+    let imageFile: File | null = null
+
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await request.formData()
+      data = {
+        title: formData.get('title') as string,
+        description: formData.get('description') as string,
+        isActive: formData.get('isActive') === 'true',
+        sortOrder: formData.get('sortOrder') as string,
+        pins: formData.get('pins') as string,
+        imageId: formData.get('imageId') as string,
+      }
+      imageFile = formData.get('image') as File
+    } else {
+      data = await request.json()
+    }
+
+    let { title, description, imageId, isActive, sortOrder, pins } = data
+
+    // Parse pins if string
+    if (typeof pins === 'string') {
+      try {
+        pins = JSON.parse(pins)
+      } catch (e) {
+        pins = []
+      }
+    }
+
+    // Handle image upload if provided
+    if (imageFile && imageFile.size > 0) {
+      // Get existing feature to find old image
+      const existingFeature = await prisma.feature.findUnique({
+        where: { featureId },
+        include: { image: true }
+      })
+
+      if (existingFeature?.imageId) {
+        await deleteImage(existingFeature.imageId)
+      }
+
+      const uploadResult = await uploadSingleImage(imageFile, 'features')
+      
+      const newImage = await prisma.image.create({
+        data: {
+          fileName: uploadResult.fileName,
+          filePath: uploadResult.key,
+          fileType: 'webp',
+          fileSize: imageFile.size,
+          altText: title || 'Feature image'
+        }
+      })
+      imageId = newImage.imageId
+    }
 
     // Transaction to update feature and replace pins
     const updatedFeature = await prisma.$transaction(async (tx) => {
@@ -65,9 +163,9 @@ export async function PUT(
         data: {
           title,
           description,
-          imageId,
+          imageId: imageId ? parseInt(String(imageId)) : undefined,
           isActive,
-          sortOrder
+          sortOrder: sortOrder ? parseInt(String(sortOrder)) : undefined
         }
       })
 
@@ -85,8 +183,8 @@ export async function PUT(
               featureId,
               furnitureId: pin.furnitureId || null,
               furnitureSetId: pin.furnitureSetId || null,
-              xPosition: pin.xPosition,
-              yPosition: pin.yPosition
+              xPosition: parseFloat(String(pin.xPosition)),
+              yPosition: parseFloat(String(pin.yPosition))
             }))
           })
         }
@@ -112,15 +210,20 @@ export async function DELETE(
   try {
     const session = await getServerSession(authOptions)
 
-    // Debug Log
-    console.log('[DELETE Feature] Session:', session ? `User: ${session.user?.email}, Role: ${session.user?.role}` : 'No Session')
-
     if (!session || (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { id } = await params
     const featureId = parseInt(id)
+
+    const feature = await prisma.feature.findUnique({
+      where: { featureId }
+    })
+
+    if (feature?.imageId) {
+      await deleteImage(feature.imageId)
+    }
 
     await prisma.feature.delete({
       where: { featureId }

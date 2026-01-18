@@ -12,17 +12,22 @@ export async function POST() {
       const deletedFurnitureProperties = await tx.furnitureProperty.deleteMany()
       const deletedFurnitureColors = await tx.furnitureColor.deleteMany()
       const deletedFurnitureImages = await tx.furnitureImage.deleteMany()
+      const deletedFurnitureSetImages = await tx.furnitureSetImage.deleteMany()
+      const deletedFurnitureSetItems = await tx.furnitureSetAndFurniture.deleteMany()
+      const deletedFurnitureSets = await tx.furnitureSet.deleteMany()
       const deletedFurniture = await tx.furniture.deleteMany()
+      
+      // Resimleri temizle (S3 dosyaları fiziksel olarak kalabilir ama DB temizlenir)
+      const deletedImages = await tx.image.deleteMany()
       
       // Kategorileri temizle
       const deletedCategories = await tx.category.deleteMany()
       
-      console.log('🧹 Mevcut veriler temizlendi:', {
-        kategoriler: deletedCategories.count,
-        mobilyalar: deletedFurniture.count,
-        mobilyaOzellikleri: deletedFurnitureProperties.count,
-        mobilyaRenkleri: deletedFurnitureColors.count,
-        mobilyaGorselleri: deletedFurnitureImages.count
+      console.log('Sweep: Existing data cleared.', {
+        categories: deletedCategories.count,
+        furniture: deletedFurniture.count,
+        furnitureSets: deletedFurnitureSets.count,
+        images: deletedImages.count
       })
 
       return {

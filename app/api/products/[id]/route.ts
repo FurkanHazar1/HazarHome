@@ -2,6 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { toPublicUrl } from '@/lib/image-utils'
 
 // GET - Tekil ürün detayı (ID ve type ile)
 export async function GET(
@@ -235,7 +236,7 @@ export async function GET(
                         }
                       }
                     },
-                    take: 5 // Sınırlı sayıda property
+                    take: 5
                   }
                 }
               }
@@ -277,7 +278,6 @@ export async function GET(
   }
 }
 
-// Furniture'ı Product formatına çevir
 function transformFurnitureToProduct(furniture: any, groupImagesByType: boolean = false) {
   const categorySlug = furniture.category?.categoryName ? 
     furniture.category.categoryName.toLowerCase()
@@ -285,7 +285,6 @@ function transformFurnitureToProduct(furniture: any, groupImagesByType: boolean 
       .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
       .replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') : 'uncategorized'
 
-  // Build breadcrumb
   const breadcrumb = []
   if (furniture.category) {
     if (furniture.category.parent) {
@@ -302,26 +301,30 @@ function transformFurnitureToProduct(furniture: any, groupImagesByType: boolean 
     })
   }
 
-  // Process images
   let imageGallery: any = {
     totalImages: furniture._count.images
   }
 
   if (groupImagesByType) {
-    imageGallery.main = furniture.images?.filter((img: any) => img.imageType === 'main') || []
-    imageGallery.gallery = furniture.images?.filter((img: any) => img.imageType === 'gallery') || []
-    imageGallery.thumbnails = furniture.images?.filter((img: any) => img.imageType === 'thumbnail') || []
+    imageGallery.main = furniture.images?.filter((img: any) => img.imageType === 'main').map((img: any) => ({
+      ...img, image: { ...img.image, url: toPublicUrl(img.image.filePath) }
+    })) || []
+    imageGallery.gallery = furniture.images?.filter((img: any) => img.imageType === 'gallery').map((img: any) => ({
+      ...img, image: { ...img.image, url: toPublicUrl(img.image.filePath) }
+    })) || []
+    imageGallery.thumbnails = furniture.images?.filter((img: any) => img.imageType === 'thumbnail').map((img: any) => ({
+      ...img, image: { ...img.image, url: toPublicUrl(img.image.filePath) }
+    })) || []
   } else {
     imageGallery.images = furniture.images?.map((img: any) => ({
       ...img,
       image: {
         ...img.image,
-        url: buildImageUrl(img.image.filePath)
+        url: toPublicUrl(img.image.filePath)
       }
     })) || []
   }
 
-  // Group properties by type
   const propertiesByType = furniture.properties?.reduce((acc: any, fp: any) => {
     const propertyType = fp.property.propertyType || 'Other'
     if (!acc[propertyType]) acc[propertyType] = []
@@ -373,30 +376,24 @@ function transformFurnitureToProduct(furniture: any, groupImagesByType: boolean 
         ? `furniture/${categorySlug}/${furniture.furnitureId}_${furniture.furnitureName.toLowerCase().replace(/\s+/g, '-')}`
         : null
     },
-    // Frontend uyumluluğu için ek alanlar
     id: furniture.furnitureId,
     title: furniture.furnitureName,
     type: 'furniture',
     brand: 'HazarHome',
     categorySlug,
-    imgSrc: furniture.images?.find((img: any) => img.imageType === 'main')?.image?.filePath ? 
-      buildImageUrl(furniture.images.find((img: any) => img.imageType === 'main').image.filePath) : 
-      '/images/products/placeholder.jpg',
+    imgSrc: toPublicUrl(furniture.images?.find((img: any) => img.imageType === 'main')?.image?.filePath),
     colors: furniture.colors?.map((colorRel: any) => ({
       id: `color-${colorRel.color.colorId}`,
       name: colorRel.color.colorName,
       value: colorRel.color.colorName,
       code: colorRel.color.colorCode || '#000000',
       colorClass: `bg-[${colorRel.color.colorCode || '#000000'}]`,
-      imgSrc: furniture.images?.find((img: any) => img.imageType === 'main')?.image?.filePath ? 
-        buildImageUrl(furniture.images.find((img: any) => img.imageType === 'main').image.filePath) : 
-        '/images/products/placeholder.jpg',
+      imgSrc: toPublicUrl(furniture.images?.find((img: any) => img.imageType === 'main')?.image?.filePath),
       isAvailable: colorRel.isAvailable
     })) || []
   }
 }
 
-// FurnitureSet'i Product formatına çevir
 function transformFurnitureSetToProduct(set: any, groupImagesByType: boolean = false) {
   const categorySlug = set.category?.categoryName ? 
     set.category.categoryName.toLowerCase()
@@ -404,7 +401,6 @@ function transformFurnitureSetToProduct(set: any, groupImagesByType: boolean = f
       .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
       .replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') : 'uncategorized'
 
-  // Build breadcrumb
   const breadcrumb = []
   if (set.category) {
     if (set.category.parent) {
@@ -421,26 +417,30 @@ function transformFurnitureSetToProduct(set: any, groupImagesByType: boolean = f
     })
   }
 
-  // Process images
   let imageGallery: any = {
     totalImages: set._count.furnitureSetImages
   }
 
   if (groupImagesByType) {
-    imageGallery.main = set.furnitureSetImages?.filter((img: any) => img.imageType === 'main') || []
-    imageGallery.gallery = set.furnitureSetImages?.filter((img: any) => img.imageType === 'gallery') || []
-    imageGallery.thumbnails = set.furnitureSetImages?.filter((img: any) => img.imageType === 'thumbnail') || []
+    imageGallery.main = set.furnitureSetImages?.filter((img: any) => img.imageType === 'main').map((img: any) => ({
+      ...img, image: { ...img.image, url: toPublicUrl(img.image.filePath) }
+    })) || []
+    imageGallery.gallery = set.furnitureSetImages?.filter((img: any) => img.imageType === 'gallery').map((img: any) => ({
+      ...img, image: { ...img.image, url: toPublicUrl(img.image.filePath) }
+    })) || []
+    imageGallery.thumbnails = set.furnitureSetImages?.filter((img: any) => img.imageType === 'thumbnail').map((img: any) => ({
+      ...img, image: { ...img.image, url: toPublicUrl(img.image.filePath) }
+    })) || []
   } else {
     imageGallery.images = set.furnitureSetImages?.map((img: any) => ({
       ...img,
       image: {
         ...img.image,
-        url: buildImageUrl(img.image.filePath)
+        url: toPublicUrl(img.image.filePath)
       }
     })) || []
   }
 
-  // Group properties by type
   const propertiesByType = set.furnitureSetProperties?.reduce((acc: any, sp: any) => {
     const propertyType = sp.property.propertyType || 'Other'
     if (!acc[propertyType]) acc[propertyType] = []
@@ -475,13 +475,10 @@ function transformFurnitureSetToProduct(set: any, groupImagesByType: boolean = f
       quantity: item.quantity,
       sortOrder: item.sortOrder,
       furniture: item.furniture,
-      // Enhanced fields for frontend
       name: item.furniture?.furnitureName || 'Bilinmeyen Ürün',
       price: item.furniture?.price ? Number(item.furniture.price) : 0,
       description: item.furniture?.description || '',
-      image: item.furniture?.images?.[0]?.image?.filePath ? 
-        buildImageUrl(item.furniture.images[0].image.filePath) : 
-        '/images/products/placeholder.jpg',
+      image: toPublicUrl(item.furniture?.images?.[0]?.image?.filePath),
       properties: item.furniture?.properties?.map((prop: any) => ({
         name: prop.property.propertyName,
         value: prop.propertyValue,
@@ -512,27 +509,21 @@ function transformFurnitureSetToProduct(set: any, groupImagesByType: boolean = f
         ? `furniture-sets/${categorySlug}/${set.setId}_${set.setName?.toLowerCase().replace(/\s+/g, '-')}`
         : null
     },
-    // Frontend uyumluluğu için ek alanlar
     id: set.setId,
     title: set.setName,
     type: 'furniture_set',
     brand: 'HazarHome',
     categorySlug,
-    imgSrc: set.furnitureSetImages?.find((img: any) => img.imageType === 'main')?.image?.filePath ? 
-      buildImageUrl(set.furnitureSetImages.find((img: any) => img.imageType === 'main').image.filePath) : 
-      '/images/products/placeholder.jpg',
+    imgSrc: toPublicUrl(set.furnitureSetImages?.find((img: any) => img.imageType === 'main')?.image?.filePath),
     colors: set.furnitureSetColors?.map((colorRel: any) => ({
       id: `set-color-${colorRel.color.colorId}`,
       name: colorRel.color.colorName,
       value: colorRel.color.colorName,
       code: colorRel.color.colorCode || '#000000',
       colorClass: `bg-[${colorRel.color.colorCode || '#000000'}]`,
-      imgSrc: set.furnitureSetImages?.find((img: any) => img.imageType === 'main')?.image?.filePath ? 
-        buildImageUrl(set.furnitureSetImages.find((img: any) => img.imageType === 'main').image.filePath) : 
-        '/images/products/placeholder.jpg',
+      imgSrc: toPublicUrl(set.furnitureSetImages?.find((img: any) => img.imageType === 'main')?.image?.filePath),
       isAvailable: colorRel.isAvailable
     })) || [],
-    // setItems alias for frontend compatibility
     setItems: set.furnitureSetItems?.map((item: any) => ({
       id: item.id,
       furnitureId: item.furnitureId,
@@ -541,9 +532,7 @@ function transformFurnitureSetToProduct(set: any, groupImagesByType: boolean = f
       name: item.furniture?.furnitureName || 'Bilinmeyen Ürün',
       price: item.furniture?.price ? Number(item.furniture.price) : 0,
       description: item.furniture?.description || '',
-      image: item.furniture?.images?.[0]?.image?.filePath ? 
-        buildImageUrl(item.furniture.images[0].image.filePath) : 
-        '/images/products/placeholder.jpg',
+      image: toPublicUrl(item.furniture?.images?.[0]?.image?.filePath),
       properties: item.furniture?.properties?.map((prop: any) => ({
         name: prop.property.propertyName,
         value: prop.propertyValue,
@@ -556,24 +545,5 @@ function transformFurnitureSetToProduct(set: any, groupImagesByType: boolean = f
       value: prop.propertyValue,
       type: prop.property.propertyType
     })) || []
-  }
-}
-
-// Image URL builder
-function buildImageUrl(filePath: string): string {
-  if (!filePath) return '/images/products/placeholder.jpg'
-  
-  if (filePath.startsWith('http') || filePath.startsWith('/api/')) {
-    return filePath
-  }
-  
-  const normalizedPath = filePath.replace(/\\/g, '/')
-  
-  if (normalizedPath.startsWith('/uploads/')) {
-    return normalizedPath
-  } else if (normalizedPath.startsWith('uploads/')) {
-    return `/${normalizedPath}`
-  } else {
-    return `/uploads/${normalizedPath}`
   }
 }

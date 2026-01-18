@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { UserRole } from '@prisma/client';
+import { toPublicUrl } from '@/lib/image-utils';
 
 interface UpdateData {
   isPopular?: boolean;
@@ -68,20 +69,7 @@ export async function GET(req: NextRequest) {
     const allPopular = [
       ...popularFurniture.map(f => {
         const image = f.images[0]?.image;
-        let filePath = image?.filePath || '';
-        
-        // Clean up path and ensure it starts with /uploads/ if it's a relative path
-        let imgSrc = '/images/products/placeholder.jpg';
-        if (filePath) {
-          filePath = filePath.replace(/\\/g, '/');
-          if (filePath.startsWith('http') || filePath.startsWith('/')) {
-            imgSrc = filePath;
-          } else {
-            // Remove leading 'public/' or 'uploads/' if present to avoid duplication
-            const cleanPath = filePath.replace(/^(public\/|uploads\/)/, '');
-            imgSrc = `/uploads/${cleanPath}`;
-          }
-        }
+        const imgSrc = toPublicUrl(image?.filePath);
 
         return {
           id: f.furnitureId,
@@ -98,20 +86,7 @@ export async function GET(req: NextRequest) {
       }),
       ...popularSets.map(s => {
         const image = s.furnitureSetImages[0]?.image;
-        let filePath = image?.filePath || '';
-        
-        // Clean up path and ensure it starts with /uploads/ if it's a relative path
-        let imgSrc = '/images/products/placeholder.jpg';
-        if (filePath) {
-          filePath = filePath.replace(/\\/g, '/');
-          if (filePath.startsWith('http') || filePath.startsWith('/')) {
-            imgSrc = filePath;
-          } else {
-            // Remove leading 'public/' or 'uploads/' if present to avoid duplication
-            const cleanPath = filePath.replace(/^(public\/|uploads\/)/, '');
-            imgSrc = `/uploads/${cleanPath}`;
-          }
-        }
+        const imgSrc = toPublicUrl(image?.filePath);
 
         return {
           id: s.setId,

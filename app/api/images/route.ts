@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { uploadSingleImage, toPublicUrl } from '@/lib/image-utils'
 
 // GET - Resim listesini getir
 export async function GET(request: NextRequest) {
@@ -52,6 +53,7 @@ export async function GET(request: NextRequest) {
         id: item.id,
         fileName: item.image.fileName,
         filePath: item.image.filePath,
+        url: toPublicUrl(item.image.filePath),
         sortOrder: item.sortOrder,
         imageType: item.imageType,
         furniture: {
@@ -76,77 +78,108 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Yeni resim upload
+// POST - Yeni resim upload (S3 Support)
 export async function POST(request: NextRequest) {
   try {
     // Auth kontrol
     const session = await getServerSession(authOptions)
     if (!session?.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json()
-    const { furnitureId, fileName, filePath, sortOrder, imageType } = body
+    const contentType = request.headers.get('content-type') || ''
+    
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await request.formData()
+      const file = formData.get('file') as File
+      const type = formData.get('type') as string || 'others'
+      const furnitureId = formData.get('furnitureId') as string
 
-    if (!furnitureId || !fileName || !filePath) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      )
-    }
-
-    // Önce Image kaydı oluştur
-    const image = await prisma.image.create({
-      data: {
-        fileName,
-        filePath,
-        fileType: fileName.split('.').pop()?.toLowerCase() || 'jpg',
-        sortOrder: sortOrder || 1
+      if (!file) {
+        return NextResponse.json({ error: 'File is required' }, { status: 400 })
       }
-    })
 
-    // Sonra FurnitureImage kaydı oluştur
-    const furnitureImage = await prisma.furnitureImage.create({
-      data: {
-        furnitureId: parseInt(furnitureId),
-        imageId: image.imageId,
-        sortOrder: sortOrder || 1,
-        imageType: imageType || 'main_image'
-      },
-      include: {
-        image: true,
-        furniture: {
-          select: {
-            furnitureId: true,
-            furnitureName: true
+      const uploadResult = await uploadSingleImage(file, type)
+      
+      // Create Image record
+      const image = await prisma.image.create({
+        data: {
+          fileName: uploadResult.fileName,
+          filePath: uploadResult.key,
+          fileType: 'webp',
+          fileSize: file.size,
+          altText: file.name
+        }
+      })
+
+      // If furnitureId is provided, also create FurnitureImage relation
+      if (furnitureId && !isNaN(parseInt(furnitureId))) {
+        await prisma.furnitureImage.create({
+          data: {
+            furnitureId: parseInt(furnitureId),
+            imageId: image.imageId,
+            imageType: 'gallery',
+            sortOrder: 1
           }
-        }
+        })
       }
-    })
 
-    return NextResponse.json({
-      success: true,
-      message: 'Image uploaded successfully',
-      image: {
-        id: furnitureImage.id,
-        fileName: furnitureImage.image.fileName,
-        filePath: furnitureImage.image.filePath,
-        sortOrder: furnitureImage.sortOrder,
-        imageType: furnitureImage.imageType,
-        furniture: {
-          id: furnitureImage.furniture.furnitureId,
-          name: furnitureImage.furniture.furnitureName
+      return NextResponse.json({
+        success: true,
+        message: 'Image uploaded successfully',
+        image: {
+          imageId: image.imageId,
+          fileName: image.fileName,
+          filePath: image.filePath,
+          url: uploadResult.publicUrl
         }
+      }, { status: 201 })
+
+    } else {
+      // Legacy JSON body support
+      const body = await request.json()
+      const { furnitureId, fileName, filePath, sortOrder, imageType } = body
+
+      if (!fileName || !filePath) {
+        return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
       }
-    }, { status: 201 })
+
+      const image = await prisma.image.create({
+        data: {
+          fileName,
+          filePath,
+          fileType: fileName.split('.').pop()?.toLowerCase() || 'jpg',
+          sortOrder: sortOrder || 1
+        }
+      })
+
+      if (furnitureId) {
+        await prisma.furnitureImage.create({
+          data: {
+            furnitureId: parseInt(furnitureId),
+            imageId: image.imageId,
+            sortOrder: sortOrder || 1,
+            imageType: imageType || 'main_image'
+          }
+        })
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'Image record created',
+        image: {
+          imageId: image.imageId,
+          fileName: image.fileName,
+          filePath: image.filePath,
+          url: toPublicUrl(image.filePath)
+        }
+      }, { status: 201 })
+    }
 
   } catch (error) {
     console.error('Upload image error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     )
   }
@@ -155,38 +188,28 @@ export async function POST(request: NextRequest) {
 // DELETE - Toplu resim silme
 export async function DELETE(request: NextRequest) {
   try {
-    // Auth kontrol
     const session = await getServerSession(authOptions)
     if (!session?.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
     const { imageIds } = body
 
     if (!imageIds || !Array.isArray(imageIds)) {
-      return NextResponse.json(
-        { error: 'Invalid image IDs' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Invalid image IDs' }, { status: 400 })
     }
 
-    // Resimleri sil
-    const deleteResult = await prisma.furnitureImage.deleteMany({
-      where: {
-        id: {
-          in: imageIds.map((id: string) => parseInt(id))
-        }
-      }
-    })
+    let deletedCount = 0
+    for (const id of imageIds) {
+      const success = await deleteImage(parseInt(id))
+      if (success) deletedCount++
+    }
 
     return NextResponse.json({
       success: true,
-      message: `${deleteResult.count} images deleted successfully`,
-      deletedCount: deleteResult.count
+      message: `${deletedCount} images deleted successfully`,
+      deletedCount
     })
 
   } catch (error) {
@@ -197,3 +220,5 @@ export async function DELETE(request: NextRequest) {
     )
   }
 }
+
+import { deleteImage } from '@/lib/image-utils'

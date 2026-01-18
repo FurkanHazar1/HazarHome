@@ -11,14 +11,16 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**',
+        hostname: process.env.AWS_CLOUDFRONT_URL ? new URL(process.env.AWS_CLOUDFRONT_URL).hostname : '**.cloudfront.net',
       },
       {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '3000',
-        pathname: '/api/images/serve/**',
+        protocol: 'https',
+        hostname: `${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com`,
       },
+      {
+        protocol: 'https',
+        hostname: '**.amazonaws.com',
+      }
     ],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
@@ -43,15 +45,6 @@ const nextConfig: NextConfig = {
       path: require.resolve('path-browserify'),
     };
     return config;
-  },
-  
-  async rewrites() {
-    return [
-      {
-        source: '/uploads/images/:path*',
-        destination: '/api/images/serve/:path*',
-      },
-    ];
   },
   
   // Production optimizations

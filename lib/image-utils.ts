@@ -1,17 +1,11 @@
-import { promises as fs } from 'fs'
-import path from 'path'
 import { prisma } from '@/lib/prisma'
+import { uploadToS3, deleteFromS3, getImageUrl } from './s3'
+import sharp from 'sharp'
+import { randomUUID } from 'crypto'
 
 // Type definitions for image management
 export type ItemType = 'furnitures' | 'furniture-sets'
 export type ImageExtension = 'jpg' | 'png' | 'webp'
-
-export interface ImagePathInfo {
-  diskDir: string
-  fileName: string
-  diskPath: string
-  publicUrl: string
-}
 
 export interface ImageFileInfo {
   fileName: string
@@ -34,46 +28,6 @@ export function slugifyCategory(categoryName: string): string {
     .replace(/[^a-z0-9\-_]/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '')
-}
-
-/**
- * Builds image paths for furniture or furniture-sets with new simplified structure
- */
-export function buildImagePaths({
-  itemType,
-  itemId,
-  categorySlug,
-  sortOrder,
-  ext = 'jpg'
-}: {
-  itemType: ItemType
-  itemId: number
-  categorySlug: string
-  sortOrder: number
-  ext?: string
-}): ImagePathInfo {
-  const fileName = `image_${sortOrder}.${ext}`
-  const diskDir = path.join(process.cwd(), 'public', 'uploads', 'images', itemType, categorySlug, itemId.toString())
-  const diskPath = path.join(diskDir, fileName)
-  const publicUrl = `/uploads/images/${itemType}/${categorySlug}/${itemId}/${fileName}`
-
-  return {
-    diskDir,
-    fileName,
-    diskPath,
-    publicUrl
-  }
-}
-
-/**
- * Ensures directory exists, creates if not
- */
-export async function ensureDir(dirPath: string): Promise<void> {
-  try {
-    await fs.access(dirPath)
-  } catch {
-    await fs.mkdir(dirPath, { recursive: true })
-  }
 }
 
 /**
@@ -112,41 +66,7 @@ export function extFromMime(mimeType: string): string {
 }
 
 /**
- * Writes image buffer to disk path
- */
-export async function writeImage(buffer: Buffer, diskPath: string): Promise<void> {
-  const dirPath = path.dirname(diskPath)
-  await ensureDir(dirPath)
-  await fs.writeFile(diskPath, buffer)
-}
-
-/**
- * Reads directory and returns image files info
- */
-export async function readDirImages(diskDir: string): Promise<ImageFileInfo[]> {
-  try {
-    const files = await fs.readdir(diskDir)
-    const imageFiles: ImageFileInfo[] = []
-    
-    for (const file of files) {
-      const match = file.match(/^image_(\d+)\.(\w+)$/)
-      if (match) {
-        imageFiles.push({
-          fileName: file,
-          sortOrder: parseInt(match[1]),
-          ext: match[2]
-        })
-      }
-    }
-    
-    return imageFiles.sort((a, b) => a.sortOrder - b.sortOrder)
-  } catch {
-    return []
-  }
-}
-
-/**
- * Process multiple image files for furniture or furniture-sets with new simplified system
+ * Process multiple image files for furniture or furniture-sets with S3 and Sharp optimization
  */
 export async function processImageFiles(
   files: File[],
@@ -162,9 +82,25 @@ export async function processImageFiles(
 }>> {
   const results = []
 
+  // Get current max sort order to append new images
+  let currentMaxSortOrder = 0
+  if (itemType === 'furnitures') {
+    const lastImg = await prisma.furnitureImage.findFirst({
+      where: { furnitureId: itemId },
+      orderBy: { sortOrder: 'desc' }
+    })
+    currentMaxSortOrder = lastImg?.sortOrder || 0
+  } else {
+    const lastImg = await prisma.furnitureSetImage.findFirst({
+      where: { furnitureSetId: itemId },
+      orderBy: { sortOrder: 'desc' }
+    })
+    currentMaxSortOrder = lastImg?.sortOrder || 0
+  }
+
   for (let i = 0; i < files.length; i++) {
     const file = files[i]
-    const sortOrder = i + 1
+    const sortOrder = currentMaxSortOrder + i + 1
 
     // Validate file
     const validation = validateImage(file)
@@ -172,66 +108,77 @@ export async function processImageFiles(
       throw new Error(`File ${file.name}: ${validation.error}`)
     }
 
-    // Get extension from file type
-    const extension = extFromMime(file.type)
-    
-    // Build paths using new system
-    const paths = buildImagePaths({
-      itemType,
-      itemId,
-      categorySlug,
-      sortOrder,
-      ext: extension
-    })
+    try {
+      // 1. Optimize image with Sharp
+      const fileBuffer = Buffer.from(await file.arrayBuffer())
+      
+      const optimizedBuffer = await sharp(fileBuffer)
+        .resize(1920, 1920, { 
+          fit: 'inside',
+          withoutEnlargement: true 
+        })
+        .webp({ quality: 80 })
+        .toBuffer()
 
-    // Save file using new method
-    const buffer = Buffer.from(await file.arrayBuffer())
-    await writeImage(buffer, paths.diskPath)
+      // 2. Generate S3 Key
+      // Structure: images/furnitures/slug/id/uuid.webp
+      const uuid = randomUUID()
+      const fileName = `${uuid}.webp`
+      const s3Key = `images/${itemType}/${categorySlug}/${itemId}/${fileName}`
 
-    // Create image record in database with relative path for DB storage
-    const relativePath = `uploads/images/${itemType}/${categorySlug}/${itemId}/${paths.fileName}`
-    const imageRecord = await prisma.image.create({
-      data: {
-        fileName: paths.fileName,
-        filePath: relativePath,
-        altText: `Image ${sortOrder}`,
-        description: null, // Could be determined with sharp library
-        width: null,
-        height: null,
-        fileSize: file.size
+      // 3. Upload to S3
+      await uploadToS3(optimizedBuffer, s3Key, 'image/webp')
+
+      // 4. Create Database Record
+      // We store the S3 Key in filePath
+      const imageRecord = await prisma.image.create({
+        data: {
+          fileName: fileName,
+          filePath: s3Key,
+          altText: `Image ${sortOrder}`,
+          description: null,
+          width: null, // We could get this from sharp metadata if needed
+          height: null,
+          fileSize: optimizedBuffer.length,
+          fileType: 'webp'
+        }
+      })
+
+      // 5. Create Relation
+      if (itemType === 'furnitures') {
+        await prisma.furnitureImage.create({
+          data: {
+            furnitureId: itemId,
+            imageId: imageRecord.imageId,
+            imageType: sortOrder === 1 ? 'main_image' : 'gallery',
+            sortOrder: sortOrder,
+            isActive: true
+          }
+        })
+      } else if (itemType === 'furniture-sets') {
+        await prisma.furnitureSetImage.create({
+          data: {
+            furnitureSetId: itemId,
+            imageId: imageRecord.imageId,
+            imageType: sortOrder === 1 ? 'main_image' : 'gallery',
+            sortOrder: sortOrder,
+            isActive: true
+          }
+        })
       }
-    })
 
-    // Create furniture-image relationship
-    if (itemType === 'furnitures') {
-      await prisma.furnitureImage.create({
-        data: {
-          furnitureId: itemId,
-          imageId: imageRecord.imageId,
-          imageType: sortOrder === 1 ? 'main' : 'gallery', // Use sortOrder logic: image_1 = cover
-          sortOrder: sortOrder,
-          isActive: true
-        }
+      results.push({
+        fileName: fileName,
+        sortOrder: sortOrder,
+        publicUrl: getImageUrl(s3Key),
+        savedPath: s3Key,
+        fileSize: optimizedBuffer.length
       })
-    } else if (itemType === 'furniture-sets') {
-      await prisma.furnitureSetImage.create({
-        data: {
-          furnitureSetId: itemId,
-          imageId: imageRecord.imageId,
-          imageType: sortOrder === 1 ? 'main' : 'gallery', // Use sortOrder logic: image_1 = cover
-          sortOrder: sortOrder,
-          isActive: true
-        }
-      })
+
+    } catch (error) {
+      console.error(`Error processing file ${file.name}:`, error)
+      throw error
     }
-
-    results.push({
-      fileName: paths.fileName,
-      sortOrder: sortOrder,
-      publicUrl: paths.publicUrl,
-      savedPath: paths.diskPath,
-      fileSize: file.size
-    })
   }
 
   return results
@@ -239,10 +186,10 @@ export async function processImageFiles(
 
 /**
  * Renumber existing images to maintain sequence based on DB sort order
- * Syncs physical file names with database sortOrder
+ * S3 Implementation: Only updates DB sort orders, does NOT rename files.
  */
 export async function renumberImages(
-  diskDir: string,
+  diskDir: string, // Unused in S3 version, kept for signature compatibility
   itemId: number,
   itemType: ItemType = 'furnitures'
 ): Promise<void> {
@@ -266,96 +213,30 @@ export async function renumberImages(
 
     if (dbImages.length === 0) return
 
-    // 2. Create renaming plan
-    // We need to map: DB Record -> Current Physical File -> Temp Name -> Final Name
-    const renames: Array<{ 
-      imageRecordId: number; // ID in join table (FurnitureImage or FurnitureSetImage)
-      imageId: number;       // ID in Image table
-      currentFilePath: string;
-      tempFilePath: string;
-      finalFileName: string;
-      finalFilePath: string;
-      newSortOrder: number;
-      extension: string;
-    }> = []
-
+    // 2. Update sortOrder in DB
     for (let i = 0; i < dbImages.length; i++) {
       const record = dbImages[i]
-      const image = record.image
       const newSortOrder = i + 1
       
-      // Get extension from current file or default to jpg
-      const ext = image.fileName.split('.').pop() || 'jpg'
-      
-      const currentFullPath = path.join(process.cwd(), 'public', image.filePath)
-      const dirPath = path.dirname(currentFullPath)
-      
-      const tempFileName = `temp_${Date.now()}_${i}.${ext}`
-      const tempFullPath = path.join(dirPath, tempFileName)
-      
-      const finalFileName = `image_${newSortOrder}.${ext}`
-      const finalFullPath = path.join(dirPath, finalFileName)
-      
-      renames.push({
-        imageRecordId: record.id,
-        imageId: image.imageId,
-        currentFilePath: currentFullPath,
-        tempFilePath: tempFullPath,
-        finalFileName: finalFileName,
-        finalFilePath: finalFullPath,
-        newSortOrder: newSortOrder,
-        extension: ext
-      })
-    }
-
-    // 3. Execute Phase 1: Rename all to temporary names
-    for (const item of renames) {
-      try {
-        await fs.access(item.currentFilePath)
-        await fs.rename(item.currentFilePath, item.tempFilePath)
-      } catch (err) {
-        console.warn(`File not found for renaming: ${item.currentFilePath}`)
-        continue 
-      }
-    }
-
-    // 4. Execute Phase 2: Rename temp to final names and update DB
-    for (const item of renames) {
-      try {
-        await fs.access(item.tempFilePath)
-        await fs.rename(item.tempFilePath, item.finalFilePath)
-
-        const relativeDir = path.dirname(dbImages.find((img: any) => img.image.imageId === item.imageId).image.filePath)
-        const finalRelativePath = `${relativeDir}/${item.finalFileName}`.replace(/\\/g, '/').replace(/^\//, '')
-
-        await prisma.image.update({
-          where: { imageId: item.imageId },
-          data: {
-            fileName: item.finalFileName,
-            filePath: finalRelativePath,
-            altText: `Image ${item.newSortOrder}`
-          }
-        })
-
+      // Only update if changed
+      if (record.sortOrder !== newSortOrder) {
         if (itemType === 'furnitures') {
           await prisma.furnitureImage.update({
-            where: { id: item.imageRecordId },
+            where: { id: record.id },
             data: {
-              sortOrder: item.newSortOrder,
-              imageType: item.newSortOrder === 1 ? 'main' : 'gallery'
+              sortOrder: newSortOrder,
+              imageType: newSortOrder === 1 ? 'main_image' : 'gallery'
             }
           })
         } else {
           await prisma.furnitureSetImage.update({
-            where: { id: item.imageRecordId },
+            where: { id: record.id },
             data: {
-              sortOrder: item.newSortOrder,
-              imageType: item.newSortOrder === 1 ? 'main' : 'gallery'
+              sortOrder: newSortOrder,
+              imageType: newSortOrder === 1 ? 'main_image' : 'gallery'
             }
           })
         }
-      } catch (error) {
-        console.error(`Error finalizing rename: ${item.tempFilePath} -> ${item.finalFilePath}`, error)
       }
     }
   } catch (error) {
@@ -365,11 +246,11 @@ export async function renumberImages(
 }
 
 /**
- * Delete image by ID - handles both database and file deletion
+ * Delete image by ID - handles both database and S3 deletion
  */
 export async function deleteImage(
   imageId: number,
-  itemType: ItemType = 'furnitures'
+  itemType: ItemType = 'furnitures' // Unused but kept for signature
 ): Promise<boolean> {
   try {
     const image = await prisma.image.findUnique({
@@ -378,13 +259,13 @@ export async function deleteImage(
 
     if (!image) return false
 
-    const filePath = path.join(process.cwd(), 'public', image.filePath)
-    try {
-      await fs.unlink(filePath)
-    } catch (error) {
-      console.warn(`⚠️ File deletion error: ${error}`)
+    // Delete from S3
+    // Assuming image.filePath holds the S3 Key
+    if (image.filePath) {
+      await deleteFromS3(image.filePath)
     }
 
+    // Delete from DB
     await prisma.image.delete({
       where: { imageId: imageId }
     })
@@ -397,18 +278,52 @@ export async function deleteImage(
 }
 
 /**
- * Check if path uses new structure
+ * Uploads and optimizes a single image to S3
  */
-export function isNewStructurePath(filePath: string): boolean {
-  return filePath.includes('/uploads/images/furnitures/') || 
-         filePath.includes('/uploads/images/furniture-sets/')
+export async function uploadSingleImage(
+  file: File,
+  folder: string = 'others'
+): Promise<{ key: string; publicUrl: string; fileName: string }> {
+  const validation = validateImage(file)
+  if (!validation.isValid) {
+    throw new Error(validation.error)
+  }
+
+  const fileBuffer = Buffer.from(await file.arrayBuffer())
+  
+  const optimizedBuffer = await sharp(fileBuffer)
+    .resize(2560, 1440, { // Larger limit for hero images
+      fit: 'inside',
+      withoutEnlargement: true 
+    })
+    .webp({ quality: 85 })
+    .toBuffer()
+
+  const uuid = randomUUID()
+  const fileName = `${uuid}.webp`
+  const s3Key = `images/${folder}/${fileName}`
+
+  await uploadToS3(optimizedBuffer, s3Key, 'image/webp')
+
+  return {
+    key: s3Key,
+    publicUrl: getImageUrl(s3Key),
+    fileName: fileName
+  }
 }
 
 /**
- * Convert file path to public URL
+ * Check if path uses new structure (Legacy check, can be kept)
+ */
+export function isNewStructurePath(filePath: string): boolean {
+  return filePath.includes('images/') // Simplified check
+}
+
+/**
+ * Convert file path to public URL (S3/CloudFront)
  */
 export function toPublicUrl(filePath: string): string {
-  if (filePath.startsWith('/')) return filePath
-  if (!filePath.startsWith('uploads/')) return `/uploads/${filePath}`
-  return `/${filePath}`
+  if (!filePath) return ''
+  return getImageUrl(filePath)
 }
+

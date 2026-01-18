@@ -2,12 +2,11 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { 
+  processImageFiles,
   renumberImages, 
   deleteImage, 
   toPublicUrl,
-  slugifyCategory,
-  buildImagePaths,
-  writeImage
+  slugifyCategory
 } from '@/lib/image-utils'
 
 // Type definitions
@@ -20,137 +19,6 @@ interface FurnitureItemInput {
   furnitureId: number;
   quantity: number;
   sortOrder?: number;
-}
-
-// Helper function to process image files with category-based system
-async function processImageFiles(
-  files: File[], 
-  setName: string,
-  categoryName: string,
-  imageTypeMappings?: { [fileName: string]: 'main' | 'gallery' }
-): Promise<Array<{
-  imageData: any;
-  fileBuffer: string;
-  sortOrder: number;
-  imageType: 'main' | 'gallery';
-  categoryName: string;
-  itemName: string;
-}>> {
-  const processedImages = []
-  
-  for (let i = 0; i < files.length; i++) {
-    const file = files[i]
-    
-    // File validation
-    if (file.size > 104857600) { // 100MB
-      throw new Error(`File ${file.name} is larger than 100MB`)
-    }
-
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
-    if (!allowedTypes.includes(file.type)) {
-      throw new Error(`Unsupported file type: ${file.type}`)
-    }
-
-    // Determine image type
-    let imageType: 'main' | 'gallery' = 'gallery'
-    
-    if (imageTypeMappings && imageTypeMappings[file.name]) {
-      imageType = imageTypeMappings[file.name]
-    } else if (i === 0) {
-      // First image is main by default
-      imageType = 'main'
-    }
-
-    // Convert file to base64
-    const arrayBuffer = await file.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
-    const base64 = buffer.toString('base64')
-
-    processedImages.push({
-      imageData: {
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type.split('/')[1],
-        originalFileName: file.name,
-        altText: `${setName} - ${imageType} image`,
-        sortOrder: imageType === 'main' ? 0 : i + 1
-      },
-      fileBuffer: base64,
-      sortOrder: imageType === 'main' ? 0 : i + 1,
-      imageType,
-      categoryName,
-      itemName: setName
-    })
-  }
-
-  return processedImages
-}
-
-// Helper function to create images directly using new system
-async function createImagesForFurnitureSet(
-  setId: number,
-  setName: string,
-  categoryName: string,
-  processedImages: any[]
-) {
-  const results = []
-  
-  for (const imageData of processedImages) {
-    try {
-      const categorySlug = slugifyCategory(categoryName)
-      const extension = imageData.imageData.fileType || 'jpg'
-      
-      // Build paths using new system
-      const paths = buildImagePaths({
-        itemType: 'furniture-sets',
-        itemId: setId,
-        categorySlug,
-        sortOrder: imageData.sortOrder,
-        ext: extension
-      })
-      
-      // Save file
-      const buffer = Buffer.from(imageData.fileBuffer, 'base64')
-      await writeImage(buffer, paths.diskPath)
-      
-      // Create image record in database
-      const relativePath = `uploads/images/furniture-sets/${categorySlug}/${setId}/${paths.fileName}`
-      const imageRecord = await prisma.image.create({
-        data: {
-          fileName: paths.fileName,
-          filePath: relativePath,
-          altText: imageData.imageData.altText || `${setName} - Image ${imageData.sortOrder}`,
-          description: imageData.imageData.description || null,
-          width: imageData.imageData.width || null,
-          height: imageData.imageData.height || null,
-          fileSize: imageData.imageData.fileSize
-        }
-      })
-      
-      // Create furniture-set-image relationship
-      await prisma.furnitureSetImage.create({
-        data: {
-          furnitureSetId: setId,
-          imageId: imageRecord.imageId,
-          imageType: imageData.imageType,
-          sortOrder: imageData.sortOrder,
-          isActive: true
-        }
-      })
-      
-      results.push({
-        imageId: imageRecord.imageId,
-        fileName: paths.fileName,
-        sortOrder: imageData.sortOrder,
-        publicUrl: paths.publicUrl
-      })
-      
-    } catch (error) {
-      console.warn(`Error creating image:`, error)
-    }
-  }
-
-  return results
 }
 
 // GET - Enhanced single furniture set details with category-based image grouping
@@ -380,9 +248,7 @@ export async function GET(
           ...setImage,
           image: {
             ...setImage.image,
-            url: setImage.image.filePath 
-              ? `/api/images/serve/${setImage.image.filePath.replace('uploads/', '')}`
-              : null
+            url: toPublicUrl(setImage.image.filePath)
           }
         }
 
@@ -418,27 +284,21 @@ export async function GET(
           ...si,
           image: {
             ...si.image,
-            url: si.image.filePath 
-              ? `/api/images/serve/${si.image.filePath.replace('uploads/', '')}`
-              : null
+            url: toPublicUrl(si.image.filePath)
           }
         })),
         galleryImages: galleryImages.map(si => ({
           ...si,
           image: {
             ...si.image,
-            url: si.image.filePath 
-              ? `/api/images/serve/${si.image.filePath.replace('uploads/', '')}`
-              : null
+            url: toPublicUrl(si.image.filePath)
           }
         })),
         thumbnailImages: thumbnailImages.map(si => ({
           ...si,
           image: {
             ...si.image,
-            url: si.image.filePath 
-              ? `/api/images/serve/${si.image.filePath.replace('uploads/', '')}`
-              : null
+            url: toPublicUrl(si.image.filePath)
           }
         })),
         totalImages: furnitureSet._count.furnitureSetImages
@@ -506,9 +366,7 @@ export async function GET(
               ...fi,
               image: {
                 ...fi.image,
-                url: fi.image.filePath 
-                  ? `/api/images/serve/${fi.image.filePath.replace('uploads/', '')}`
-                  : null
+                url: toPublicUrl(fi.image.filePath)
               }
             }))
           }
@@ -824,26 +682,6 @@ export async function PUT(
       }
     }
 
-    // Process image files if any
-    let processedImages: any[] = []
-    if (imageFiles.length > 0) {
-      const setNameForImages = setName?.trim() || existingSet.setName || `Set ${setId}`
-      
-      try {
-        processedImages = await processImageFiles(
-          imageFiles, 
-          setNameForImages,
-          categoryName,
-          parsedImageTypeMappings
-        )
-      } catch (imageProcessError) {
-        return NextResponse.json({
-          success: false,
-          error: `Image processing error: ${imageProcessError instanceof Error ? imageProcessError.message : 'Unknown error'}`
-        }, { status: 400 })
-      }
-    }
-
     // Main transaction - Update furniture set data
     const updatedSet = await prisma.$transaction(async (tx) => {
       // 1. Update main set data
@@ -987,12 +825,6 @@ export async function PUT(
           
           console.log(`✅ Updated furniture-set image ${imageId} sortOrder to ${sortOrder}`)
         }
-
-        // After updating sort orders, rename physical files to match
-        const categorySlug = slugifyCategory(existingSet.category?.categoryName || 'unknown')
-        await renumberImages(`public/uploads/images/furniture-sets/${categorySlug}/${setId}`, setId, 'furniture-sets')
-        
-        console.log(`✅ Physical files renumbered for furniture-set ${setId}`)
         
       } catch (error) {
         console.error('Furniture-set image sort order update error:', error)
@@ -1005,74 +837,13 @@ export async function PUT(
       try {
         const categorySlug = slugifyCategory(existingSet.category?.categoryName || 'unknown')
         
-        // Get current highest sortOrder to continue numbering
-        const existingImages = await prisma.furnitureSetImage.findMany({
-          where: {
-            furnitureSetId: setId,
-            isActive: true
-          },
-          orderBy: {
-            sortOrder: 'desc'
-          },
-          take: 1
-        })
-        
-        const startingSortOrder = existingImages.length > 0 ? existingImages[0].sortOrder + 1 : 1
-        
-        // Process new images with correct sort order continuation
-        for (let i = 0; i < imageFiles.length; i++) {
-          const file = imageFiles[i]
-          const sortOrder = startingSortOrder + i
-          
-          // Validate file
-          const extension = file.type.includes('png') ? 'png' : 'jpg'
-          
-          // Build paths using new system
-          const paths = buildImagePaths({
-            itemType: 'furniture-sets',
-            itemId: setId,
-            categorySlug,
-            sortOrder,
-            ext: extension
-          })
-          
-          // Save file
-          const buffer = Buffer.from(await file.arrayBuffer())
-          await writeImage(buffer, paths.diskPath)
-          
-          // Create image record in database
-          const relativePath = `uploads/images/furniture-sets/${categorySlug}/${setId}/${paths.fileName}`
-          const imageRecord = await prisma.image.create({
-            data: {
-              fileName: paths.fileName,
-              filePath: relativePath,
-              altText: `Furniture Set Image ${sortOrder}`,
-              description: null,
-              width: null,
-              height: null,
-              fileSize: file.size
-            }
-          })
-          
-          // Create furniture-set-image relationship
-          await prisma.furnitureSetImage.create({
-            data: {
-              furnitureSetId: setId,
-              imageId: imageRecord.imageId,
-              imageType: sortOrder === 1 ? 'main' : 'gallery',
-              sortOrder: sortOrder,
-              isActive: true
-            }
-          })
-          
-          newImageResults.push({
-            fileName: paths.fileName,
-            sortOrder: sortOrder,
-            publicUrl: paths.publicUrl,
-            savedPath: paths.diskPath,
-            fileSize: file.size
-          })
-        }
+        // Use the centralized S3/Image processing function
+        newImageResults = await processImageFiles(
+          imageFiles,
+          setId,
+          categorySlug,
+          'furniture-sets'
+        )
         
         console.log(`✅ Processed ${newImageResults.length} new furniture-set images`)
         
@@ -1169,7 +940,7 @@ export async function PUT(
         ...si,
         image: {
           ...si.image,
-          url: si.image.filePath ? `/api/images/serve/${si.image.filePath.replace('uploads/', '')}` : null
+          url: toPublicUrl(si.image.filePath)
         }
       })) || [],
       stats: {

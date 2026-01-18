@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { toPublicUrl } from '@/lib/image-utils'
 
 export async function GET(request: Request) {
   try {
@@ -38,7 +39,39 @@ export async function GET(request: Request) {
       }
     })
 
-    return NextResponse.json(features)
+    // Process URLs
+    const processedFeatures = features.map(feature => ({
+      ...feature,
+      image: feature.image ? {
+        ...feature.image,
+        url: toPublicUrl(feature.image.filePath)
+      } : null,
+      pins: feature.pins.map(pin => ({
+        ...pin,
+        furniture: pin.furniture ? {
+          ...pin.furniture,
+          images: pin.furniture.images.map(fi => ({
+            ...fi,
+            image: {
+              ...fi.image,
+              url: toPublicUrl(fi.image.filePath)
+            }
+          }))
+        } : null,
+        furnitureSet: pin.furnitureSet ? {
+          ...pin.furnitureSet,
+          furnitureSetImages: pin.furnitureSet.furnitureSetImages.map(fsi => ({
+            ...fsi,
+            image: {
+              ...fsi.image,
+              url: toPublicUrl(fsi.image.filePath)
+            }
+          }))
+        } : null
+      }))
+    }))
+
+    return NextResponse.json(processedFeatures)
   } catch (error) {
     console.error('Error fetching features:', error)
     return NextResponse.json(
@@ -52,19 +85,55 @@ export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions)
     
-    // Debug log
-    if (!session) {
-      console.log('POST /api/features - No session found')
-    } else {
-      console.log('POST /api/features - Session found for user:', session.user?.email, 'Role:', session.user?.role)
-    }
-
     if (!session || (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json()
-    const { title, description, imageId, isActive, sortOrder, pins } = body
+    const contentType = request.headers.get('content-type') || ''
+    let data: any = {}
+    let imageFile: File | null = null
+
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await request.formData()
+      data = {
+        title: formData.get('title') as string,
+        description: formData.get('description') as string,
+        isActive: formData.get('isActive') === 'true',
+        sortOrder: formData.get('sortOrder') as string,
+        pins: formData.get('pins') as string,
+        imageId: formData.get('imageId') as string,
+      }
+      imageFile = formData.get('image') as File
+    } else {
+      data = await request.json()
+    }
+
+    let { title, description, imageId, isActive, sortOrder, pins } = data
+
+    // Parse pins if string
+    if (typeof pins === 'string') {
+      try {
+        pins = JSON.parse(pins)
+      } catch (e) {
+        pins = []
+      }
+    }
+
+    // Handle image upload if provided
+    if (imageFile && imageFile.size > 0) {
+      const uploadResult = await uploadSingleImage(imageFile, 'features')
+      
+      const newImage = await prisma.image.create({
+        data: {
+          fileName: uploadResult.fileName,
+          filePath: uploadResult.key,
+          fileType: 'webp',
+          fileSize: imageFile.size,
+          altText: title || 'Feature image'
+        }
+      })
+      imageId = newImage.imageId
+    }
 
     // Transaction to create feature and pins
     const feature = await prisma.$transaction(async (tx) => {
@@ -73,9 +142,9 @@ export async function POST(request: Request) {
         data: {
           title,
           description,
-          imageId,
+          imageId: imageId ? parseInt(String(imageId)) : null,
           isActive: isActive ?? true,
-          sortOrder: sortOrder ?? 0
+          sortOrder: sortOrder ? parseInt(String(sortOrder)) : 0
         }
       })
 
@@ -86,8 +155,8 @@ export async function POST(request: Request) {
             featureId: newFeature.featureId,
             furnitureId: pin.furnitureId || null,
             furnitureSetId: pin.furnitureSetId || null,
-            xPosition: pin.xPosition,
-            yPosition: pin.yPosition
+            xPosition: parseFloat(String(pin.xPosition)),
+            yPosition: parseFloat(String(pin.yPosition))
           }))
         })
       }
@@ -104,3 +173,5 @@ export async function POST(request: Request) {
     )
   }
 }
+
+import { uploadSingleImage } from '@/lib/image-utils'

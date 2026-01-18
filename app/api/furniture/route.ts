@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { 
   slugifyCategory, 
-  buildImagePaths, 
   validateImage, 
   processImageFiles,
   toPublicUrl,
@@ -535,7 +534,7 @@ export async function POST(request: Request) {
         ...fi,
         image: {
           ...fi.image,
-          url: fi.image.filePath ? `/api/images/serve/${fi.image.filePath.replace('uploads/', '')}` : null
+          url: toPublicUrl(fi.image.filePath)
         }
       })) || []
     }

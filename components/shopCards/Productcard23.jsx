@@ -72,41 +72,6 @@ export default function Productcard23({ product }) {
             <span className="tooltip">Quick add</span>
           </a>
           <a
-            onClick={() => addToWishlist(product.id)}
-            className="box-icon wishlist style-3 hover-tooltip"
-          >
-            <span
-              className={`icon icon-heart ${
-                isAddedtoWishlist(product.id) ? "added" : ""
-              }`}
-            />
-            <span className="tooltip">
-              {isAddedtoWishlist(product.id)
-                ? "Already Wishlisted"
-                : "Add to Wishlist"}
-            </span>
-          </a>
-
-          <a
-            href="#compare"
-            data-bs-toggle="offcanvas"
-            aria-controls="offcanvasLeft"
-            onClick={() => addToCompareItem(product.id)}
-            className="box-icon compare style-3 hover-tooltip"
-          >
-            <span
-              className={`icon icon-compare ${
-                isAddedtoCompareItem(product.id) ? "added" : ""
-              }`}
-            />
-            <span className="tooltip">
-              {" "}
-              {isAddedtoCompareItem(product.id)
-                ? "Already Compared"
-                : "Add to Compare"}
-            </span>
-          </a>
-          <a
             href="#quick_view"
             onClick={() => setQuickViewItem(product)}
             data-bs-toggle="modal"

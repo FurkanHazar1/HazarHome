@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { toPublicUrl } from '@/lib/image-utils'
 import { 
   getCategoryBySlug, 
   categorySlugToId, 
@@ -39,9 +40,6 @@ export async function GET(request: NextRequest) {
       } else {
         // Slug ise veritabanından kategori ara
         try {
-          let searchCategory = categoryParam;
-          
-          // Slug'ı kategori adına çevir
           const slugToName: { [key: string]: string } = {
             'oturma-odasi': 'Oturma Odası',
             'yemek-odasi': 'Yemek Odası',
@@ -62,7 +60,7 @@ export async function GET(request: NextRequest) {
             'sifonyerler': 'Şifonyerler'
           };
           
-          const categoryName = slugToName[searchCategory];
+          const categoryName = slugToName[categoryParam];
           if (categoryName) {
             const category = await prisma.category.findFirst({
               where: { categoryName: categoryName }
@@ -133,9 +131,7 @@ export async function GET(request: NextRequest) {
 
     // Kategori filtresi
     if (subCategoryId) {
-      // Alt kategori seçildiyse onu kullan
       furnitureWhere.categoryId = subCategoryId
-      // Furniture sets sadece ana kategorilerde gösterilir
     } else if (categoryId) {
       furnitureWhere.categoryId = categoryId
       furnitureSetWhere.categoryId = categoryId
@@ -170,19 +166,15 @@ export async function GET(request: NextRequest) {
     const sortField = validSortFields.includes(sortBy) ? sortBy : 'createdAt'
     const orderDirection = sortOrder === 'asc' ? 'asc' : 'desc'
 
-    // Rastgele sıralama için özel sorgu ayarı
     let furnitureOrderBy: any
     let furnitureSetOrderBy: any
 
     if (random) {
-      // PostgreSQL için RANDOM(), MySQL için RAND(), SQLite için RANDOM() kullanır
-      furnitureOrderBy = { furnitureId: 'asc' } // Fallback için
-      furnitureSetOrderBy = { setId: 'asc' } // Fallback için
+      furnitureOrderBy = { furnitureId: 'asc' } 
+      furnitureSetOrderBy = { setId: 'asc' }
     } else {
       furnitureOrderBy = sortField === 'setName' ? { furnitureName: orderDirection } : { [sortField]: orderDirection }
-      furnitureSetOrderBy = sortField === 'furnitureName' ? { setName: orderDirection } : 
-                           sortField === 'setName' ? { setName: orderDirection } : 
-                           { [sortField]: orderDirection }
+      furnitureSetOrderBy = sortField === 'furnitureName' ? { setName: orderDirection } : { [sortField]: orderDirection }
     }
 
     // Paralel sorgular
@@ -226,7 +218,6 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Alt kategori seçildiyse furniture sets'leri getirme
     if ((!type || type === 'furniture_set') && !subCategoryId) {
       furnitureSetPromise = prisma.furnitureSet.findMany({
         where: furnitureSetWhere,
@@ -274,15 +265,12 @@ export async function GET(request: NextRequest) {
     // Birleştir ve sırala
     const allProducts = [...transformedFurnitures, ...transformedSets]
     
-    // Rastgele sıralama için
     if (random) {
-      // Fisher-Yates shuffle algoritması
       for (let i = allProducts.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [allProducts[i], allProducts[j]] = [allProducts[j], allProducts[i]];
       }
     } else {
-      // Normal sıralama (birleşik sonuç için)
       if (sortField === 'createdAt') {
         allProducts.sort((a, b) => {
           const dateA = new Date(a.createdAt || 0).getTime()
@@ -296,7 +284,6 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Sayfalama için toplam sayıları al
     const totalFurnitures = !type || type === 'furniture' ? 
       await prisma.furniture.count({ where: furnitureWhere }) : 0
     const totalSets = (!type || type === 'furniture_set') && !subCategoryId ? 
@@ -305,7 +292,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: allProducts.slice(0, limit), // Limit'i tekrar uygula
+      data: allProducts.slice(0, limit),
       pagination: {
         page,
         limit,
@@ -313,16 +300,6 @@ export async function GET(request: NextRequest) {
         totalFurnitures,
         totalSets,
         pages: Math.ceil(total / limit)
-      },
-      metadata: {
-        categoryId,
-        subCategoryId,
-        type,
-        search,
-        priceRange: {
-          min: minPrice ? parseFloat(minPrice) : null,
-          max: maxPrice ? parseFloat(maxPrice) : null
-        }
       }
     })
 
@@ -335,7 +312,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Furniture'ı Product formatına çevir
 function transformFurnitureToProduct(furniture: any) {
   const mainImage = furniture.images?.find((img: any) => img.imageType === 'main')?.image
   const galleryImages = furniture.images?.filter((img: any) => img.imageType === 'gallery') || []
@@ -348,8 +324,8 @@ function transformFurnitureToProduct(furniture: any) {
 
   return {
     id: furniture.furnitureId,
-    imgSrc: mainImage?.filePath ? buildImageUrl(mainImage.filePath) : '/images/products/placeholder.jpg',
-    imgHoverSrc: galleryImages[0]?.image?.filePath ? buildImageUrl(galleryImages[0].image.filePath) : undefined,
+    imgSrc: toPublicUrl(mainImage?.filePath),
+    imgHoverSrc: galleryImages[0]?.image?.filePath ? toPublicUrl(galleryImages[0].image.filePath) : undefined,
     title: furniture.furnitureName,
     price: Number(furniture.price),
     category: categorySlug,
@@ -366,7 +342,7 @@ function transformFurnitureToProduct(furniture: any) {
       value: colorRel.color.colorName,
       code: colorRel.color.colorCode || '#000000',
       colorClass: `bg-[${colorRel.color.colorCode || '#000000'}]`,
-      imgSrc: mainImage?.filePath ? buildImageUrl(mainImage.filePath) : '/images/products/placeholder.jpg',
+      imgSrc: toPublicUrl(mainImage?.filePath),
       isAvailable: colorRel.isAvailable
     })) || [],
     properties: furniture.properties?.map((prop: any) => ({
@@ -378,7 +354,7 @@ function transformFurnitureToProduct(furniture: any) {
       id: img.image.imageId,
       fileName: img.image.fileName,
       filePath: img.image.filePath,
-      url: buildImageUrl(img.image.filePath),
+      url: toPublicUrl(img.image.filePath),
       imageType: img.imageType,
       sortOrder: img.sortOrder,
       altText: img.image.altText
@@ -386,7 +362,6 @@ function transformFurnitureToProduct(furniture: any) {
   }
 }
 
-// FurnitureSet'i Product formatına çevir
 function transformFurnitureSetToProduct(set: any) {
   const mainImage = set.furnitureSetImages?.find((img: any) => img.imageType === 'main')?.image
   const galleryImages = set.furnitureSetImages?.filter((img: any) => img.imageType === 'gallery') || []
@@ -399,8 +374,8 @@ function transformFurnitureSetToProduct(set: any) {
 
   return {
     id: set.setId,
-    imgSrc: mainImage?.filePath ? buildImageUrl(mainImage.filePath) : '/images/products/placeholder.jpg',
-    imgHoverSrc: galleryImages[0]?.image?.filePath ? buildImageUrl(galleryImages[0].image.filePath) : undefined,
+    imgSrc: toPublicUrl(mainImage?.filePath),
+    imgHoverSrc: galleryImages[0]?.image?.filePath ? toPublicUrl(galleryImages[0].image.filePath) : undefined,
     title: set.setName,
     price: Number(set.price),
     category: categorySlug,
@@ -417,7 +392,7 @@ function transformFurnitureSetToProduct(set: any) {
       value: colorRel.color.colorName,
       code: colorRel.color.colorCode || '#000000',
       colorClass: `bg-[${colorRel.color.colorCode || '#000000'}]`,
-      imgSrc: mainImage?.filePath ? buildImageUrl(mainImage.filePath) : '/images/products/placeholder.jpg',
+      imgSrc: toPublicUrl(mainImage?.filePath),
       isAvailable: colorRel.isAvailable
     })) || [],
     properties: set.furnitureSetProperties?.map((prop: any) => ({
@@ -429,7 +404,7 @@ function transformFurnitureSetToProduct(set: any) {
       id: img.image.imageId,
       fileName: img.image.fileName,
       filePath: img.image.filePath,
-      url: buildImageUrl(img.image.filePath),
+      url: toPublicUrl(img.image.filePath),
       imageType: img.imageType,
       sortOrder: img.sortOrder,
       altText: img.image.altText
@@ -437,31 +412,9 @@ function transformFurnitureSetToProduct(set: any) {
   }
 }
 
-// Image URL builder
-function buildImageUrl(filePath: string): string {
-  if (!filePath) return '/images/products/placeholder.jpg'
-  
-  if (filePath.startsWith('http') || filePath.startsWith('/api/')) {
-    return filePath
-  }
-  
-  const normalizedPath = filePath.replace(/\\/g, '/')
-  
-  if (normalizedPath.startsWith('/uploads/')) {
-    return normalizedPath
-  } else if (normalizedPath.startsWith('uploads/')) {
-    return `/${normalizedPath}`
-  } else {
-    return `/uploads/${normalizedPath}`
-  }
-}
-
-// POST - Gelişmiş filtreleme (opsiyonel)
 export async function POST(request: NextRequest) {
   try {
     const filters = await request.json()
-    
-    // POST filters'ı GET parametrelerine çevir
     const searchParams = new URLSearchParams()
     
     if (filters.category) searchParams.append('category', filters.category)
@@ -475,7 +428,6 @@ export async function POST(request: NextRequest) {
     
     searchParams.append('includeDetails', 'true')
 
-    // GET metodunu yeniden kullan
     const getRequest = new NextRequest(`${request.url}?${searchParams.toString()}`, {
       method: 'GET'
     })

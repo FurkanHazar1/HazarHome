@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 
 export default function HeroManagement() {
-  const [slides, setSlides] = useState([])
+  const [slides, setSlides] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [isEditing, setIsEditing] = useState(false)
-  const [currentSlide, setCurrentSlide] = useState(null)
+  const [currentSlide, setCurrentSlide] = useState<any>(null)
   
   // Form states
   const [formData, setFormData] = useState({
@@ -24,11 +24,11 @@ export default function HeroManagement() {
 
   // Product Selector States
   const [showProductSelector, setShowProductSelector] = useState(false)
-  const [products, setProducts] = useState([])
-  const [categories, setCategories] = useState([])
+  const [products, setProducts] = useState<any[]>([])
+  const [categories, setCategories] = useState<any[]>([])
   const [selectedCategory, setSelectedCategory] = useState('')
   const [productSearch, setProductSearch] = useState('')
-  const [selectedProduct, setSelectedProduct] = useState(null)
+  const [selectedProduct, setSelectedProduct] = useState<any>(null)
   const [loadingProducts, setLoadingProducts] = useState(false)
 
   const fetchCategories = async () => {
@@ -63,7 +63,7 @@ export default function HeroManagement() {
       const combinedProducts = []
 
       if (furnData.success) {
-        combinedProducts.push(...furnData.data.map(item => ({
+        combinedProducts.push(...furnData.data.map((item: any) => ({
           ...item,
           type: 'furniture',
           displayName: item.furnitureName, 
@@ -72,14 +72,14 @@ export default function HeroManagement() {
       }
 
       if (setsData.success) {
-        combinedProducts.push(...setsData.data.map(item => ({
+        combinedProducts.push(...setsData.data.map((item: any) => ({
           ...item,
           type: 'set',
           furnitureId: item.setId, 
           furnitureName: item.setName, 
           displayName: item.setName,
           categoryName: item.category?.categoryName,
-          images: item.furnitureSetImages?.map(img => ({ image: img.image })) || []
+          images: item.furnitureSetImages?.map((img: any) => ({ image: img.image })) || []
         })))
       }
 
@@ -114,7 +114,7 @@ export default function HeroManagement() {
     }
   }
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: any) => {
     const { name, value, type, checked } = e.target
     setFormData(prev => ({
       ...prev,
@@ -122,7 +122,7 @@ export default function HeroManagement() {
     }))
   }
 
-  const handleImageUpload = async (e) => {
+  const handleImageUpload = async (e: any) => {
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -149,7 +149,7 @@ export default function HeroManagement() {
     }
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault()
     try {
       const url = isEditing 
@@ -175,7 +175,7 @@ export default function HeroManagement() {
     }
   }
 
-  const handleEdit = (slide) => {
+  const handleEdit = (slide: any) => {
     setIsEditing(true)
     setCurrentSlide(slide)
     setFormData({
@@ -191,7 +191,7 @@ export default function HeroManagement() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id: any) => {
     if (!confirm('Bu slaytı silmek istediğinize emin misiniz?')) return
 
     try {
@@ -461,7 +461,7 @@ export default function HeroManagement() {
                       <div className="text-center p-4 text-slate-500 text-sm">Yükleniyor...</div>
                     ) : (
                       products
-                        .map((product, idx) => (
+                        .map((product: any, idx) => (
                           <div
                             key={`${product.type}-${product.furnitureId || product.setId}-${idx}`}
                             onClick={() => setSelectedProduct(product)}
@@ -509,7 +509,7 @@ export default function HeroManagement() {
                     {selectedProduct ? (
                       selectedProduct.images && selectedProduct.images.length > 0 ? (
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                          {selectedProduct.images.map((imgItem) => (
+                          {selectedProduct.images.map((imgItem: any) => (
                             <div 
                               key={imgItem.image.imageId}
                               onClick={() => {
