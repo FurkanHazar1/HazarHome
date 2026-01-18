@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { openCartModal } from "@/utlis/openCartModal";
 import CountdownComponent from "../common/Countdown";
-import StickyItem from "./StickyItem";
 import Quantity from "./Quantity";
 import SliderWithGalleryPopup from "./sliders/SliderWithGalleryPopup";
 import { useContextElement } from "@/context/Context";
@@ -382,7 +381,6 @@ export default function FurnitureSetDetailsPopup({ product }) {
           </div>
         </div>
       </div>
-      <StickyItem product={product} style={{ marginTop: '20px' }} />
     </section>
   );
 }
