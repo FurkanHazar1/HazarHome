@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
+import { toPublicUrl } from '@/lib/image-helpers'
 
 export default function FurnitureDetail({ furnitureId }: { furnitureId: number }) {
   const router = useRouter()
@@ -12,39 +13,41 @@ export default function FurnitureDetail({ furnitureId }: { furnitureId: number }
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
 
   useEffect(() => {
-    // Cache busting
-    const timestamp = new Date().getTime()
-    fetch(`/api/furniture/${furnitureId}?includeDetails=true&t=${timestamp}`)
-      .then(res => res.json())
-      .then(data => {
+    const loadData = async () => {
+      try {
+        const timestamp = new Date().getTime()
+        const res = await fetch(`/api/furniture/${furnitureId}?includeDetails=true&t=${timestamp}`)
+        const data = await res.json()
+        
         if (data.success) {
           setFurniture(data.data)
           if (data.data.images?.length > 0) {
-            // Sort by sortOrder
             const sorted = data.data.images.sort((a: any, b: any) => a.sortOrder - b.sortOrder)
-            setSelectedImage(getImageUrl(sorted[0].image.filePath))
+            setSelectedImage(toPublicUrl(sorted[0].image.filePath))
           }
         }
-      })
-      .finally(() => setLoading(false))
+      } catch (err) {
+        console.error(err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadData()
   }, [furnitureId])
-
-  const getImageUrl = (path?: string) => {
-    if (!path) return ''
-    // Ensure clean path for /uploads/
-    let cleanPath = path.replace(/\\/g, '/')
-    if (cleanPath.startsWith('public/')) cleanPath = cleanPath.replace('public/', '')
-    if (!cleanPath.startsWith('/')) cleanPath = '/' + cleanPath
-    if (!cleanPath.startsWith('/uploads/')) cleanPath = '/uploads/' + cleanPath.replace(/^\//, '')
-    
-    // Add version query param for cache busting
-    return `${cleanPath}?v=${furniture?.updatedAt ? new Date(furniture.updatedAt).getTime() : Date.now()}`
-  }
 
   const handleDelete = async () => {
     if (!confirm('Silmek istediğinize emin misiniz?')) return
-    await fetch(`/api/furniture/${furnitureId}`, { method: 'DELETE' })
-    router.push('/admin/furniture')
+    try {
+      const res = await fetch(`/api/furniture/${furnitureId}`, { method: 'DELETE' })
+      if (res.ok) {
+        router.push('/admin/furniture')
+      } else {
+        alert('Silme işlemi başarısız oldu.')
+      }
+    } catch (error) {
+      console.error(error)
+      alert('Bir hata oluştu.')
+    }
   }
 
   if (loading) return <div className="min-h-screen bg-slate-900 flex items-center justify-center text-white">Yükleniyor...</div>
@@ -98,7 +101,7 @@ export default function FurnitureDetail({ furnitureId }: { furnitureId: number }
             
             <div className="grid grid-cols-5 gap-3">
               {sortedImages.map((item: any, idx: number) => {
-                const url = getImageUrl(item.image.filePath)
+                const url = toPublicUrl(item.image.filePath)
                 return (
                   <button 
                     key={idx}
@@ -117,8 +120,6 @@ export default function FurnitureDetail({ furnitureId }: { furnitureId: number }
 
           {/* Right Column: Info */}
           <div className="space-y-6">
-            
-            {/* Stats Card */}
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700">
                 <div className="text-slate-400 text-sm mb-1">Fiyat</div>
@@ -134,7 +135,6 @@ export default function FurnitureDetail({ furnitureId }: { furnitureId: number }
               </div>
             </div>
 
-            {/* Description */}
             <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700">
               <h3 className="text-lg font-semibold text-white mb-3">Açıklama</h3>
               <p className="text-slate-300 leading-relaxed">
@@ -142,7 +142,6 @@ export default function FurnitureDetail({ furnitureId }: { furnitureId: number }
               </p>
             </div>
 
-            {/* Properties */}
             {furniture.properties?.length > 0 && (
               <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700">
                 <h3 className="text-lg font-semibold text-white mb-4">Özellikler</h3>
@@ -156,26 +155,6 @@ export default function FurnitureDetail({ furnitureId }: { furnitureId: number }
                 </div>
               </div>
             )}
-
-            {/* Attributes */}
-            <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700">
-              <h3 className="text-lg font-semibold text-white mb-4">Diğer Bilgiler</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between py-2 border-b border-slate-700/50">
-                  <span className="text-slate-400">ID</span>
-                  <span className="font-mono text-indigo-300">#{furniture.furnitureId}</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-slate-700/50">
-                  <span className="text-slate-400">Oluşturulma</span>
-                  <span>{new Date(furniture.createdAt).toLocaleDateString('tr-TR')}</span>
-                </div>
-                <div className="flex justify-between py-2 border-b border-slate-700/50">
-                  <span className="text-slate-400">Güncellenme</span>
-                  <span>{furniture.updatedAt ? new Date(furniture.updatedAt).toLocaleDateString('tr-TR') : '-'}</span>
-                </div>
-              </div>
-            </div>
-
           </div>
         </div>
       </div>

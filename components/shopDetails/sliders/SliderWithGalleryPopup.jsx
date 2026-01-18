@@ -6,6 +6,8 @@ import { Gallery, Item } from "react-photoswipe-gallery";
 import { Navigation, Thumbs } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 
+import { toPublicUrl } from "@/lib/image-helpers";
+
 export default function SliderWithGalleryPopup({
   currentColor = "Beige",
   handleColor = () => {},
@@ -22,37 +24,10 @@ export default function SliderWithGalleryPopup({
   // Sabit px yerine yüzde ve aspect-ratio ile çerçeve kullanıyoruz
   // (ör: %100 genişlik, 4/3 oran)
 
-  // Image URL resolution helper
-  const getImageUrl = (img) => {
-    if (!img) return firstImage || "/images/products/placeholder.jpg";
-    
-    // If it's a string, return it (after ensuring it starts with /)
-    if (typeof img === 'string') {
-      return img.startsWith('/') ? img : `/${img}`;
-    }
-
-    // Handle API object structure
-    const path = img.image?.filePath || img.filePath || img.src || img.imgSrc;
-    if (!path) return firstImage || "/images/products/placeholder.jpg";
-
-    if (path.startsWith('http') || path.startsWith('/api/')) {
-      return path;
-    }
-
-    const normalizedPath = path.replace(/\\/g, '/');
-    if (normalizedPath.startsWith('/uploads/')) {
-      return normalizedPath;
-    } else if (normalizedPath.startsWith('uploads/')) {
-      return `/${normalizedPath}`;
-    } else {
-      return `/uploads/${normalizedPath}`;
-    }
-  };
-
   // Convert propImages to the expected format with id and dataValue
   const processedPropImages = propImages && propImages.length > 0 
     ? propImages.map((img, index) => {
-        const imageSrc = getImageUrl(img);
+        const imageSrc = toPublicUrl(img.image?.filePath || img.filePath || img.src || img.imgSrc || img);
           
         return {
           id: index + 1,
@@ -71,18 +46,12 @@ export default function SliderWithGalleryPopup({
   // Use processed prop images if available, otherwise use default images
   const images = processedPropImages.length > 0 ? processedPropImages : (firstImage ? [{
     id: 1,
-    src: firstImage,
+    src: toPublicUrl(firstImage),
     alt: "",
     width: MAIN_IMAGE_WIDTH,
     height: MAIN_IMAGE_HEIGHT,
     dataValue: (currentColor && typeof currentColor === 'string' ? currentColor.toLowerCase() : "beige"),
-  }] : defaultImages.map(img => ({
-    ...img,
-    width: MAIN_IMAGE_WIDTH,
-    height: MAIN_IMAGE_HEIGHT,
-    originalWidth: img.width,
-    originalHeight: img.height,
-  })));
+  }] : []);
 
   const [thumbsSwiper, setThumbsSwiper] = useState(null);
   const swiperRef = useRef(null);

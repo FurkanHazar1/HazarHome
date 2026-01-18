@@ -204,11 +204,17 @@ export default function FurnitureAdd() {
         const { uploadUrl, s3Key } = await presignedRes.json()
 
         // Upload directly to S3
-        await fetch(uploadUrl, {
+        const uploadResult = await fetch(uploadUrl, {
           method: 'PUT',
           body: file,
-          headers: { 'Content-Type': file.type }
+          headers: { 
+            'Content-Type': file.type 
+          }
         })
+
+        if (!uploadResult.ok) {
+          throw new Error(`S3 upload failed with status: ${uploadResult.status}`)
+        }
 
         uploadedImagesMetadata.push({
           s3Key,
