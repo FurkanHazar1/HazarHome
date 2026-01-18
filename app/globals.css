@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Performance Optimizations */
+/* Performance Optimizations - Restricted to Shop parts to avoid breaking Admin Panel */
 .swiper-slide, .img-product, .hero-image-fixed, .tf-product-media-main, .tf-product-media-thumbs {
   backface-visibility: hidden;
   transform: translateZ(0);
@@ -11,11 +11,13 @@
   will-change: transform;
 }
 
+/* Limit optimizations to specific shop lists */
 .properties-list, .set-items-list {
   contain: content;
 }
 
-img {
+/* Avoid global img content-visibility as it breaks admin icons/logos */
+.card-product img, .img-slider img {
   content-visibility: auto;
 }
 
