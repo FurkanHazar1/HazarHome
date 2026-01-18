@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { toPublicUrl } from '@/lib/image-helpers'
 
 interface Pin {
   pinId?: number
@@ -35,8 +36,128 @@ export default function FeatureEditor({ initialData, isNew = false }: FeatureEdi
   const [uploading, setUploading] = useState(false)
 
   // Image Selection Modal State
-  // ...
-  
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false)
+  const [imageSearchQuery, setImageSearchQuery] = useState('')
+  const [imageSearchResults, setImageSearchResults] = useState<any[]>([])
+  const [selectedProductImages, setSelectedProductImages] = useState<any[]>([])
+  const [selectedProductForImages, setSelectedProductForImages] = useState<any>(null)
+
+  // Pin Product Selection Modal State
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false)
+  const [productSearchQuery, setProductSearchQuery] = useState('')
+  const [productSearchResults, setProductSearchResults] = useState<any[]>([])
+  const [currentPinIndex, setCurrentPinIndex] = useState<number | null>(null)
+
+  // Image Ref for calculating coordinates
+  const imageContainerRef = useRef<HTMLDivElement>(null)
+
+  // --- SEARCH HELPERS ---
+  const searchProducts = async (query: string, setResults: (data: any[]) => void) => {
+    if (!query) {
+      setResults([])
+      return
+    }
+    try {
+      const [furnRes, setsRes] = await Promise.all([
+        fetch(`/api/furniture?search=${encodeURIComponent(query)}&limit=5`),
+        fetch(`/api/furniture-sets?search=${encodeURIComponent(query)}&limit=5`)
+      ])
+      const furnData = await furnRes.json()
+      const setsData = await setsRes.json()
+
+      const results = [
+        ...(furnData.data || []).map((i: any) => ({ ...i, type: 'furniture', label: 'Mobilya', name: i.furnitureName })),
+        ...(setsData.data || []).map((i: any) => ({ ...i, type: 'set', label: 'Takım', name: i.setName }))
+      ]
+      setResults(results)
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  const handleImageSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const q = e.target.value
+    setImageSearchQuery(q)
+    searchProducts(q, setImageSearchResults)
+  }
+
+  const handleProductSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const q = e.target.value
+    setProductSearchQuery(q)
+    searchProducts(q, setProductSearchResults)
+  }
+
+  const fetchProductImages = async (item: any) => {
+    setSelectedProductForImages(item)
+    // Fetch detailed item to get images
+    const endpoint = item.type === 'furniture' 
+      ? `/api/furniture/${item.furnitureId}` 
+      : `/api/furniture-sets/${item.setId}`
+    
+    try {
+      const res = await fetch(endpoint)
+      const response = await res.json()
+      
+      const images = item.type === 'furniture'
+        ? response.data?.images?.map((r: any) => r.image)
+        : response.data?.furnitureSetImages?.map((r: any) => r.image)
+      
+      setSelectedProductImages(images || [])
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  // --- PIN LOGIC ---
+  const handleImageClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!imageContainerRef.current) return
+
+    const rect = imageContainerRef.current.getBoundingClientRect()
+    const x = ((e.clientX - rect.left) / rect.width) * 100
+    const y = ((e.clientY - rect.top) / rect.height) * 100
+
+    const newPin: Pin = {
+      xPosition: x,
+      yPosition: y,
+    }
+
+    setPins([...pins, newPin])
+    // Automatically open product selector for the new pin
+    setCurrentPinIndex(pins.length) // Index of the new pin
+    setIsProductModalOpen(true)
+    setProductSearchQuery('')
+    setProductSearchResults([])
+  }
+
+  const updatePinProduct = (item: any) => {
+    if (currentPinIndex === null) return
+
+    const updatedPins = [...pins]
+    const pin = updatedPins[currentPinIndex]
+
+    if (item.type === 'furniture') {
+      pin.furnitureId = item.furnitureId
+      pin.furnitureSetId = undefined
+      pin.furniture = item
+      pin.furnitureSet = undefined
+    } else {
+      pin.furnitureSetId = item.setId
+      pin.furnitureId = undefined
+      pin.furnitureSet = item
+      pin.furniture = undefined
+    }
+
+    setPins(updatedPins)
+    setIsProductModalOpen(false)
+    setCurrentPinIndex(null)
+  }
+
+  const removePin = (index: number) => {
+    const updatedPins = [...pins]
+    updatedPins.splice(index, 1)
+    setPins(updatedPins)
+  }
+
   // --- DIRECT UPLOAD ---
   const handleDirectImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -134,10 +255,6 @@ export default function FeatureEditor({ initialData, isNew = false }: FeatureEdi
     if (img.isNewS3) return img.previewUrl
     return toPublicUrl(img.filePath)
   }
-
-  // Fixed import
-  import { toPublicUrl } from '@/lib/image-utils'
-
 
   return (
     <div className="max-w-6xl mx-auto pb-20">

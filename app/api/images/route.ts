@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { uploadSingleImage, toPublicUrl } from '@/lib/image-utils'
+import { uploadSingleImage, toPublicUrl, deleteImage } from '@/lib/image-utils'
 
 // GET - Resim listesini getir
 export async function GET(request: NextRequest) {
@@ -220,5 +220,3 @@ export async function DELETE(request: NextRequest) {
     )
   }
 }
-
-import { deleteImage } from '@/lib/image-utils'

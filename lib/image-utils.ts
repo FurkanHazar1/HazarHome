@@ -3,6 +3,9 @@ import { uploadToS3, deleteFromS3, getImageUrl } from './s3'
 import sharp from 'sharp'
 import { randomUUID } from 'crypto'
 
+// Re-export client-safe helpers
+export { slugifyCategory, toPublicUrl } from './image-helpers'
+
 // Type definitions for image management
 export type ItemType = 'furnitures' | 'furniture-sets'
 export type ImageExtension = 'jpg' | 'png' | 'webp'
@@ -11,23 +14,6 @@ export interface ImageFileInfo {
   fileName: string
   sortOrder: number
   ext: string
-}
-
-/**
- * Converts category name to URL-friendly slug
- */
-export function slugifyCategory(categoryName: string): string {
-  return categoryName
-    .toLowerCase()
-    .replace(/ğ/g, 'g')
-    .replace(/ü/g, 'u')
-    .replace(/ş/g, 's')
-    .replace(/ı/g, 'i')
-    .replace(/ö/g, 'o')
-    .replace(/ç/g, 'c')
-    .replace(/[^a-z0-9\-_]/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
 }
 
 /**
@@ -137,7 +123,7 @@ export async function processImageFiles(
           filePath: s3Key,
           altText: `Image ${sortOrder}`,
           description: null,
-          width: null, // We could get this from sharp metadata if needed
+          width: null, 
           height: null,
           fileSize: optimizedBuffer.length,
           fileType: 'webp'
@@ -260,7 +246,6 @@ export async function deleteImage(
     if (!image) return false
 
     // Delete from S3
-    // Assuming image.filePath holds the S3 Key
     if (image.filePath) {
       await deleteFromS3(image.filePath)
     }
@@ -278,7 +263,7 @@ export async function deleteImage(
 }
 
 /**
- * Uploads and optimizes a single image to S3
+ * Uploads and optimizes a single image to S3 (Server-side)
  */
 export async function uploadSingleImage(
   file: File,
@@ -292,7 +277,7 @@ export async function uploadSingleImage(
   const fileBuffer = Buffer.from(await file.arrayBuffer())
   
   const optimizedBuffer = await sharp(fileBuffer)
-    .resize(2560, 1440, { // Larger limit for hero images
+    .resize(2560, 1440, { 
       fit: 'inside',
       withoutEnlargement: true 
     })
@@ -316,14 +301,5 @@ export async function uploadSingleImage(
  * Check if path uses new structure (Legacy check, can be kept)
  */
 export function isNewStructurePath(filePath: string): boolean {
-  return filePath.includes('images/') // Simplified check
+  return filePath.includes('images/') 
 }
-
-/**
- * Convert file path to public URL (S3/CloudFront)
- */
-export function toPublicUrl(filePath: string): string {
-  if (!filePath) return ''
-  return getImageUrl(filePath)
-}
-

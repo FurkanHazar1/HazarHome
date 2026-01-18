@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { toPublicUrl } from '@/lib/image-helpers';
 
 interface Product {
   id: number | string;
@@ -31,14 +32,14 @@ export default function PopularProductsManagement() {
         // Ensure image paths are processed correctly for the existing list
         const processed = data.data.map((p: any) => ({
           ...p,
-          imgSrc: getImageUrl(p.imgSrc) || '/images/products/placeholder.jpg'
+          imgSrc: toPublicUrl(p.imgSrc) || '/images/products/placeholder.jpg'
         }));
         setPopularProducts(processed);
       }
     } catch (error) {
       console.error('Error fetching popular products:', error);
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   };
 
@@ -49,15 +50,6 @@ export default function PopularProductsManagement() {
 
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('');
-
-  const getImageUrl = (path?: string) => {
-    if (!path) return null;
-    let cleanPath = path.replace(/\\/g, '/');
-    if (cleanPath.startsWith('public/')) cleanPath = cleanPath.replace('public/', '');
-    if (!cleanPath.startsWith('/')) cleanPath = '/' + cleanPath;
-    if (!cleanPath.startsWith('/uploads/')) cleanPath = '/uploads/' + cleanPath.replace(/^\//, '');
-    return cleanPath;
-  };
 
   // Fetch categories on mount
   useEffect(() => {
@@ -99,7 +91,7 @@ export default function PopularProductsManagement() {
           // Sort images by sortOrder and get the first one
           const sortedImages = f.images ? [...f.images].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0)) : [];
           const imagePath = sortedImages[0]?.image?.filePath;
-          const imgSrc = getImageUrl(imagePath) || '/images/products/placeholder.jpg';
+          const imgSrc = toPublicUrl(imagePath) || '/images/products/placeholder.jpg';
 
           return {
             id: f.furnitureId,
@@ -120,7 +112,7 @@ export default function PopularProductsManagement() {
           // Sort set images by sortOrder and get the first one
           const sortedImages = s.furnitureSetImages ? [...s.furnitureSetImages].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0)) : [];
           const imagePath = sortedImages[0]?.image?.filePath;
-          const imgSrc = getImageUrl(imagePath) || '/images/products/placeholder.jpg';
+          const imgSrc = toPublicUrl(imagePath) || '/images/products/placeholder.jpg';
 
           return {
             id: s.setId,

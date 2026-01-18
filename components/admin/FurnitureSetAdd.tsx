@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { compressImage } from '@/utils/imageCompression'
+import { toPublicUrl } from '@/lib/image-helpers'
 
 export default function FurnitureSetAdd() {
   const router = useRouter()
@@ -71,15 +72,6 @@ export default function FurnitureSetAdd() {
   // Images
   const [images, setImages] = useState<File[]>([])
   const [previews, setPreviews] = useState<string[]>([])
-
-  const getImageUrl = (path?: string) => {
-    if (!path) return null
-    let cleanPath = path.replace(/\\/g, '/')
-    if (cleanPath.startsWith('public/')) cleanPath = cleanPath.replace('public/', '')
-    if (!cleanPath.startsWith('/')) cleanPath = '/' + cleanPath
-    if (!cleanPath.startsWith('/uploads/')) cleanPath = '/uploads/' + cleanPath.replace(/^\//, '')
-    return `${cleanPath}?t=${Date.now()}`
-  }
 
   useEffect(() => {
     // Load Categories
@@ -338,7 +330,7 @@ export default function FurnitureSetAdd() {
                       <div className="flex items-center gap-3">
                         <div className="relative w-12 h-12 bg-black rounded-lg overflow-hidden border border-slate-600 flex-shrink-0">
                           {item.image ? (
-                            <Image src={getImageUrl(item.image) || ''} alt={item.name} fill className="object-cover" />
+                            <Image src={toPublicUrl(item.image) || ''} alt={item.name} fill className="object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-slate-500 text-xs">IMG</div>
                           )}
@@ -408,7 +400,7 @@ export default function FurnitureSetAdd() {
                         className="flex items-center gap-3 p-3 bg-slate-900 border border-slate-700 rounded-xl hover:border-pink-500 hover:bg-slate-800 transition text-left group">
                         <div className="relative w-12 h-12 bg-black rounded-lg overflow-hidden border border-slate-600 flex-shrink-0">
                           {itemImage ? (
-                            <Image src={getImageUrl(itemImage) || ''} alt={item.furnitureName} fill className="object-cover" />
+                            <Image src={toPublicUrl(itemImage) || ''} alt={item.furnitureName} fill className="object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-slate-500 text-xs">IMG</div>
                           )}

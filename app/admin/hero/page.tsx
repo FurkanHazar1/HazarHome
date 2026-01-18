@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
+import { toPublicUrl } from '@/lib/image-helpers'
 
 export default function HeroManagement() {
   const [slides, setSlides] = useState<any[]>([])
@@ -361,7 +362,7 @@ export default function HeroManagement() {
                 {formData.imageUrl && (
                     <div className="mt-4 relative w-full aspect-video rounded-xl overflow-hidden border border-slate-700 bg-slate-900">
                       <Image 
-                        src={formData.imageUrl.startsWith('/') ? formData.imageUrl : `/${formData.imageUrl}`}
+                        src={toPublicUrl(formData.imageUrl)}
                         alt="Preview" 
                         fill 
                         className="object-cover"
@@ -600,7 +601,7 @@ export default function HeroManagement() {
                                   <div className="w-24 h-16 rounded-lg bg-slate-700 relative overflow-hidden border border-slate-600 group-hover:border-slate-500 transition">
                                      {item.imageUrl ? (
                                         <Image
-                                           src={`/${item.imageUrl}`}
+                                           src={toPublicUrl(item.imageUrl)}
                                            alt={item.title}
                                            fill
                                            className="object-cover"
