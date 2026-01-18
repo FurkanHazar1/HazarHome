@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { compressImage } from '@/utils/imageCompression'
+import { toPublicUrl } from '@/lib/image-helpers'
 
 interface Property {
   propertyId: number
@@ -233,15 +234,6 @@ export default function FurnitureEdit({ furnitureId }: { furnitureId: number }) 
     }
   }
 
-  const getImageUrl = (path: string) => {
-    if (!path) return ''
-    let cleanPath = path.replace(/\\/g, '/')
-    if (cleanPath.startsWith('public/')) cleanPath = cleanPath.replace('public/', '')
-    if (!cleanPath.startsWith('/')) cleanPath = '/' + cleanPath
-    if (!cleanPath.startsWith('/uploads/')) cleanPath = '/uploads/' + cleanPath.replace(/^\//, '')
-    return `${cleanPath}?t=${Date.now()}`
-  }
-
   if (loading) return <div className="min-h-screen bg-slate-900 flex items-center justify-center text-white">Yükleniyor...</div>
 
   return (
@@ -357,7 +349,7 @@ export default function FurnitureEdit({ furnitureId }: { furnitureId: number }) 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {existingImages.map((item, idx) => (
                 <div key={item.image.imageId} className="relative aspect-square rounded-xl overflow-hidden group border border-slate-600 bg-black">
-                  <Image src={getImageUrl(item.image.filePath)} alt="Img" fill className="object-cover" />
+                  <Image src={toPublicUrl(item.image.filePath)} alt="Img" fill className="object-cover" />
                   <div className="absolute top-2 left-2 w-6 h-6 bg-black/70 rounded-full flex items-center justify-center text-xs font-bold border border-white/20 z-10">{idx + 1}</div>
                   <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
                     <div className="flex gap-2">

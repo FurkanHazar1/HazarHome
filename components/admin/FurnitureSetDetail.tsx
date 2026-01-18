@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
+import { toPublicUrl } from '@/lib/image-helpers'
 
 export default function FurnitureSetDetail({ setId }: { setId: number }) {
   const router = useRouter()
@@ -20,18 +21,12 @@ export default function FurnitureSetDetail({ setId }: { setId: number }) {
           setSet(data.data)
           if (data.data.furnitureSetImages?.length > 0) {
             const sorted = data.data.furnitureSetImages.sort((a: any, b: any) => a.sortOrder - b.sortOrder)
-            setSelectedImage(getImageUrl(sorted[0].image.filePath))
+            setSelectedImage(toPublicUrl(sorted[0].image.filePath))
           }
         }
       })
       .finally(() => setLoading(false))
   }, [setId])
-
-  const getImageUrl = (path?: string) => {
-    if (!path) return ''
-    const cleanPath = path.replace(/\\/g, '/').replace('uploads/', '')
-    return `/uploads/${cleanPath}?v=${set?.updatedAt ? new Date(set.updatedAt).getTime() : Date.now()}`
-  }
 
   const handleDelete = async () => {
     if (!confirm('Silmek istediğinize emin misiniz?')) return
@@ -87,7 +82,7 @@ export default function FurnitureSetDetail({ setId }: { setId: number }) {
             
             <div className="grid grid-cols-5 gap-3">
               {sortedImages.map((item: any, idx: number) => {
-                const url = getImageUrl(item.image.filePath)
+                const url = toPublicUrl(item.image.filePath)
                 return (
                   <button 
                     key={idx}
@@ -134,7 +129,7 @@ export default function FurnitureSetDetail({ setId }: { setId: number }) {
                       <div className="flex items-center gap-3">
                         <div className="relative w-12 h-12 bg-black rounded-lg overflow-hidden border border-slate-700 flex-shrink-0">
                           {itemImage ? (
-                            <Image src={getImageUrl(itemImage) || ''} alt={item.furniture?.furnitureName} fill className="object-cover" />
+                            <Image src={toPublicUrl(itemImage) || ''} alt={item.furniture?.furnitureName} fill className="object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-slate-500 text-xs">IMG</div>
                           )}

@@ -170,8 +170,8 @@ export default function FurnitureManagement() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredList.map((item) => {
-              const mainImage = item.images?.[0]?.image.filePath
-              const imageUrl = getImageUrl(mainImage)
+              const mainImage = item.images?.[0]?.image?.filePath
+              const imageUrl = toPublicUrl(mainImage)
 
               return (
                 <div key={item.furnitureId} className="group bg-slate-800 rounded-2xl overflow-hidden border border-slate-700/50 hover:border-indigo-500/50 transition-all hover:shadow-2xl hover:shadow-indigo-500/10 flex flex-col">
