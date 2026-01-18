@@ -9,6 +9,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import Quantity from "../shopDetails/Quantity";
 import React, { useState } from "react";
 import { getColorHex } from "@/utils/colorUtils";
+import { toPublicUrl } from "@/lib/image-helpers";
 
 export default function QuickView() {
   const {
@@ -136,10 +137,8 @@ export default function QuickView() {
                           if (mainImage) {
                             const imageSrc = mainImage.url || mainImage.filePath || mainImage.src;
                             if (imageSrc) {
-                              const finalSrc = imageSrc.startsWith('/uploads/') ? imageSrc : 
-                                              imageSrc.startsWith('http') ? imageSrc : `/uploads/${imageSrc}`;
                               images.push({
-                                src: finalSrc,
+                                src: toPublicUrl(imageSrc),
                                 alt: mainImage.altText || mainImage.alt || quickViewItem.title || 'Ana Ürün Resmi',
                                 type: 'main'
                               });
@@ -151,8 +150,7 @@ export default function QuickView() {
                             if (img.imageType !== 'main') { // Main resmi zaten ekledik
                               const imageSrc = img.url || img.filePath || img.src;
                               if (imageSrc) {
-                                const finalSrc = imageSrc.startsWith('/uploads/') ? imageSrc : 
-                                                imageSrc.startsWith('http') ? imageSrc : `/uploads/${imageSrc}`;
+                                const finalSrc = toPublicUrl(imageSrc);
                                 if (!images.some(existingImg => existingImg.src === finalSrc)) {
                                   images.push({
                                     src: finalSrc,
@@ -168,7 +166,7 @@ export default function QuickView() {
                       // Fallback: imgSrc ve imgHoverSrc kullan
                       if (quickViewItem.imgSrc) {
                         images.push({
-                          src: quickViewItem.imgSrc,
+                          src: toPublicUrl(quickViewItem.imgSrc),
                           alt: quickViewItem.title || 'Ana Ürün Resmi',
                           type: 'main'
                         });
@@ -176,7 +174,7 @@ export default function QuickView() {
                       
                       if (quickViewItem.imgHoverSrc && quickViewItem.imgHoverSrc !== quickViewItem.imgSrc) {
                         images.push({
-                          src: quickViewItem.imgHoverSrc,
+                          src: toPublicUrl(quickViewItem.imgHoverSrc),
                           alt: quickViewItem.title || 'Ürün Hover Resmi',
                           type: 'hover'
                         });
@@ -191,7 +189,7 @@ export default function QuickView() {
                       if (quickViewItem.imageGallery.main && Array.isArray(quickViewItem.imageGallery.main)) {
                         console.log('Found main images:', quickViewItem.imageGallery.main);
                         quickViewItem.imageGallery.main.forEach((img, index) => {
-                          const imageSrc = img.image?.url || (img.image?.filePath ? `/uploads/${img.image.filePath}` : null);
+                          const imageSrc = toPublicUrl(img.image?.url || img.image?.filePath);
                           if (imageSrc && !images.some(existingImg => existingImg.src === imageSrc)) {
                             images.push({
                               src: imageSrc,
@@ -205,7 +203,7 @@ export default function QuickView() {
                       if (quickViewItem.imageGallery.gallery && Array.isArray(quickViewItem.imageGallery.gallery)) {
                         console.log('Found gallery images:', quickViewItem.imageGallery.gallery);
                         quickViewItem.imageGallery.gallery.forEach((img, index) => {
-                          const imageSrc = img.image?.url || (img.image?.filePath ? `/uploads/${img.image.filePath}` : null);
+                          const imageSrc = toPublicUrl(img.image?.url || img.image?.filePath);
                           if (imageSrc && !images.some(existingImg => existingImg.src === imageSrc)) {
                             images.push({
                               src: imageSrc,
@@ -220,7 +218,7 @@ export default function QuickView() {
                       if (quickViewItem.imageGallery.images && Array.isArray(quickViewItem.imageGallery.images)) {
                         console.log('Found images array:', quickViewItem.imageGallery.images);
                         quickViewItem.imageGallery.images.forEach((img, index) => {
-                          const imageSrc = img.image?.url || (img.image?.filePath ? `/uploads/${img.image.filePath}` : null);
+                          const imageSrc = toPublicUrl(img.image?.url || img.image?.filePath);
                           if (imageSrc && !images.some(existingImg => existingImg.src === imageSrc)) {
                             images.push({
                               src: imageSrc,
@@ -236,7 +234,7 @@ export default function QuickView() {
                     if (quickViewItem.furnitureImages && Array.isArray(quickViewItem.furnitureImages)) {
                       console.log('Found furnitureImages array:', quickViewItem.furnitureImages);
                       quickViewItem.furnitureImages.forEach((img, index) => {
-                        const imageSrc = img.image?.filePath ? `/uploads/${img.image.filePath}` : null;
+                        const imageSrc = toPublicUrl(img.image?.filePath);
                         if (imageSrc && !images.some(existingImg => existingImg.src === imageSrc)) {
                           images.push({
                             src: imageSrc,
@@ -251,7 +249,7 @@ export default function QuickView() {
                     if (quickViewItem.furnitureSetImages && Array.isArray(quickViewItem.furnitureSetImages)) {
                       console.log('Found furnitureSetImages array:', quickViewItem.furnitureSetImages);
                       quickViewItem.furnitureSetImages.forEach((img, index) => {
-                        const imageSrc = img.image?.filePath ? `/uploads/${img.image.filePath}` : null;
+                        const imageSrc = toPublicUrl(img.image?.filePath);
                         if (imageSrc && !images.some(existingImg => existingImg.src === imageSrc)) {
                           images.push({
                             src: imageSrc,

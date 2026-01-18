@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import { toPublicUrl } from '@/lib/image-helpers'
 
 interface Furniture {
   furnitureId: number
@@ -95,14 +96,12 @@ export default function FurnitureManagement() {
     item.furnitureName.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const getImageUrl = (path?: string) => {
-    if (!path) return null
-    let cleanPath = path.replace(/\\/g, '/')
-    if (cleanPath.startsWith('public/')) cleanPath = cleanPath.replace('public/', '')
-    if (!cleanPath.startsWith('/')) cleanPath = '/' + cleanPath
-    if (!cleanPath.startsWith('/uploads/')) cleanPath = '/uploads/' + cleanPath.replace(/^\//, '')
-    return `${cleanPath}?t=${Date.now()}`
+  const getFurnitureImage = (furniture: Furniture) => {
+    const mainImg = furniture.images?.find((img: any) => img.imageType === 'main') || furniture.images?.[0]
+    return toPublicUrl(mainImg?.image?.filePath) || '/images/products/placeholder.jpg'
   }
+
+  if (loading) return <div className="min-h-screen bg-slate-900 flex items-center justify-center text-white">Yükleniyor...</div>
 
   return (
     <div className="min-h-screen bg-slate-900 p-6 sm:p-10">

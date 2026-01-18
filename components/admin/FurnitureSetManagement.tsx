@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import { toPublicUrl } from '@/lib/image-helpers'
 
 export default function FurnitureSetManagement() {
   const [sets, setSets] = useState<any[]>([])
@@ -77,15 +78,6 @@ export default function FurnitureSetManagement() {
     s.setName.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const getImageUrl = (path?: string) => {
-    if (!path) return null
-    let cleanPath = path.replace(/\\/g, '/')
-    if (cleanPath.startsWith('public/')) cleanPath = cleanPath.replace('public/', '')
-    if (!cleanPath.startsWith('/')) cleanPath = '/' + cleanPath
-    if (!cleanPath.startsWith('/uploads/')) cleanPath = '/uploads/' + cleanPath.replace(/^\//, '')
-    return `${cleanPath}?t=${Date.now()}`
-  }
-
   return (
     <div className="min-h-screen bg-slate-900 p-6 sm:p-10">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -151,8 +143,8 @@ export default function FurnitureSetManagement() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredSets.map((set) => {
-              const mainImage = set.furnitureSetImages?.[0]?.image.filePath
-              const imageUrl = getImageUrl(mainImage)
+              const mainImage = set.furnitureSetImages?.[0]?.image?.filePath
+              const imageUrl = toPublicUrl(mainImage)
 
               return (
                 <div key={set.setId} className="group bg-slate-800 rounded-2xl overflow-hidden border border-slate-700/50 hover:border-pink-500/50 transition hover:shadow-2xl hover:shadow-pink-500/10 flex flex-col">
