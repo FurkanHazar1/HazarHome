@@ -22,11 +22,12 @@ async function fetchRandomProducts() {
   }
 }
 
-export default function Products() {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function Products({ products: initialProducts }) {
+  const [products, setProducts] = useState(initialProducts || []);
+  const [loading, setLoading] = useState(!initialProducts);
 
   useEffect(() => {
+    if (initialProducts) return;
     async function loadProducts() {
       setLoading(true);
       const randomProducts = await fetchRandomProducts();

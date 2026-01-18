@@ -6,11 +6,12 @@ import { Autoplay, EffectFade, Navigation } from "swiper/modules";
 import { useState, useEffect } from "react";
 import { toPublicUrl } from "@/lib/image-helpers";
 
-export default function Hero() {
-  const [slides, setSlides] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function Hero({ slides: initialSlides }) {
+  const [slides, setSlides] = useState(initialSlides || []);
+  const [loading, setLoading] = useState(!initialSlides);
 
   useEffect(() => {
+    if (initialSlides) return; // Don't fetch if we already have data
     const fetchSlides = async () => {
       try {
         const res = await fetch('/api/hero?activeOnly=true');

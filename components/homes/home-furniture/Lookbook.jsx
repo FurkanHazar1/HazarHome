@@ -8,11 +8,12 @@ import { toPublicUrl } from "@/lib/image-helpers";
 
 
 
-export default function Lookbook() {
-  const [features, setFeatures] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function Lookbook({ features: initialFeatures }) {
+  const [features, setFeatures] = useState(initialFeatures || []);
+  const [loading, setLoading] = useState(!initialFeatures);
 
   useEffect(() => {
+    if (initialFeatures) return;
     fetch('/api/features?active=true')
       .then(res => res.json())
       .then(data => {

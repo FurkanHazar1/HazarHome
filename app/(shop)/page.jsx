@@ -13,21 +13,53 @@ import React from "react";
 
 export const metadata = {
   title: "Hazar Home || Ferahlığın Anahtarı",
-  description: "Hazar Home",
+  description: "Hazar Home - Kaliteli Mobilya ve Ev Dekorasyonu Ürünleri",
 };
 
-export default function page() {
+// Data Fetching Functions
+async function getHeroSlides() {
+  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+  const res = await fetch(`${baseUrl}/api/hero?activeOnly=true`, { next: { revalidate: 3600 } });
+  if (!res.ok) return [];
+  const data = await res.json();
+  return Array.isArray(data) ? data : (data.data || []);
+}
+
+async function getLookbookFeatures() {
+  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+  const res = await fetch(`${baseUrl}/api/features?active=true`, { next: { revalidate: 3600 } });
+  if (!res.ok) return [];
+  const data = await res.json();
+  return Array.isArray(data) ? data : (data.data || []);
+}
+
+async function getRandomProducts() {
+  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+  const res = await fetch(`${baseUrl}/api/products?random=true&limit=8&active=true&includeDetails=true`, { next: { revalidate: 3600 } });
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.success ? data.data : [];
+}
+
+export default async function page() {
+  // Paralel veri çekme (Hız için)
+  const [slides, featuresData, products] = await Promise.all([
+    getHeroSlides(),
+    getLookbookFeatures(),
+    getRandomProducts()
+  ]);
+
   return (
     <>
       <div className="color-primary-2">
         <Announcment />
         <Header4 />
-        <Hero />
+        <Hero slides={slides} />
         <Collection />
         <Categories />
         <Banner />
-        <Products />
-        <Lookbook />
+        <Products products={products} />
+        <Lookbook features={featuresData} />
         <Features />
         <ShopGram />
         <Footer1 bgColor="background-gray" />
