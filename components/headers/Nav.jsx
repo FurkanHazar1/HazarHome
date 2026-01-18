@@ -80,8 +80,6 @@ export default function Nav({ isArrow = true, textColor = "", Linkfs = "" }) {
                   <Link href={item.href}>
                     <div className="demo-image position-relative">
                       <Image
-                        className="lazyload"
-                        data-src={item.src}
                         alt={item.alt}
                         src={item.src}
                         width={300}
@@ -136,8 +134,6 @@ export default function Nav({ isArrow = true, textColor = "", Linkfs = "" }) {
                   <Link href={item.href}>
                     <div className="demo-image position-relative">
                       <Image
-                        className="lazyload"
-                        data-src={item.src}
                         alt={item.alt}
                         src={item.src}
                         width={300}
@@ -192,8 +188,6 @@ export default function Nav({ isArrow = true, textColor = "", Linkfs = "" }) {
                   <Link href={item.href}>
                     <div className="demo-image position-relative">
                       <Image
-                        className="lazyload"
-                        data-src={item.src}
                         alt={item.alt}
                         src={item.src}
                         width={300}

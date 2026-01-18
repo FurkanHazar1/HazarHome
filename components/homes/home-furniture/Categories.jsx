@@ -16,8 +16,7 @@ export default function Categories() {
         @media (max-width: 768px) {
           .responsive-category-btn {
                         <Image
-                          className="lazyload category-img"
-                          data-src={item.src}
+                          className="category-img"
                           alt={item.alt}
                           src={item.src}
                           width={1200}

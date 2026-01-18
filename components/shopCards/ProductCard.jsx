@@ -35,7 +35,7 @@ export const ProductCard = ({ product }) => {
           className="product-img"
         >
           <Image
-            className="lazyload img-product"
+            className="img-product"
             data-src={product.imgSrc}
             src={currentImage}
             alt="image-product"
@@ -43,7 +43,7 @@ export const ProductCard = ({ product }) => {
             height={540}
           />
           <Image
-            className="lazyload img-hover"
+            className="img-hover"
             data-src={
               product.imgHoverSrc ? product.imgHoverSrc : product.imgSrc
             }

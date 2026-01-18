@@ -83,18 +83,22 @@ export async function deleteFromS3(key: string): Promise<void> {
  */
 export function getImageUrl(key: string): string {
   if (!key) return ''
+  
+  // If it's already a full URL, return it
   if (key.startsWith('http')) return key
   
-  const cleanKey = key.startsWith('/') ? key.substring(1) : key
+  // If it starts with a slash, it's a LOCAL static asset in the public folder
+  if (key.startsWith('/')) return key
 
+  // Otherwise, it's an S3 object key
   if (CLOUDFRONT_URL) {
     const baseUrl = CLOUDFRONT_URL.endsWith('/') ? CLOUDFRONT_URL.slice(0, -1) : CLOUDFRONT_URL
-    return `${baseUrl}/${cleanKey}`
+    return `${baseUrl}/${key}`
   }
   
   if (!BUCKET_NAME) {
-    return `/${cleanKey}` // Fallback to local if no bucket defined
+    return `/${key}` 
   }
 
-  return `https://${BUCKET_NAME}.s3.${REGION}.amazonaws.com/${cleanKey}`
+  return `https://${BUCKET_NAME}.s3.${REGION}.amazonaws.com/${key}`
 }

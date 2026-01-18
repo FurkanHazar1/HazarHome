@@ -4,6 +4,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import Image from "next/image";
 import LookbookComponent from "@/components/common/LookbookComponent";
 import { Navigation, Pagination } from "swiper/modules";
+import { toPublicUrl } from "@/lib/image-helpers";
 
 
 
@@ -67,11 +68,12 @@ export default function Lookbook() {
               <div className={`wrap-lookbook lookbook-${(index % 2) + 1}`} style={{ width: 'auto' }}>
                 <div className="image" style={{ position: 'relative', width: 'fit-content' }}>
                   <Image
-                    className="lazyload lookbook-main-img"
+                    className="lookbook-main-img"
                     alt={feature.title || "Lookbook"}
-                    src={feature.image?.filePath ? `/${feature.image.filePath}` : '/images/slider/slider-1.jpg'}
+                    src={feature.image?.filePath ? toPublicUrl(feature.image.filePath) : '/images/slider/slider-1.jpg'}
                     width={feature.image?.width || 2153}
                     height={feature.image?.height || 1059}
+                    priority={index === 0}
                     style={{ width: 'auto', height: 'var(--lookbook-img-height, 70vh)', display: 'block', maxWidth: 'none' }}
                   />
                   
@@ -82,7 +84,7 @@ export default function Lookbook() {
                     if (pin.furniture) {
                       productData = {
                         href: `/product-detail-furniture/${pin.furniture.furnitureId}`,
-                        imgSrc: pin.furniture.images?.[0]?.image?.filePath ? `/${pin.furniture.images[0].image.filePath}` : '/images/products/furniture_1.jpg',
+                        imgSrc: toPublicUrl(pin.furniture.images?.[0]?.image?.filePath) || '/images/products/furniture_1.jpg',
                         title: pin.furniture.furnitureName,
                         price: Number(pin.furniture.price),
                         width: 600,
@@ -91,7 +93,7 @@ export default function Lookbook() {
                     } else if (pin.furnitureSet) {
                       productData = {
                         href: `/product-detail-furniture-set/${pin.furnitureSet.setId}`,
-                        imgSrc: pin.furnitureSet.furnitureSetImages?.[0]?.image?.filePath ? `/${pin.furnitureSet.furnitureSetImages[0].image.filePath}` : '/images/products/furniture_1.jpg',
+                        imgSrc: toPublicUrl(pin.furnitureSet.furnitureSetImages?.[0]?.image?.filePath) || '/images/products/furniture_1.jpg',
                         title: pin.furnitureSet.setName,
                         price: Number(pin.furnitureSet.price),
                         width: 600,

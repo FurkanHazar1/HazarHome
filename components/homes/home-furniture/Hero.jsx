@@ -4,6 +4,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import Image from "next/image";
 import { Autoplay, EffectFade, Navigation } from "swiper/modules";
 import { useState, useEffect } from "react";
+import { toPublicUrl } from "@/lib/image-helpers";
 
 export default function Hero() {
   const [slides, setSlides] = useState([]);
@@ -90,21 +91,21 @@ export default function Hero() {
                 </div>
               </div>
               <div className="img-slider" style={{
-                height: '100%', // Keep relative height or remove if it causes issues, but standard flex centering usually works fine
+                height: '100%', 
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
                 <Image
                   className="hero-image-fixed"
-                  src={slide.imageUrl.startsWith('/') ? slide.imageUrl : `/${slide.imageUrl}`}
+                  src={toPublicUrl(slide.imageUrl)}
                   alt={slide.title}
                   width={1000}
                   height={600}
                   priority={true}
                   style={{
-                    height: 'auto', // Allow natural aspect ratio scaling
-                    objectFit: 'contain' // Or just remove objectFit to let it be natural
+                    height: 'auto', 
+                    objectFit: 'contain' 
                   }}
                 />
               </div>

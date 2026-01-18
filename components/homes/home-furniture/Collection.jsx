@@ -10,8 +10,6 @@ export default function Collection() {
             <Link href={`/oturma-odasi`} className="collection-inner">
               <div className="collection-image img-style">
                 <Image
-                  className="lazyload"
-                  data-src="/images/menu/koleksiyonlar/oturma_odasi.jpeg"
                   alt="collection-img"
                   src="/images/menu/koleksiyonlar/oturma_odasi.jpeg"
                   width={500}
@@ -37,8 +35,6 @@ export default function Collection() {
             <Link href={`/yatak-odasi`} className="collection-inner">
               <div className="collection-image img-style">
                 <Image
-                  className="lazyload"
-                  data-src="/images/menu/koleksiyonlar/yatak_odasi.png"
                   alt="collection-img"
                   src="/images/menu/koleksiyonlar/yatak_odasi.png"
                   width={500}
@@ -61,8 +57,6 @@ export default function Collection() {
             <Link href={`/yemek-odasi`} className="collection-inner">
               <div className="collection-image img-style">
                 <Image
-                  className="lazyload"
-                  data-src="/images/menu/koleksiyonlar/yemek_odasi.png"
                   alt="collection-img"
                   src="/images/menu/koleksiyonlar/yemek_odasi.png"
                   width={500}
