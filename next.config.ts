@@ -1,10 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // Turbopack empty config to allow webpack fallback
+  // @ts-ignore
+  turbopack: {},
+
   // SCSS support
+  sassOptions: {
   sassOptions: {
     includePaths: ['./styles/scss', './public/scss'],
     prependData: ``,
