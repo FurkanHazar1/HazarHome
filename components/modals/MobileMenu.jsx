@@ -250,7 +250,7 @@ export default function MobileMenu() {
                 Email: <b>info@hazarhome.com</b>
               </li>
               <li>
-                Telefon: <b>(0212) 555-0123</b>
+                Telefon: <b> +90 533 519 13 29</b>
               </li>
             </ul>
           </div>
