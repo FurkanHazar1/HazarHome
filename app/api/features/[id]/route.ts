@@ -3,14 +3,15 @@ import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { toPublicUrl, uploadSingleImage, deleteImage } from '@/lib/image-utils'
+import { revalidateTag, revalidatePath } from 'next/cache'
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params
-    const featureId = parseInt(id)
+    const { id: idParam } = await params
+    const featureId = parseInt(idParam)
 
     const feature = await prisma.feature.findUnique({
       where: { featureId },
@@ -43,7 +44,6 @@ export async function GET(
       return NextResponse.json({ error: 'Feature not found' }, { status: 404 })
     }
 
-    // Process URLs
     const processedFeature = {
       ...feature,
       image: feature.image ? {
@@ -56,20 +56,14 @@ export async function GET(
           ...pin.furniture,
           images: pin.furniture.images.map(fi => ({
             ...fi,
-            image: {
-              ...fi.image,
-              url: toPublicUrl(fi.image.filePath)
-            }
+            image: { ...fi.image, url: toPublicUrl(fi.image.filePath) }
           }))
         } : null,
         furnitureSet: pin.furnitureSet ? {
           ...pin.furnitureSet,
           furnitureSetImages: pin.furnitureSet.furnitureSetImages.map(fsi => ({
             ...fsi,
-            image: {
-              ...fsi.image,
-              url: toPublicUrl(fsi.image.filePath)
-            }
+            image: { ...fsi.image, url: toPublicUrl(fsi.image.filePath) }
           }))
         } : null
       }))
@@ -77,11 +71,7 @@ export async function GET(
 
     return NextResponse.json(processedFeature)
   } catch (error) {
-    console.error('Error fetching feature:', error)
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }
 
@@ -91,14 +81,12 @@ export async function PUT(
 ) {
   try {
     const session = await getServerSession(authOptions)
-
     if (!session || (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { id: idParam } = await params
     const featureId = parseInt(idParam)
-    
     const contentType = request.headers.get('content-type') || ''
     let data: any = {}
     let imageFile: File | null = null
@@ -106,12 +94,13 @@ export async function PUT(
     if (contentType.includes('multipart/form-data')) {
       const formData = await request.formData()
       data = {
-        title: formData.get('title') as string,
-        description: formData.get('description') as string,
+        title: formData.get('title'),
+        description: formData.get('description'),
         isActive: formData.get('isActive') === 'true',
-        sortOrder: formData.get('sortOrder') as string,
-        pins: formData.get('pins') as string,
-        imageId: formData.get('imageId') as string,
+        sortOrder: formData.get('sortOrder'),
+        pins: formData.get('pins'),
+        imageId: formData.get('imageId'),
+        s3Key: formData.get('s3Key')
       }
       imageFile = formData.get('image') as File
     } else {
@@ -120,106 +109,52 @@ export async function PUT(
 
     let { title, description, imageId, isActive, sortOrder, pins, s3Key } = data
 
-    // Parse pins if string
-    if (typeof pins === 'string') {
-      try {
-        pins = JSON.parse(pins)
-      } catch (e) {
-        pins = []
-      }
-    }
-
-    // Handle image upload if provided
-    if (s3Key) {
-      // Get existing feature to find old image
-      const existingFeature = await prisma.feature.findUnique({
-        where: { featureId },
-        include: { image: true }
-      })
-
-      if (existingFeature?.imageId) {
-        await deleteImage(existingFeature.imageId)
-      }
-
-      const newImage = await prisma.image.create({
-        data: {
-          fileName: s3Key.split('/').pop() || 'image.webp',
-          filePath: s3Key,
-          fileType: 'webp',
-          altText: title || 'Feature image'
-        }
-      })
-      imageId = newImage.imageId
-    } else if (imageFile && imageFile.size > 0) {
-      // Get existing feature to find old image
-      const existingFeature = await prisma.feature.findUnique({
-        where: { featureId },
-        include: { image: true }
-      })
-
-      if (existingFeature?.imageId) {
-        await deleteImage(existingFeature.imageId)
-      }
-
-      const uploadResult = await uploadSingleImage(imageFile, 'features')
+    if (s3Key || (imageFile && imageFile.size > 0)) {
+      const existing = await prisma.feature.findUnique({ where: { featureId } })
+      if (existing?.imageId) await deleteImage(existing.imageId)
       
-      const newImage = await prisma.image.create({
-        data: {
-          fileName: uploadResult.fileName,
-          filePath: uploadResult.key,
-          fileType: 'webp',
-          fileSize: imageFile.size,
-          altText: title || 'Feature image'
-        }
+      let filePath = s3Key
+      if (imageFile && imageFile.size > 0) {
+        const upload = await uploadSingleImage(imageFile, 'features')
+        filePath = upload.key
+      }
+
+      const newImg = await prisma.image.create({
+        data: { fileName: filePath.split('/').pop() || 'img.webp', filePath, fileType: 'webp', altText: title || 'Feature' }
       })
-      imageId = newImage.imageId
+      imageId = newImg.imageId
     }
 
-    // Transaction to update feature and replace pins
-    const updatedFeature = await prisma.$transaction(async (tx) => {
-      // 1. Update Feature details
-      const feature = await tx.feature.update({
+    const updated = await prisma.$transaction(async (tx) => {
+      const f = await tx.feature.update({
         where: { featureId },
-        data: {
-          title,
-          description,
-          imageId: imageId ? parseInt(String(imageId)) : undefined,
-          isActive,
-          sortOrder: sortOrder ? parseInt(String(sortOrder)) : undefined
-        }
+        data: { title, description, imageId: imageId ? parseInt(String(imageId)) : undefined, isActive, sortOrder: sortOrder ? parseInt(String(sortOrder)) : undefined }
       })
-
-      // 2. Handle Pins if provided
       if (pins) {
-        // Delete existing pins
-        await tx.featurePin.deleteMany({
-          where: { featureId }
-        })
-
-        // Create new pins
-        if (pins.length > 0) {
+        const parsedPins = typeof pins === 'string' ? JSON.parse(pins) : pins
+        await tx.featurePin.deleteMany({ where: { featureId } })
+        if (parsedPins.length > 0) {
           await tx.featurePin.createMany({
-            data: pins.map((pin: any) => ({
-              featureId,
-              furnitureId: pin.furnitureId || null,
-              furnitureSetId: pin.furnitureSetId || null,
-              xPosition: parseFloat(String(pin.xPosition)),
-              yPosition: parseFloat(String(pin.yPosition))
+            data: parsedPins.map((p: any) => ({
+              featureId, furnitureId: p.furnitureId || null, furnitureSetId: p.furnitureSetId || null,
+              xPosition: parseFloat(String(p.xPosition)), yPosition: parseFloat(String(p.yPosition))
             }))
           })
         }
       }
-
-      return feature
+      return f
     })
 
-    return NextResponse.json(updatedFeature)
+    // Revalidate
+    try {
+      (revalidateTag as any)('features');
+      (revalidatePath as any)('/');
+    } catch (e) {
+      console.error('Revalidation error:', e);
+    }
+    return NextResponse.json(updated)
   } catch (error) {
-    console.error('Error updating feature:', error)
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Update failed' }, { status: 500 })
   }
 }
 
@@ -229,32 +164,25 @@ export async function DELETE(
 ) {
   try {
     const session = await getServerSession(authOptions)
-
     if (!session || (session.user.role !== 'ADMIN' && session.user.role !== 'SUPER_ADMIN')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = await params
-    const featureId = parseInt(id)
+    const { id: idParam } = await params
+    const featureId = parseInt(idParam)
+    const feature = await prisma.feature.findUnique({ where: { featureId } })
+    if (feature?.imageId) await deleteImage(feature.imageId)
+    await prisma.feature.delete({ where: { featureId } })
 
-    const feature = await prisma.feature.findUnique({
-      where: { featureId }
-    })
-
-    if (feature?.imageId) {
-      await deleteImage(feature.imageId)
+    // Revalidate
+    try {
+      (revalidateTag as any)('features');
+      (revalidatePath as any)('/');
+    } catch (e) {
+      console.error('Revalidation error:', e);
     }
-
-    await prisma.feature.delete({
-      where: { featureId }
-    })
-
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error deleting feature:', error)
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Delete failed' }, { status: 500 })
   }
 }

@@ -8,6 +8,7 @@ import {
   toPublicUrl,
   slugifyCategory
 } from '@/lib/image-utils'
+import { revalidateTag, revalidatePath } from 'next/cache'
 
 // Type definitions
 interface PropertyInput {
@@ -785,6 +786,16 @@ export async function PUT(
       }
     }
 
+    // Trigger revalidation for immediate updates
+    try {
+      (revalidateTag as any)('products');
+      (revalidateTag as any)('home-products');
+      (revalidatePath as any)('/');
+      (revalidatePath as any)(`/product-detail-furniture/${furnitureId}`);
+    } catch (e) {
+      console.error('Revalidation error:', e);
+    }
+
     return NextResponse.json(response)
 
   } catch (error) {
@@ -886,6 +897,16 @@ export async function DELETE(
       } catch (error) {
         console.warn('Image deletion error:', error)
       }
+    }
+
+    // Trigger revalidation for immediate updates
+    try {
+      (revalidateTag as any)('products');
+      (revalidateTag as any)('home-products');
+      (revalidatePath as any)('/');
+      (revalidatePath as any)(`/product-detail-furniture/${furnitureId}`);
+    } catch (e) {
+      console.error('Revalidation error:', e);
     }
 
     return NextResponse.json({

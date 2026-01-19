@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { toPublicUrl, uploadSingleImage } from '@/lib/image-utils'
+import { revalidateTag, revalidatePath } from 'next/cache'
 
 export async function GET(request: Request) {
   try {
@@ -172,10 +173,17 @@ export async function POST(request: Request) {
         })
       }
 
-      return newFeature
+      return feature
     })
 
-    return NextResponse.json(feature)
+    try {
+      (revalidateTag as any)('features');
+      (revalidatePath as any)('/');
+    } catch (e) {
+      console.error('Revalidation error:', e);
+    }
+
+    return NextResponse.json(newFeature)
   } catch (error) {
     console.error('Error creating feature:', error)
     return NextResponse.json(

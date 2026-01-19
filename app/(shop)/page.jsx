@@ -40,7 +40,7 @@ async function getLookbookFeatures() {
 async function getRandomProducts() {
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
   const res = await fetch(`${baseUrl}/api/products?random=true&limit=8&active=true&includeDetails=true`, { 
-    next: { revalidate: 3600, tags: ['products'] } 
+    next: { revalidate: 3600, tags: ['products', 'home-products'] } 
   });
   if (!res.ok) return [];
   const data = await res.json();

@@ -12,12 +12,12 @@ export async function POST(request: NextRequest) {
   }
 
   if (tag) {
-    revalidateTag(tag);
+    (revalidateTag as any)(tag);
     return NextResponse.json({ revalidated: true, now: Date.now(), tag });
   }
 
   if (path) {
-    revalidatePath(path);
+    (revalidatePath as any)(path);
     return NextResponse.json({ revalidated: true, now: Date.now(), path });
   }
 

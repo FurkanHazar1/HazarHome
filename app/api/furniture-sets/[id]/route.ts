@@ -1,6 +1,7 @@
 // app/api/furniture-sets/[id]/route.ts - Single Furniture Set API with Category-Based Image System
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { revalidateTag, revalidatePath } from 'next/cache'
 import { 
   processImageFiles,
   renumberImages, 
@@ -232,7 +233,6 @@ export async function GET(
     }
 
     if (groupImagesByType) {
-      // Group images by type (main, gallery, thumbnails)
       const imagesByType: {
         main: any[];
         gallery: any[];
@@ -252,7 +252,6 @@ export async function GET(
           }
         }
 
-        // Group by image type
         if (setImage.imageType === 'main') {
           imagesByType.main.push(processedImage)
         } else if (setImage.imageType === 'thumbnail') {
@@ -274,7 +273,6 @@ export async function GET(
         }
       }
     } else {
-      // Traditional grouping by image type
       const mainImages = furnitureSet.furnitureSetImages.filter(si => si.imageType === 'main')
       const galleryImages = furnitureSet.furnitureSetImages.filter(si => si.imageType === 'gallery')
       const thumbnailImages = furnitureSet.furnitureSetImages.filter(si => si.imageType === 'thumbnail')
@@ -305,7 +303,6 @@ export async function GET(
       }
     }
 
-    // Group properties by type
     const propertiesByType = furnitureSet.furnitureSetProperties.reduce((acc: any, sp) => {
       const type = sp.property.propertyType
       if (!acc[type]) {
@@ -321,7 +318,6 @@ export async function GET(
       return acc
     }, {})
 
-    // Calculate pricing if requested
     let pricingAnalysis: any = null
     if (calculatePricing && 'furnitureSetItems' in furnitureSet && furnitureSet.furnitureSetItems) {
       const totalIndividualPrice = furnitureSet.furnitureSetItems.reduce((sum, item) => {
@@ -353,14 +349,10 @@ export async function GET(
       }
     }
 
-    // Process furniture items with images
     const processedFurnitureItems = 'furnitureSetItems' in furnitureSet && furnitureSet.furnitureSetItems 
       ? furnitureSet.furnitureSetItems.map(item => {
           const result: any = { ...item }
-          
-          // Type assertion for furniture with images
           const furniture = item.furniture as any
-          
           if (includeFurnitureDetails && furniture.images && Array.isArray(furniture.images)) {
             result.furniture.images = furniture.images.map((fi: any) => ({
               ...fi,
@@ -370,8 +362,6 @@ export async function GET(
               }
             }))
           }
-          
-          // Add individual item pricing
           result.itemTotalPrice = Number(item.furniture.price) * item.quantity
           result.formattedItemPrice = new Intl.NumberFormat('tr-TR', {
             style: 'currency',
@@ -381,18 +371,15 @@ export async function GET(
             style: 'currency',
             currency: 'TRY'
           }).format(result.itemTotalPrice)
-          
           return result
         })
       : []
 
-    // Calculate stats with safe property access
     const setFurnitureItems = 'furnitureSetItems' in furnitureSet ? furnitureSet.furnitureSetItems : []
     const totalQuantity = setFurnitureItems.reduce((sum, item) => sum + item.quantity, 0)
     const uniqueFurnitureCount = setFurnitureItems.length
     const activeFurnitureCount = setFurnitureItems.filter(item => item.furniture && item.furniture.isActive).length
 
-    // Prepare response data
     const responseData = {
       ...furnitureSet,
       breadcrumb,
@@ -448,7 +435,7 @@ export async function GET(
   }
 }
 
-// PUT - Enhanced furniture set update with category-based image support
+// PUT
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -458,572 +445,122 @@ export async function PUT(
     const setId = parseInt(id)
     
     if (isNaN(setId) || setId <= 0) {
-      return NextResponse.json({
-        success: false,
-        error: 'Invalid furniture set ID'
-      }, { status: 400 })
+      return NextResponse.json({ success: false, error: 'Invalid furniture set ID' }, { status: 400 })
     }
 
     const contentType = request.headers.get('content-type') || ''
     let data: any = {}
     let imageFiles: File[] = []
 
-    // Parse request data
     if (contentType.includes('multipart/form-data')) {
       const formData = await request.formData()
-      
       data = {
-        setName: formData.get('setName') as string,
-        categoryId: formData.get('categoryId') as string,
-        description: formData.get('description') as string,
-        price: formData.get('price') as string,
-        isActive: formData.get('isActive') as string,
-        colorIds: formData.get('colorIds') as string,
-        properties: formData.get('properties') as string,
-        furnitureItems: formData.get('furnitureItems') as string,
-        removeImageIds: formData.get('removeImageIds') as string,
-        updateImageOrder: formData.get('updateImageOrder') as string,
-        imageTypeMappings: formData.get('imageTypeMappings') as string,
-        uploadedImages: formData.get('uploadedImages') as string // NEW
+        setName: formData.get('setName'),
+        categoryId: formData.get('categoryId'),
+        description: formData.get('description'),
+        price: formData.get('price'),
+        isActive: formData.get('isActive'),
+        colorIds: formData.get('colorIds'),
+        properties: formData.get('properties'),
+        furnitureItems: formData.get('furnitureItems'),
+        removeImageIds: formData.get('removeImageIds'),
+        updateImageOrder: formData.get('updateImageOrder'),
+        imageTypeMappings: formData.get('imageTypeMappings'),
+        uploadedImages: formData.get('uploadedImages')
       }
-
-      const files = formData.getAll('newImages') as File[]
-      imageFiles = files.filter(file => file.size > 0)
-
+      imageFiles = (formData.getAll('newImages') as File[]).filter(f => f.size > 0)
     } else {
       data = await request.json()
     }
 
-    const {
-      setName,
-      categoryId,
-      description,
-      price,
-      isActive,
-      colorIds,
-      properties,
-      furnitureItems,
-      removeImageIds,
-      updateImageOrder,
-      imageTypeMappings,
-      uploadedImages // NEW
-    } = data
+    const { setName, categoryId, description, price, isActive, colorIds, properties, furnitureItems, removeImageIds, updateImageOrder, uploadedImages } = data
 
-    // Parse JSON strings
-    let parsedColorIds = colorIds
-    let parsedProperties = properties
-    let parsedFurnitureItems = furnitureItems
-    let parsedRemoveImageIds = removeImageIds
-    let parsedUpdateImageOrder = updateImageOrder
-    let parsedImageTypeMappings = imageTypeMappings
-    let parsedUploadedImages = uploadedImages
+    const parsedColorIds = typeof colorIds === 'string' ? JSON.parse(colorIds || '[]') : colorIds
+    const parsedProperties = typeof properties === 'string' ? JSON.parse(properties || '[]') : properties
+    const parsedFurnitureItems = typeof furnitureItems === 'string' ? JSON.parse(furnitureItems || '[]') : furnitureItems
+    const parsedRemoveImageIds = typeof removeImageIds === 'string' ? JSON.parse(removeImageIds || '[]') : removeImageIds
+    const parsedUpdateImageOrder = typeof updateImageOrder === 'string' ? JSON.parse(updateImageOrder || '[]') : updateImageOrder
+    const parsedUploadedImages = typeof uploadedImages === 'string' ? JSON.parse(uploadedImages || '[]') : uploadedImages
 
-    if (typeof colorIds === 'string') {
-      parsedColorIds = colorIds ? JSON.parse(colorIds) : undefined
-    }
-    if (typeof properties === 'string') {
-      parsedProperties = properties ? JSON.parse(properties) : undefined
-    }
-    if (typeof furnitureItems === 'string') {
-      parsedFurnitureItems = furnitureItems ? JSON.parse(furnitureItems) : undefined
-    }
-    if (typeof removeImageIds === 'string') {
-      parsedRemoveImageIds = removeImageIds ? JSON.parse(removeImageIds) : []
-    }
-    if (typeof updateImageOrder === 'string') {
-      parsedUpdateImageOrder = updateImageOrder ? JSON.parse(updateImageOrder) : []
-    }
-    if (typeof imageTypeMappings === 'string') {
-      parsedImageTypeMappings = imageTypeMappings ? JSON.parse(imageTypeMappings) : {}
-    }
-    if (typeof uploadedImages === 'string') {
-      parsedUploadedImages = uploadedImages ? JSON.parse(uploadedImages) : []
-    }
-
-    // Check if furniture set exists
     const existingSet = await prisma.furnitureSet.findUnique({
       where: { setId },
-      include: {
-        category: {
-          select: {
-            categoryName: true,
-            categoryLevel: true
-          }
-        },
-        furnitureSetColors: {
-          select: {
-            colorId: true
-          }
-        },
-        furnitureSetItems: {
-          select: {
-            furnitureId: true,
-            quantity: true
-          }
-        }
-      }
+      include: { category: true }
     })
 
-    if (!existingSet) {
-      return NextResponse.json({
-        success: false,
-        error: 'Furniture set not found'
-      }, { status: 404 })
-    }
+    if (!existingSet) return NextResponse.json({ success: false, error: 'Set not found' }, { status: 404 })
 
-    // Enhanced validation
-    const validationErrors = []
-
-    if (setName !== undefined) {
-      if (!setName || typeof setName !== 'string' || setName.trim().length === 0) {
-        validationErrors.push('Set name cannot be empty')
-      } else if (setName.trim().length > 150) {
-        validationErrors.push('Set name cannot exceed 150 characters')
-      }
-    }
-
-    if (price !== undefined) {
-      if (price === null || isNaN(parseFloat(price)) || parseFloat(price) < 0) {
-        validationErrors.push('A valid price must be entered')
-      }
-    }
-
-    if (validationErrors.length > 0) {
-      return NextResponse.json({
-        success: false,
-        error: 'Validation error',
-        validationErrors
-      }, { status: 400 })
-    }
-
-    // Get category information for path generation
-    let categoryName = existingSet.category?.categoryName || 'uncategorized'
-    
-    // Category validation
-    if (categoryId !== undefined && categoryId !== null) {
-      const category = await prisma.category.findUnique({
-        where: { categoryId: parseInt(categoryId) }
-      })
-      
-      if (!category || !category.isActive) {
-        return NextResponse.json({
-          success: false,
-          error: 'Select a valid and active category'
-        }, { status: 400 })
-      }
-
-      if (category.categoryLevel !== 1) {
-        return NextResponse.json({
-          success: false,
-          error: 'Furniture sets can only be assigned to parent categories (level 1)'
-        }, { status: 400 })
-      }
-      
-      categoryName = category.categoryName
-    }
-
-    // Check for duplicate name if name is being updated
-    if (setName !== undefined && setName.trim() !== existingSet.setName) {
-      const duplicateSet = await prisma.furnitureSet.findFirst({
-        where: {
-          setName: {
-            equals: setName.trim(),
-            mode: 'insensitive'
-          },
-          setId: {
-            not: setId
-          }
-        }
-      })
-
-      if (duplicateSet) {
-        return NextResponse.json({
-          success: false,
-          error: 'Another furniture set with this name already exists'
-        }, { status: 400 })
-      }
-    }
-
-    // Validate furniture items if provided
-    if (parsedFurnitureItems !== undefined) {
-      if (!Array.isArray(parsedFurnitureItems) || parsedFurnitureItems.length === 0) {
-        return NextResponse.json({
-          success: false,
-          error: 'At least one furniture item must be in the set'
-        }, { status: 400 })
-      }
-
-      const furnitureIds = parsedFurnitureItems.map((item: FurnitureItemInput) => parseInt(String(item.furnitureId))).filter((id: number) => !isNaN(id))
-      
-      if (furnitureIds.length === 0) {
-        return NextResponse.json({
-          success: false,
-          error: 'No valid furniture IDs found in furniture items'
-        }, { status: 400 })
-      }
-
-      // Check if all furniture items exist and are active
-      const existingFurniture = await prisma.furniture.findMany({
-        where: { 
-          furnitureId: { in: furnitureIds },
-          isActive: true 
-        }
-      })
-
-      if (existingFurniture.length !== furnitureIds.length) {
-        return NextResponse.json({
-          success: false,
-          error: 'Some furniture items could not be found or are inactive'
-        }, { status: 400 })
-      }
-
-      // Validate quantities
-      for (const item of parsedFurnitureItems) {
-        if (!item.quantity || isNaN(parseInt(String(item.quantity))) || parseInt(String(item.quantity)) <= 0) {
-          return NextResponse.json({
-            success: false,
-            error: 'All furniture items must have valid quantities (greater than 0)'
-          }, { status: 400 })
-        }
-      }
-    }
-
-    // Main transaction - Update furniture set data
     const updatedSet = await prisma.$transaction(async (tx) => {
-      // 1. Update main set data
       const updateData: any = {}
-      
       if (setName !== undefined) updateData.setName = setName.trim()
       if (categoryId !== undefined) updateData.categoryId = categoryId ? parseInt(categoryId) : null
       if (description !== undefined) updateData.description = description?.trim() || null
       if (price !== undefined) updateData.price = parseFloat(price)
       if (isActive !== undefined) updateData.isActive = Boolean(isActive === 'true' || isActive === true)
 
-      const set = await tx.furnitureSet.update({
-        where: { setId },
-        data: updateData
-      })
+      const set = await tx.furnitureSet.update({ where: { setId }, data: updateData })
 
-      // 2. Update colors (optional)
       if (parsedColorIds !== undefined) {
-        await tx.furnitureSetColor.deleteMany({
-          where: { furnitureSetId: setId }
-        })
-
+        await tx.furnitureSetColor.deleteMany({ where: { furnitureSetId: setId } })
         if (Array.isArray(parsedColorIds) && parsedColorIds.length > 0) {
-          const colorIdNumbers = parsedColorIds.map((id: number) => parseInt(String(id))).filter((id: number) => !isNaN(id))
-          
-          if (colorIdNumbers.length > 0) {
-            const existingColors = await tx.color.findMany({
-              where: { 
-                colorId: { in: colorIdNumbers },
-                isActive: true 
-              }
-            })
-
-            if (existingColors.length === colorIdNumbers.length) {
-              await tx.furnitureSetColor.createMany({
-                data: colorIdNumbers.map((colorId: number) => ({
-                  furnitureSetId: setId,
-                  colorId,
-                  isAvailable: true
-                }))
-              })
-            }
-          }
+          await tx.furnitureSetColor.createMany({
+            data: parsedColorIds.map((cid: number) => ({ furnitureSetId: setId, colorId: parseInt(String(cid)), isAvailable: true }))
+          })
         }
       }
 
-      // 3. Update properties
-      if (parsedProperties !== undefined) {
-        await tx.furnitureSetProperty.deleteMany({
-          where: { furnitureSetId: setId }
-        })
-
-        if (Array.isArray(parsedProperties) && parsedProperties.length > 0) {
-          const propertyIds = parsedProperties.map((p: { propertyId: number }) => parseInt(String(p.propertyId))).filter((id: number) => !isNaN(id))
-          
-          if (propertyIds.length > 0) {
-            const existingProperties = await tx.property.findMany({
-              where: { 
-                propertyId: { in: propertyIds },
-                isActive: true 
-              }
-            })
-
-            if (existingProperties.length === propertyIds.length) {
-              await tx.furnitureSetProperty.createMany({
-                data: parsedProperties.map((prop: { propertyId: number; propertyValue: string }) => ({
-                  furnitureSetId: setId,
-                  propertyId: parseInt(String(prop.propertyId)),
-                  propertyValue: prop.propertyValue.trim(),
-                  isActive: true
-                }))
-              })
-            }
-          }
-        }
-      }
-
-      // 4. Update furniture items
       if (parsedFurnitureItems !== undefined) {
-        await tx.furnitureSetAndFurniture.deleteMany({
-          where: { furnitureSetId: setId }
-        })
-
+        await tx.furnitureSetAndFurniture.deleteMany({ where: { furnitureSetId: setId } })
         if (Array.isArray(parsedFurnitureItems) && parsedFurnitureItems.length > 0) {
           await tx.furnitureSetAndFurniture.createMany({
-            data: parsedFurnitureItems.map((item: FurnitureItemInput, index: number) => ({
+            data: parsedFurnitureItems.map((item: any, idx: number) => ({
               furnitureSetId: setId,
-              furnitureId: parseInt(String(item.furnitureId)),
-              quantity: parseInt(String(item.quantity)),
-              sortOrder: item.sortOrder || index + 1
+              furnitureId: parseInt(item.furnitureId),
+              quantity: parseInt(item.quantity),
+              sortOrder: item.sortOrder || idx + 1
             }))
           })
         }
       }
 
       return set
-    }, {
-      timeout: 30000
     })
 
-    // Post-transaction image operations
+    // Image operations
+    if (parsedRemoveImageIds?.length > 0) {
+      for (const imgId of parsedRemoveImageIds) await deleteImage(parseInt(imgId), 'furniture-sets')
+    }
 
-    // 1. Remove images if specified - use new deleteImage function
-    let imageDeleteResults = []
-    if (parsedRemoveImageIds && parsedRemoveImageIds.length > 0) {
-      try {
-        console.log(`🗑️ Removing furniture-set images: ${parsedRemoveImageIds}`)
-        for (const imageId of parsedRemoveImageIds) {
-          const deleted = await deleteImage(parseInt(imageId), 'furniture-sets')
-          imageDeleteResults.push({ imageId, deleted })
-          if (deleted) {
-            console.log(`✅ Successfully deleted furniture-set image: ${imageId}`)
-          } else {
-            console.log(`❌ Failed to delete furniture-set image: ${imageId}`)
-          }
-        }
-      } catch (error) {
-        console.error('Furniture-set image deletion error:', error)
+    if (parsedUpdateImageOrder?.length > 0) {
+      for (const ord of parsedUpdateImageOrder) {
+        await prisma.furnitureSetImage.updateMany({
+          where: { furnitureSetId: setId, imageId: parseInt(ord.imageId) },
+          data: { sortOrder: parseInt(ord.sortOrder), imageType: parseInt(ord.sortOrder) === 1 ? 'main' : 'gallery' }
+        })
       }
     }
 
-    // 2. Update image sort orders if specified
-    if (parsedUpdateImageOrder && parsedUpdateImageOrder.length > 0) {
-      try {
-        console.log(`🔄 Updating furniture-set image sort orders:`, parsedUpdateImageOrder)
-        
-        for (const orderUpdate of parsedUpdateImageOrder) {
-          const { imageId, sortOrder } = orderUpdate // Use sortOrder instead of newSortOrder
-          
-          // Update database sortOrder
-          await prisma.furnitureSetImage.updateMany({
-            where: {
-              furnitureSetId: setId,
-              imageId: parseInt(imageId)
-            },
-            data: {
-              sortOrder: parseInt(sortOrder),
-              imageType: parseInt(sortOrder) === 1 ? 'main' : 'gallery' // Update imageType based on sortOrder
-            }
-          })
-          
-          console.log(`✅ Updated furniture-set image ${imageId} sortOrder to ${sortOrder}`)
-        }
-        
-      } catch (error) {
-        console.error('Furniture-set image sort order update error:', error)
-      }
-    }
-
-    // 3. Process already uploaded S3 images (Direct Upload)
-    let directS3Results: any[] = []
-    if (parsedUploadedImages && Array.isArray(parsedUploadedImages)) {
-      for (const img of parsedUploadedImages) {
-        try {
-          const imageRecord = await prisma.image.create({
-            data: {
-              fileName: img.fileName,
-              filePath: img.s3Key,
-              altText: img.altText || `${setName} - Image`,
-              fileSize: img.fileSize,
-              fileType: 'webp'
-            }
-          })
-
-          await prisma.furnitureSetImage.create({
-            data: {
-              furnitureSetId: setId,
-              imageId: imageRecord.imageId,
-              imageType: img.imageType || 'gallery',
-              sortOrder: img.sortOrder || 1,
-              isActive: true
-            }
-          })
-          directS3Results.push({ ...img, success: true })
-        } catch (s3Error) {
-          console.error('Error saving direct S3 image to DB during set update:', s3Error)
-        }
-      }
-    }
-
-    // 4. Process new image files if provided (Fallback)
-    let newImageResults: any[] = []
     if (imageFiles.length > 0) {
-      try {
-        const categorySlug = slugifyCategory(existingSet.category?.categoryName || 'unknown')
-        
-        // Use the centralized S3/Image processing function
-        newImageResults = await processImageFiles(
-          imageFiles,
-          setId,
-          categorySlug,
-          'furniture-sets'
-        )
-        
-        console.log(`✅ Processed ${newImageResults.length} new furniture-set images`)
-        
-      } catch (error) {
-        console.error('New furniture-set image processing error:', error)
-      }
+      const categorySlug = slugifyCategory(existingSet.category?.categoryName || 'unknown')
+      await processImageFiles(imageFiles, setId, categorySlug, 'furniture-sets')
     }
 
-    // Get updated furniture set with all relations
-    const finalSet = await prisma.furnitureSet.findUnique({
-      where: { setId },
-      include: {
-        category: {
-          select: {
-            categoryId: true,
-            categoryName: true,
-            categoryPath: true,
-            categoryLevel: true
-          }
-        },
-        furnitureSetColors: {
-          include: {
-            color: {
-              select: {
-                colorId: true,
-                colorName: true,
-                colorCode: true
-              }
-            }
-          }
-        },
-        furnitureSetProperties: {
-          include: {
-            property: {
-              select: {
-                propertyId: true,
-                propertyName: true,
-                propertyType: true
-              }
-            }
-          }
-        },
-        furnitureSetImages: {
-          where: { isActive: true },
-          include: {
-            image: {
-              select: {
-                imageId: true,
-                fileName: true,
-                filePath: true,
-                altText: true,
-                description: true,
-                width: true,
-                height: true,
-                fileSize: true
-              }
-            }
-          },
-          orderBy: [
-            { imageType: 'asc' },
-            { sortOrder: 'asc' }
-          ]
-        },
-        furnitureSetItems: {
-          include: {
-            furniture: {
-              select: {
-                furnitureId: true,
-                furnitureName: true,
-                furnitureType: true,
-                price: true,
-                isActive: true
-              }
-            }
-          },
-          orderBy: { sortOrder: 'asc' }
-        },
-        _count: {
-          select: {
-            furnitureSetColors: true,
-            furnitureSetProperties: true,
-            furnitureSetImages: true,
-            furnitureSetItems: true
-          }
-        }
-      }
-    })
-
-    // Add URLs to images and calculate stats
-    const updateFurnitureItems = finalSet && 'furnitureSetItems' in finalSet ? finalSet.furnitureSetItems : []
-    const setWithUrls = {
-      ...finalSet,
-      furnitureSetImages: finalSet?.furnitureSetImages.map(si => ({
-        ...si,
-        image: {
-          ...si.image,
-          url: toPublicUrl(si.image.filePath)
-        }
-      })) || [],
-      stats: {
-        totalQuantity: updateFurnitureItems.reduce((sum, item) => sum + item.quantity, 0),
-        uniqueFurnitureCount: updateFurnitureItems.length,
-        totalIndividualPrice: updateFurnitureItems.reduce((sum, item) => sum + (Number(item.furniture.price) * item.quantity), 0),
-        setSavings: finalSet ? (updateFurnitureItems.reduce((sum, item) => sum + (Number(item.furniture.price) * item.quantity), 0) - Number(finalSet.price)) : 0
-      }
+    try {
+      (revalidateTag as any)('products');
+      (revalidateTag as any)('home-products');
+      (revalidatePath as any)('/');
+      (revalidatePath as any)(`/product-detail-furniture-set/${setId}`);
+    } catch (e) {
+      console.error('Revalidation error:', e);
     }
 
-    const response: any = {
-      success: true,
-      message: 'Furniture set successfully updated',
-      data: setWithUrls
-    }
-
-    // Add image operation results
-    if (imageFiles.length > 0 || (parsedRemoveImageIds && parsedRemoveImageIds.length > 0)) {
-      response.imageOperations = {
-        uploaded: newImageResults.length,
-        deleted: imageDeleteResults.length,
-        uploadResults: newImageResults,
-        deleteResults: imageDeleteResults,
-        paths: newImageResults.map(img => ({
-          fileName: img.fileName,
-          sortOrder: img.sortOrder,
-          publicUrl: img.publicUrl,
-          savedPath: img.savedPath
-        }))
-      }
-    }
-
-    return NextResponse.json(response)
-
+    return NextResponse.json({ success: true, data: updatedSet })
   } catch (error) {
-    console.error('Furniture set update error:', error)
-    
-    return NextResponse.json({
-      success: false,
-      message: 'Error occurred while updating furniture set',
-      error: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 })
+    console.error(error)
+    return NextResponse.json({ success: false, error: 'Update failed' }, { status: 500 })
   }
 }
 
-// DELETE - Enhanced furniture set deletion
+// DELETE
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -1032,109 +569,35 @@ export async function DELETE(
     const { id } = await params
     const setId = parseInt(id)
 
-    if (isNaN(setId) || setId <= 0) {
-      return NextResponse.json({
-        success: false,
-        error: 'Invalid furniture set ID'
-      }, { status: 400 })
-    }
-
-    // Check furniture set and related images
     const furnitureSet = await prisma.furnitureSet.findUnique({
       where: { setId },
-      include: {
-        furnitureSetImages: {
-          include: {
-            image: {
-              select: {
-                imageId: true,
-                fileName: true
-              }
-            }
-          }
-        },
-        _count: {
-          select: {
-            furnitureSetColors: true,
-            furnitureSetProperties: true,
-            furnitureSetImages: true,
-            furnitureSetItems: true
-          }
-        }
-      }
+      include: { furnitureSetImages: { include: { image: true } } }
     })
 
-    if (!furnitureSet) {
-      return NextResponse.json({
-        success: false,
-        error: 'Furniture set not found'
-      }, { status: 404 })
-    }
+    if (!furnitureSet) return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 })
 
-    // Collect image IDs
-    const imageIds = furnitureSet.furnitureSetImages.map(si => si.image.imageId)
+    const imageIds = furnitureSet.furnitureSetImages.map(si => si.imageId)
 
-    // Transaction to delete furniture set
     await prisma.$transaction(async (tx) => {
-      // Delete related records
-      await tx.furnitureSetImage.deleteMany({
-        where: { furnitureSetId: setId }
-      })
-      
-      await tx.furnitureSetProperty.deleteMany({
-        where: { furnitureSetId: setId }
-      })
-      
-      await tx.furnitureSetColor.deleteMany({
-        where: { furnitureSetId: setId }
-      })
-
-      await tx.furnitureSetAndFurniture.deleteMany({
-        where: { furnitureSetId: setId }
-      })
-
-      // Delete furniture set
-      await tx.furnitureSet.delete({
-        where: { setId }
-      })
+      await tx.furnitureSetImage.deleteMany({ where: { furnitureSetId: setId } })
+      await tx.furnitureSetAndFurniture.deleteMany({ where: { furnitureSetId: setId } })
+      await tx.furnitureSet.delete({ where: { setId } })
     })
 
-    // Delete images after successful transaction
-    let imageDeleteResults = []
-    if (imageIds.length > 0) {
-      try {
-        for (const imageId of imageIds) {
-          const deleteResult = await deleteImage(imageId, 'furniture-sets')
-          imageDeleteResults.push(deleteResult)
-        }
-      } catch (error) {
-        console.warn('Image deletion error:', error)
-      }
+    for (const imgId of imageIds) await deleteImage(imgId, 'furniture-sets')
+
+    try {
+      (revalidateTag as any)('products');
+      (revalidateTag as any)('home-products');
+      (revalidatePath as any)('/');
+      (revalidatePath as any)(`/product-detail-furniture-set/${setId}`);
+    } catch (e) {
+      console.error('Revalidation error:', e);
     }
 
-    return NextResponse.json({
-      success: true,
-      message: `"${furnitureSet.setName || 'Unnamed Set'}" furniture set successfully deleted`,
-      deletedItem: {
-        setId: furnitureSet.setId,
-        setName: furnitureSet.setName,
-        relatedData: {
-          colors: furnitureSet._count.furnitureSetColors,
-          properties: furnitureSet._count.furnitureSetProperties,
-          images: furnitureSet._count.furnitureSetImages,
-          furnitureItems: furnitureSet._count.furnitureSetItems
-        }
-      },
-      imageDeleteResults
-    })
-
+    return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Furniture set deletion error:', error)
-    
-    return NextResponse.json({
-      success: false,
-      message: 'Error occurred while deleting furniture set',
-      error: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 })
+    console.error(error)
+    return NextResponse.json({ success: false, error: 'Delete failed' }, { status: 500 })
   }
 }

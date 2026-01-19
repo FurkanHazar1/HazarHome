@@ -1,14 +1,14 @@
 // app/api/furniture/route.ts - Simplified Image Management System
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { 
-  slugifyCategory, 
-  validateImage, 
+import {
+  slugifyCategory,
+  validateImage,
   processImageFiles,
   toPublicUrl,
   deleteImage
 } from '@/lib/image-utils'
-
+import { revalidateTag, revalidatePath } from 'next/cache'
 // Type definitions
 interface PropertyInput {
   propertyId: number;
@@ -200,7 +200,13 @@ export async function GET(request: Request) {
       }
       
       return result
-    })
+    try {
+      (revalidateTag as any)('products');
+      (revalidateTag as any)('home-products');
+      (revalidatePath as any)('/');
+    } catch (e) {
+      console.error('Revalidation error:', e);
+    }
 
     return NextResponse.json({
       success: true,
@@ -411,6 +417,14 @@ export async function POST(request: Request) {
       }
     }
 
+    try {
+      (revalidateTag as any)('products');
+      (revalidateTag as any)('home-products');
+      (revalidatePath as any)('/');
+    } catch (e) {
+      console.error('Revalidation error:', e);
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Furniture successfully added',
@@ -490,7 +504,13 @@ export async function PATCH(request: Request) {
     const updated = await prisma.furniture.updateMany({
       where: { furnitureId: { in: ids.map(Number) } },
       data: { isActive }
-    })
+    try {
+      (revalidateTag as any)('products');
+      (revalidateTag as any)('home-products');
+      (revalidatePath as any)('/');
+    } catch (e) {
+      console.error('Revalidation error:', e);
+    }
 
     return NextResponse.json({
       success: true,

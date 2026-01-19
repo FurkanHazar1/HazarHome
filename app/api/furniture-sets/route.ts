@@ -7,6 +7,7 @@ import {
   toPublicUrl,
   deleteImage
 } from '@/lib/image-utils'
+import { revalidateTag, revalidatePath } from 'next/cache'
 
 // Type definitions
 interface PropertyInput {
@@ -792,7 +793,20 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json(response, { status: 201 })
+    try {
+      (revalidateTag as any)('products');
+      (revalidateTag as any)('home-products');
+      (revalidatePath as any)('/');
+    } catch (e) {
+      console.error('Revalidation error:', e);
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Furniture set successfully added',
+      data: furnitureSetWithUrls,
+      imageResults
+    }, { status: 201 })
 
   } catch (error) {
     console.error('Furniture set creation error:', error)
