@@ -24,16 +24,22 @@ const categoryMappings = {
 // Data Fetcher
 async function getCategoryProducts(categorySlug, subCategorySlug = null) {
   try {
-    const where: any = { isActive: true };
+    const where = { isActive: true };
     
     if (subCategorySlug) {
-      where.category = { categoryName: { equals: subCategorySlug.replace(/-/g, ' '), mode: 'insensitive' } };
+      const subCatName = subCategorySlug.replace(/-/g, ' ');
+      where.category = { 
+        categoryName: { equals: subCatName, mode: 'insensitive' } 
+      };
     } else if (categorySlug) {
-      where.category = { parent: { categoryName: { equals: categorySlug.replace(/-/g, ' '), mode: 'insensitive' } } };
+      const catName = categorySlug.replace(/-/g, ' ');
+      where.category = { 
+        parent: { categoryName: { equals: catName, mode: 'insensitive' } } 
+      };
     }
 
     const products = await prisma.furniture.findMany({
-      where,
+      where: where,
       include: {
         images: { where: { isActive: true }, include: { image: true }, orderBy: { sortOrder: 'asc' } },
         category: true
