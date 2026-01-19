@@ -7,7 +7,24 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import React from "react";
 
+import { toPublicUrl } from "@/lib/image-helpers";
+
 export const revalidate = 3600; // Cache for 1 hour
+
+export async function generateMetadata({ params }) {
+  const { id } = await params;
+  const product = await getSet(id);
+  
+  if (!product) return { title: "Takım Bulunamadı" };
+
+  return {
+    title: `${product.title} | Hazar Home`,
+    description: `${product.title} - ${product.description || 'Şık ve modern mobilya takımı.'} En uygun fiyatlarla Hazar Home'da.`,
+    openGraph: {
+      images: [toPublicUrl(product.imgSrc)],
+    },
+  };
+}
 
 async function getSet(id) {
   try {
@@ -66,8 +83,28 @@ export default async function page({ params }) {
   // Ensure type is set for tabs
   const productWithStatus = { ...product, type: 'furniture_set' };
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": product.title,
+    "image": toPublicUrl(product.imgSrc),
+    "description": product.description || product.title,
+    "brand": {
+      "@type": "Brand",
+      "name": "Hazar Home"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": `https://hazarhome.com/product-detail-furniture-set/${product.id}`,
+    }
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Header2 />
       <FurnitureSetDetailsPopup product={productWithStatus} />
       <FurnitureDetailsTab product={productWithStatus} />

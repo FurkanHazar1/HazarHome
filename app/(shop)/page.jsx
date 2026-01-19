@@ -22,6 +22,38 @@ export const metadata = {
   },
 };
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FurnitureStore",
+  "name": "Hazar Home",
+  "image": "https://hazarhome.com/images/logo/logo.svg",
+  "description": "Kaliteli mobilya, modern koltuk takımları ve ev dekorasyonunda estetiğin adresi.",
+  "url": "https://hazarhome.com",
+  "telephone": "+905335191329",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Topkapı Maltepe Yolu, Numara 4, Tek Merkez AVM",
+    "addressLocality": "Bayrampaşa",
+    "addressRegion": "Istanbul",
+    "postalCode": "34030",
+    "addressCountry": "TR"
+  },
+  "openingHoursSpecification": {
+    "@type": "OpeningHoursSpecification",
+    "dayOfWeek": [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday"
+    ],
+    "opens": "09:00",
+    "closes": "20:00"
+  }
+};
+
 // Data Fetching Functions using direct DB access to prevent build-time fetch errors
 async function getHeroSlides() {
   try {
@@ -134,6 +166,10 @@ export default async function page() {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div className="color-primary-2">
         <Announcment />
         <Header4 />

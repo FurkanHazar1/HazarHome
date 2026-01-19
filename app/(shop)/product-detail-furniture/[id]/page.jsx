@@ -10,7 +10,24 @@ import { getCategoryById } from "@/lib/category-mapping";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 
+import { toPublicUrl } from "@/lib/image-helpers";
+
 export const revalidate = 3600; // Cache for 1 hour
+
+export async function generateMetadata({ params }) {
+  const { id } = await params;
+  const product = await getProduct(id);
+  
+  if (!product) return { title: "Ürün Bulunamadı" };
+
+  return {
+    title: `${product.title} | Hazar Home`,
+    description: `${product.title} - ${product.description || 'Kaliteli ve şık mobilya.'} Uygun fiyat ve taksit seçenekleriyle Hazar Home'da.`,
+    openGraph: {
+      images: [toPublicUrl(product.imgSrc)],
+    },
+  };
+}
 
 // Standard fetch function (More stable for Next.js 16)
 async function getProduct(id) {
@@ -62,9 +79,30 @@ export default async function page({ params }) {
   if (!product) {
     notFound();
   }
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": product.title,
+    "image": toPublicUrl(product.imgSrc),
+    "description": product.description || product.title,
+    "brand": {
+      "@type": "Brand",
+      "name": "Hazar Home"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": `https://hazarhome.com/product-detail-furniture/${product.id}`,
+
+    }
+  };
   
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Header2 />
       <FurnitureDetailsPopup product={product} />
       <FurnitureDetailsTab product={product} />
