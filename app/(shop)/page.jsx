@@ -19,7 +19,9 @@ export const metadata = {
 // Data Fetching Functions
 async function getHeroSlides() {
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-  const res = await fetch(`${baseUrl}/api/hero?activeOnly=true`, { next: { revalidate: 3600 } });
+  const res = await fetch(`${baseUrl}/api/hero?activeOnly=true`, { 
+    next: { revalidate: 3600, tags: ['hero-slides'] } 
+  });
   if (!res.ok) return [];
   const data = await res.json();
   return Array.isArray(data) ? data : (data.data || []);
@@ -27,7 +29,9 @@ async function getHeroSlides() {
 
 async function getLookbookFeatures() {
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-  const res = await fetch(`${baseUrl}/api/features?active=true`, { next: { revalidate: 3600 } });
+  const res = await fetch(`${baseUrl}/api/features?active=true`, { 
+    next: { revalidate: 3600, tags: ['features'] } 
+  });
   if (!res.ok) return [];
   const data = await res.json();
   return Array.isArray(data) ? data : (data.data || []);
@@ -35,7 +39,9 @@ async function getLookbookFeatures() {
 
 async function getRandomProducts() {
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-  const res = await fetch(`${baseUrl}/api/products?random=true&limit=8&active=true&includeDetails=true`, { next: { revalidate: 3600 } });
+  const res = await fetch(`${baseUrl}/api/products?random=true&limit=8&active=true&includeDetails=true`, { 
+    next: { revalidate: 3600, tags: ['products'] } 
+  });
   if (!res.ok) return [];
   const data = await res.json();
   return data.success ? data.data : [];
