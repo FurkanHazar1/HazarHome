@@ -40,14 +40,22 @@ async function fetchProducts(categorySlug = null, subCategorySlug = null) {
   }
 }
 
-export default function ShopDefault({ category = null, subCategory = null, categories = null, page = 1, pageSize = 12 }) {
+export default function ShopDefault({ 
+  category = null, 
+  subCategory = null, 
+  categories = null, 
+  page = 1, 
+  pageSize = 12,
+  initialProducts = null 
+}) {
   const [gridItems, setGridItems] = useState(4);
-  const [products, setProducts] = useState([]);
-  const [finalSorted, setFinalSorted] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState(initialProducts || []);
+  const [finalSorted, setFinalSorted] = useState(initialProducts || []);
+  const [loading, setLoading] = useState(!initialProducts);
 
   // Kategori veya alt kategoriye göre ürünleri API'den çek
   useEffect(() => {
+    if (initialProducts) return; // Don't fetch if already have data
     async function loadProducts() {
       setLoading(true);
       const fetchedProducts = await fetchProducts(category, subCategory);

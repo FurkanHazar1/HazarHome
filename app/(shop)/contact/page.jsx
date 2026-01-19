@@ -5,9 +5,12 @@ import Map2 from "@/components/othersPages/contact/Map2";
 import React from "react";
 
 export const metadata = {
-  title: "Contact 2 || Ecomus - Ultimate Nextjs Ecommerce Template",
-  description: "Ecomus - Ultimate Nextjs Ecommerce Template",
+  title: "İletişim || Hazar Home - Ferahlığın Anahtarı",
+  description: "Hazar Home ile iletişime geçin. Adres, telefon ve konum bilgileri.",
 };
+
+export const revalidate = 86400; // Cache for 24 hours
+
 export default function page() {
   return (
     <>

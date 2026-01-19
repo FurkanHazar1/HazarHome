@@ -10,187 +10,119 @@ import {
   yatakOdasiCategories 
 } from "@/data/menu";
 import { notFound } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+
+export const revalidate = 3600; // 1 hour cache
 
 // Kategori mapping'i
 const categoryMappings = {
-  'oturma-odasi': {
-    title: 'Oturma Odası Takımları',
-    description: 'Oturma odası için en yeni ve şık mobilyalar',
-    categories: oturmaOdasiCategories,
-    mainCategory: 'oturma-odasi'
-  },
-  'yemek-odasi': {
-    title: 'Yemek Odası Takımları',
-    description: 'Yemek odası için en yeni ve şık mobilyalar',
-    categories: yemekOdasiCategories,
-    mainCategory: 'yemek-odasi'
-  },
-  'yatak-odasi': {
-    title: 'Yatak Odası Takımları',
-    description: 'Yatak odası için en yeni ve şık mobilyalar',
-    categories: yatakOdasiCategories,
-    mainCategory: 'yatak-odasi'
-  }
+  'oturma-odasi': { title: 'Oturma Odası Takımları', description: 'Oturma odası için en yeni ve şık mobilyalar', categories: oturmaOdasiCategories, mainCategory: 'oturma-odasi' },
+  'yemek-odasi': { title: 'Yemek Odası Takımları', description: 'Yemek odası için en yeni ve şık mobilyalar', categories: yemekOdasiCategories, mainCategory: 'yemek-odasi' },
+  'yatak-odasi': { title: 'Yatak Odası Takımları', description: 'Yatak odası için en yeni ve şık mobilyalar', categories: yatakOdasiCategories, mainCategory: 'yatak-odasi' }
 };
+
+// Data Fetcher
+async function getCategoryProducts(categorySlug, subCategorySlug = null) {
+  try {
+    const where: any = { isActive: true };
+    
+    if (subCategorySlug) {
+      where.category = { categoryName: { equals: subCategorySlug.replace(/-/g, ' '), mode: 'insensitive' } };
+    } else if (categorySlug) {
+      where.category = { parent: { categoryName: { equals: categorySlug.replace(/-/g, ' '), mode: 'insensitive' } } };
+    }
+
+    const products = await prisma.furniture.findMany({
+      where,
+      include: {
+        images: { where: { isActive: true }, include: { image: true }, orderBy: { sortOrder: 'asc' } },
+        category: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    return products.map(p => ({
+      ...p,
+      id: p.furnitureId,
+      title: p.furnitureName,
+      imgSrc: p.images.find(img => img.sortOrder === 1)?.image?.filePath || p.images[0]?.image?.filePath,
+      imgHoverSrc: p.images.find(img => img.sortOrder === 2)?.image?.filePath || p.images[0]?.image?.filePath,
+      type: 'furniture'
+    }));
+  } catch (error) {
+    console.error("Error fetching category products:", error);
+    return [];
+  }
+}
 
 // Alt kategoriler için mapping
 const getSubCategoryMapping = () => {
   const subCategories = {};
-  
-  // Oturma odası alt kategorileri
-  oturmaOdasiCategories.forEach(item => {
+  [...oturmaOdasiCategories, ...yemekOdasiCategories, ...yatakOdasiCategories].forEach(item => {
     const slug = item.href.replace('/', '');
     subCategories[slug] = {
       title: item.name,
       description: `${item.name} kategorisindeki tüm ürünler`,
-      parentCategory: 'oturma-odasi',
+      parentCategory: item.href.includes('oturma') ? 'oturma-odasi' : item.href.includes('yemek') ? 'yemek-odasi' : 'yatak-odasi',
       categoryData: item
     };
   });
-  
-  // Yemek odası alt kategorileri
-  yemekOdasiCategories.forEach(item => {
-    const slug = item.href.replace('/', '');
-    subCategories[slug] = {
-      title: item.name,
-      description: `${item.name} kategorisindeki tüm ürünler`,
-      parentCategory: 'yemek-odasi',
-      categoryData: item
-    };
-  });
-  
-  // Yatak odası alt kategorileri
-  yatakOdasiCategories.forEach(item => {
-    const slug = item.href.replace('/', '');
-    subCategories[slug] = {
-      title: item.name,
-      description: `${item.name} kategorisindeki tüm ürünler`,
-      parentCategory: 'yatak-odasi',
-      categoryData: item
-    };
-    
-    // URL encoding sorunları için alternatif slug'ları da ekle
-    if (slug === 'gardıroplar') {
-      // Türkçe karakter problemleri için farklı varyasyonları da ekle
-      subCategories['gardiroplar'] = subCategories[slug];
-      subCategories['gardırpolar'] = subCategories[slug]; // URL encoding sonucu olabilir
-    }
-  });
-  
   return subCategories;
 };
-
-export async function generateMetadata({ params }) {
-  const { category } = await params;
-  const categoryData = categoryMappings[category];
-  const subCategoryData = getSubCategoryMapping()[category];
-  
-  if (categoryData) {
-    return {
-      title: `${categoryData.title} || HazarHome`,
-      description: categoryData.description,
-    };
-  } else if (subCategoryData) {
-    return {
-      title: `${subCategoryData.title} || HazarHome`,
-      description: subCategoryData.description,
-    };
-  }
-  
-  return {
-    title: "Kategori Bulunamadı || HazarHome",
-    description: "Aradığınız kategori bulunamadı",
-  };
-}
 
 export default async function CategoryPage({ params, searchParams }) {
   const { category } = await params;
   const resolvedSearchParams = await searchParams;
   const page = resolvedSearchParams?.page ? parseInt(resolvedSearchParams.page, 10) : 1;
   const pageSize = 12;
+  
   const categoryData = categoryMappings[category];
   const subCategoryData = getSubCategoryMapping()[category];
 
-  // Ana kategori kontrolü
   if (categoryData) {
+    const products = await getCategoryProducts(category);
     return (
       <>
-        <Topbar1 />
-        <Header2 />
+        <Topbar1 /><Header2 />
         <div className="tf-page-title bg_grey-13" style={{ backgroundImage: 'none' }}>
           <div className="container-full">
             <div className="heading text-center">{categoryData.title}</div>
-            <p className="text-center text-2 text_black-2 mt_5">
-              {categoryData.description}
-            </p>
+            <p className="text-center text-2 text_black-2 mt_5">{categoryData.description}</p>
           </div>
         </div>
-        <div className="bg_white">
-          <Subcollections categories={categoryData.categories} />
-        </div>
-        <ShopDefault category={categoryData.mainCategory} page={page} pageSize={pageSize} />
+        <div className="bg_white"><Subcollections categories={categoryData.categories} /></div>
+        <ShopDefault category={categoryData.mainCategory} page={page} pageSize={pageSize} initialProducts={products} />
         <Footer1 />
       </>
     );
   }
 
-  // Alt kategori kontrolü
   if (subCategoryData) {
-    // Ana kategorinin tüm alt kategorilerini al
-    let parentCategories = null;
-    if (subCategoryData.parentCategory === 'oturma-odasi') {
-      parentCategories = oturmaOdasiCategories;
-    } else if (subCategoryData.parentCategory === 'yemek-odasi') {
-      parentCategories = yemekOdasiCategories;
-    } else if (subCategoryData.parentCategory === 'yatak-odasi') {
-      parentCategories = yatakOdasiCategories;
-    }
+    const products = await getCategoryProducts(null, category);
+    let parentCategories = subCategoryData.parentCategory === 'oturma-odasi' ? oturmaOdasiCategories : subCategoryData.parentCategory === 'yemek-odasi' ? yemekOdasiCategories : yatakOdasiCategories;
 
     return (
       <>
-        <Topbar1 />
-        <Header2 />
+        <Topbar1 /><Header2 />
         <div className="tf-page-title bg_grey-13" style={{ backgroundImage: 'none' }}>
           <div className="container-full">
             <div className="heading text-center">{subCategoryData.title}</div>
-            <p className="text-center text-2 text_black-2 mt_5">
-              {subCategoryData.description}
-            </p>
+            <p className="text-center text-2 text_black-2 mt_5">{subCategoryData.description}</p>
           </div>
         </div>
-        {/* Ana kategorinin tüm alt kategorilerini göster */}
-        <div className="bg_white">
-          {parentCategories && <Subcollections categories={parentCategories} />}
-        </div>
-        <ShopDefault 
-          category={subCategoryData.parentCategory} 
-          subCategory={category}
-          page={page}
-          pageSize={pageSize}
-        />
+        <div className="bg_white"><Subcollections categories={parentCategories} /></div>
+        <ShopDefault category={subCategoryData.parentCategory} subCategory={category} page={page} pageSize={pageSize} initialProducts={products} />
         <Footer1 />
       </>
     );
   }
 
-  // Kategori bulunamadıysa 404
   notFound();
 }
 
-// Static generation için desteklenen kategorileri export et
 export async function generateStaticParams() {
-  const allCategories = [];
-  
-  // Ana kategoriler
-  Object.keys(categoryMappings).forEach(key => {
-    allCategories.push({ category: key });
-  });
-  
-  // Alt kategoriler
-  const subCategories = getSubCategoryMapping();
-  Object.keys(subCategories).forEach(key => {
-    allCategories.push({ category: key });
-  });
-  
-  return allCategories;
+  return [
+    ...Object.keys(categoryMappings).map(key => ({ category: key })),
+    ...Object.keys(getSubCategoryMapping()).map(key => ({ category: key }))
+  ];
 }

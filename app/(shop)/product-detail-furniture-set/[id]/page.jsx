@@ -9,60 +9,64 @@ import FurnitureSetDetailsPopup from "@/components/shopDetails/FurnitureSetDetai
 import { getCategoryById } from "@/lib/category-mapping";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { unstable_cache } from "next/cache";
 
-export const revalidate = 3600; // Cache for 1 hour
+export const revalidate = 3600; // Fallback 1 hour
 
-// Fetch data directly from DB
-async function getProduct(id) {
-  try {
-    const setId = parseInt(id);
-    if (isNaN(setId)) return null;
+// Fetch set data with caching
+const getCachedSet = unstable_cache(
+  async (id) => {
+    try {
+      const setId = parseInt(id);
+      if (isNaN(setId)) return null;
 
-    const product = await prisma.furnitureSet.findUnique({
-      where: { setId },
-      include: {
-        category: true,
-        furnitureSetImages: {
-          include: { image: true },
-          orderBy: { sortOrder: 'asc' }
-        },
-        furnitureSetItems: {
-          include: {
-            furniture: {
-              include: {
-                images: { include: { image: true }, take: 1 }
+      const product = await prisma.furnitureSet.findUnique({
+        where: { setId },
+        include: {
+          category: true,
+          furnitureSetImages: {
+            include: { image: true },
+            orderBy: { sortOrder: 'asc' }
+          },
+          furnitureSetItems: {
+            include: {
+              furniture: {
+                include: {
+                  images: { include: { image: true }, take: 1 }
+                }
               }
             }
           }
         }
-      }
-    });
+      });
 
-    if (!product) return null;
+      if (!product) return null;
 
-    // Transform to match component expectations
-    return {
-      ...product,
-      id: product.setId,
-      title: product.setName,
-      imgSrc: product.furnitureSetImages?.[0]?.image?.filePath,
-      categorySlug: product.category?.categoryName?.toLowerCase() || 'furniture-set',
-      setItems: product.furnitureSetItems.map(item => ({
-        id: item.furnitureId,
-        name: item.furniture?.furnitureName,
-        quantity: item.quantity,
-        image: item.furniture?.images?.[0]?.image?.filePath
-      }))
-    };
-  } catch (error) {
-    console.error('Error fetching set directly:', error);
-    return null;
-  }
-}
+      return {
+        ...product,
+        id: product.setId,
+        title: product.setName,
+        imgSrc: product.furnitureSetImages?.[0]?.image?.filePath,
+        categorySlug: product.category?.categoryName?.toLowerCase() || 'furniture-set',
+        setItems: product.furnitureSetItems.map(item => ({
+          id: item.furnitureId,
+          name: item.furniture?.furnitureName,
+          quantity: item.quantity,
+          image: item.furniture?.images?.[0]?.image?.filePath
+        }))
+      };
+    } catch (error) {
+      console.error('Error fetching set:', error);
+      return null;
+    }
+  },
+  ['set-detail'],
+  { revalidate: 3600, tags: ['products'] }
+);
 
 export default async function page({ params }) {
   const { id } = await params;
-  const product = await getProduct(id);
+  const product = await getCachedSet(id);
   
   if (!product) {
     notFound();

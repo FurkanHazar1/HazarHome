@@ -9,62 +9,60 @@ import FurnitureDetailsPopup from "@/components/shopDetails/FurnitureDetailsPopu
 import { getCategoryById } from "@/lib/category-mapping";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { unstable_cache } from "next/cache";
 
-export const revalidate = 3600; // Cache for 1 hour
+export const revalidate = 3600; // Fallback 1 hour
 
-// Fetch data directly from DB
-async function getProduct(id) {
-  try {
-    const furnitureId = parseInt(id);
-    if (isNaN(furnitureId)) return null;
+// Fetch data with caching and tagging
+const getCachedProduct = unstable_cache(
+  async (id) => {
+    try {
+      const furnitureId = parseInt(id);
+      if (isNaN(furnitureId)) return null;
 
-    const product = await prisma.furniture.findUnique({
-      where: { furnitureId },
-      include: {
-        category: true,
-        images: {
-          include: {
-            image: true
+      const product = await prisma.furniture.findUnique({
+        where: { furnitureId },
+        include: {
+          category: true,
+          images: {
+            include: { image: true },
+            orderBy: { sortOrder: 'asc' }
           },
-          orderBy: { sortOrder: 'asc' }
-        },
-        properties: {
-          include: {
-            property: true
-          }
-        },
-        colors: {
-          include: {
-            color: true
+          properties: {
+            include: { property: true }
+          },
+          colors: {
+            include: { color: true }
           }
         }
-      }
-    });
+      });
 
-    if (!product) return null;
+      if (!product) return null;
 
-    // Transform to match component expectations
-    return {
-      ...product,
-      id: product.furnitureId,
-      title: product.furnitureName,
-      imgSrc: product.images?.[0]?.image?.filePath,
-      categorySlug: product.category?.categoryName?.toLowerCase() || 'furniture',
-      colors: product.colors.map(c => ({
-        id: c.colorId,
-        name: c.color.colorName,
-        value: c.color.colorCode
-      }))
-    };
-  } catch (error) {
-    console.error('Error fetching product directly:', error);
-    return null;
-  }
-}
+      return {
+        ...product,
+        id: product.furnitureId,
+        title: product.furnitureName,
+        imgSrc: product.images?.[0]?.image?.filePath,
+        categorySlug: product.category?.categoryName?.toLowerCase() || 'furniture',
+        colors: product.colors.map(c => ({
+          id: c.colorId,
+          name: c.color.colorName,
+          value: c.color.colorCode
+        }))
+      };
+    } catch (error) {
+      console.error('Error fetching product:', error);
+      return null;
+    }
+  },
+  ['product-detail'],
+  { revalidate: 3600, tags: ['products'] }
+);
 
 export default async function page({ params }) {
   const { id } = await params;
-  const product = await getProduct(id);
+  const product = await getCachedProduct(id);
   
   if (!product) {
     notFound();
