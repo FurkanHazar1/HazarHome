@@ -1,32 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* Performance Optimizations - Restricted to Shop parts to avoid breaking Admin Panel */
-.swiper-slide, .img-product, .hero-image-fixed, .tf-product-media-main, .tf-product-media-thumbs {
-  backface-visibility: hidden;
-  transform: translateZ(0);
-  -webkit-transform: translate3d(0,0,0);
-  perspective: 1000;
-  will-change: transform;
-}
-
-/* Limit optimizations to specific shop lists */
-.properties-list, .set-items-list {
-  contain: content;
-}
-
-/* Avoid global img content-visibility as it breaks admin icons/logos */
-.card-product img, .img-slider img {
-  content-visibility: auto;
-}
-
-/* Smooth Scrolling for the whole page */
-html {
-  scroll-behavior: smooth;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+@import "tailwindcss";
 
 :root {
   --background: #ffffff;
