@@ -30,12 +30,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 3. Aktif Mobilyalar
   const furnitures = await prisma.furniture.findMany({
     where: { isActive: true },
-    select: { furnitureId: true, updatedAt: true },
+    select: { furnitureId: true, createdAt: true },
   });
 
   const furnitureRoutes = furnitures.map((f) => ({
     url: `${baseUrl}/product-detail-furniture/${f.furnitureId}`,
-    lastModified: f.updatedAt,
+    lastModified: f.createdAt,
     changeFrequency: "weekly" as const,
     priority: 0.6,
   }));
@@ -43,12 +43,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 4. Aktif Takımlar
   const sets = await prisma.furnitureSet.findMany({
     where: { isActive: true },
-    select: { setId: true, updatedAt: true },
+    select: { setId: true, createdAt: true },
   });
 
   const setRoutes = sets.map((s) => ({
     url: `${baseUrl}/product-detail-furniture-set/${s.setId}`,
-    lastModified: s.updatedAt,
+    lastModified: s.createdAt,
     changeFrequency: "weekly" as const,
     priority: 0.7,
   }));
