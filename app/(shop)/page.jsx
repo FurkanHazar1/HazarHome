@@ -14,8 +14,12 @@ import { prisma } from "@/lib/prisma";
 import { toPublicUrl } from "@/lib/image-utils";
 
 export const metadata = {
-  title: "Hazar Home || Ferahlığın Anahtarı",
-  description: "Hazar Home - Kaliteli Mobilya ve Ev Dekorasyonu Ürünleri",
+  title: "Hazar Home || Ferahlığın Anahtarı | Modern Mobilya",
+  description: "Hazar Home ile evinize şıklık katın. En yeni koltuk takımları, yemek odaları, yatak odaları ve modern mobilya modelleri burada. Kalite ve konforu keşfedin.",
+  keywords: ["mobilya", "koltuk takımı", "yemek odası", "yatak odası", "hazar home", "istanbul mobilya","inegöl mobilya","salon takımı","modern mobilya"],
+  alternates: {
+    canonical: "https://hazarhome.com",
+  },
 };
 
 // Data Fetching Functions using direct DB access to prevent build-time fetch errors
