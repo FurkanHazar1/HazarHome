@@ -98,7 +98,16 @@ export default function FurnitureSetAdd() {
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files)
-      const compressedFiles = await Promise.all(newFiles.map(file => compressImage(file)))
+      
+      const compressedFiles: File[] = []
+      for (const file of newFiles) {
+        try {
+          const compressed = await compressImage(file)
+          compressedFiles.push(compressed)
+        } catch (error) {
+          console.error("Image compression failed for", file.name, error)
+        }
+      }
       
       setImages(prev => [...prev, ...compressedFiles])
       const urls = compressedFiles.map(file => URL.createObjectURL(file))
