@@ -801,12 +801,7 @@ export async function POST(request: Request) {
       console.error('Revalidation error:', e);
     }
 
-    return NextResponse.json({
-      success: true,
-      message: 'Furniture set successfully added',
-      data: furnitureSetWithUrls,
-      imageResults
-    }, { status: 201 })
+    return NextResponse.json(response, { status: 201 })
 
   } catch (error) {
     console.error('Furniture set creation error:', error)
@@ -957,6 +952,14 @@ export async function DELETE(request: Request) {
       }
     }
 
+    try {
+      (revalidateTag as any)('products');
+      (revalidateTag as any)('home-products');
+      (revalidatePath as any)('/');
+    } catch (e) {
+      console.error('Revalidation error:', e);
+    }
+
     return NextResponse.json({
       success: true,
       message: `${result.count} furniture sets successfully deleted`,
@@ -1022,6 +1025,14 @@ export async function PATCH(request: Request) {
       where: { setId: { in: validIds } },
       data: { isActive }
     })
+
+    try {
+      (revalidateTag as any)('products');
+      (revalidateTag as any)('home-products');
+      (revalidatePath as any)('/');
+    } catch (e) {
+      console.error('Revalidation error:', e);
+    }
 
     return NextResponse.json({
       success: true,

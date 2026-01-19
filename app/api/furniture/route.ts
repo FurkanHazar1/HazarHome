@@ -200,13 +200,7 @@ export async function GET(request: Request) {
       }
       
       return result
-    try {
-      (revalidateTag as any)('products');
-      (revalidateTag as any)('home-products');
-      (revalidatePath as any)('/');
-    } catch (e) {
-      console.error('Revalidation error:', e);
-    }
+    })
 
     return NextResponse.json({
       success: true,
@@ -483,6 +477,14 @@ export async function DELETE(request: Request) {
       }
     }
 
+    try {
+      (revalidateTag as any)('products');
+      (revalidateTag as any)('home-products');
+      (revalidatePath as any)('/');
+    } catch (e) {
+      console.error('Revalidation error:', e);
+    }
+
     return NextResponse.json({
       success: true,
       message: `${result.count} furniture successfully deleted`
@@ -504,6 +506,8 @@ export async function PATCH(request: Request) {
     const updated = await prisma.furniture.updateMany({
       where: { furnitureId: { in: ids.map(Number) } },
       data: { isActive }
+    });
+
     try {
       (revalidateTag as any)('products');
       (revalidateTag as any)('home-products');

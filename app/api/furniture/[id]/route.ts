@@ -672,7 +672,7 @@ export async function PUT(
         const categorySlug = slugifyCategory(existingFurniture.category?.categoryName || 'unknown')
         
         // Use the centralized S3/Image processing function
-        newImageResults = await processImageFiles(
+        const newImageResults = await processImageFiles(
           imageFiles,
           furnitureId,
           categorySlug,
