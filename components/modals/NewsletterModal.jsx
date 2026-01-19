@@ -47,7 +47,7 @@ export default function NewsletterModal() {
           <div className="modal-top" style={{ padding: 0 }}>
             <div style={{ width: '100%', aspectRatio: '4/3', overflow: 'hidden', borderRadius: '8px', background: '#ffffffff', marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <video
-                src={toPublicUrl("videos/hazarhome.mov")}
+                src={toPublicUrl("videos/hazarhome.mp4")}
                 autoPlay
                 loop
                 muted
