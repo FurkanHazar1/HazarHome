@@ -238,13 +238,13 @@ export default function MobileMenu() {
             </div>
             <div className="mb-notice">
               <Link href={`/contact`} className="text-need">
-                Yardıma mı ihtiyacınız var?
+                Bize Ulaşın
               </Link>
             </div>
             <ul className="mb-info">
               <li>
-                Adres: Mobilya Caddesi No:123, <br />
-                İstanbul, Türkiye
+                Adres: Topkapı Maltepe Yolu, Numara 4, Tek Merkez AVM, Stand No: 100-101-102 <br />
+                Bayrampaşa, Istanbul, Turkey
               </li>
               <li>
                 Email: <b>info@hazarhome.com</b>

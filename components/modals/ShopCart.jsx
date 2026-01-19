@@ -199,9 +199,6 @@ export default function ShopCart() {
                 </div>
                 <div className="tf-mini-cart-bottom-wrap">
                   {/* Total value removed */}
-                  <div className="tf-cart-tax">
-                    Kargo Ücretsizdir
-                  </div>
                   <div className="tf-mini-cart-line" />
                   <div className="tf-cart-checkbox">
                     <div className="tf-checkbox-wrapp">

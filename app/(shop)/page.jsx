@@ -60,7 +60,6 @@ export default async function page() {
         <Banner />
         <Products products={products} />
         <Lookbook features={featuresData} />
-        <Features />
         <ShopGram />
         <Footer1 bgColor="background-gray" />
       </div>

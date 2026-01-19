@@ -178,17 +178,6 @@ export default function Footer1({ bgColor = "" }) {
                   <div className="footer-menu_item">
                     © {new Date().getFullYear()} Hazar Home. Tüm Hakları Saklıdır.
                   </div>
-                  <div className="tf-payment">
-                    {paymentImages.map((image, index) => (
-                      <Image
-                        key={index}
-                        src={image.src}
-                        width={image.width}
-                        height={image.height}
-                        alt={image.alt}
-                      />
-                    ))}
-                  </div>
                 </div>
               </div>
             </div>
