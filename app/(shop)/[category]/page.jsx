@@ -12,7 +12,7 @@ import {
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 
-export const revalidate = 3600; // 1 hour cache
+export const revalidate = 0; // Şimdilik önbelleği kapatalım ki yeni ürünleri hemen görün
 
 // Kategori mapping'i
 const categoryMappings = {
@@ -20,46 +20,6 @@ const categoryMappings = {
   'yemek-odasi': { title: 'Yemek Odası Takımları', description: 'Yemek odası için en yeni ve şık mobilyalar', categories: yemekOdasiCategories, mainCategory: 'yemek-odasi' },
   'yatak-odasi': { title: 'Yatak Odası Takımları', description: 'Yatak odası için en yeni ve şık mobilyalar', categories: yatakOdasiCategories, mainCategory: 'yatak-odasi' }
 };
-
-// Data Fetcher
-async function getCategoryProducts(categorySlug, subCategorySlug = null) {
-  try {
-    const where = { isActive: true };
-    
-    if (subCategorySlug) {
-      const subCatName = subCategorySlug.replace(/-/g, ' ');
-      where.category = { 
-        categoryName: { equals: subCatName, mode: 'insensitive' } 
-      };
-    } else if (categorySlug) {
-      const catName = categorySlug.replace(/-/g, ' ');
-      where.category = { 
-        parent: { categoryName: { equals: catName, mode: 'insensitive' } } 
-      };
-    }
-
-    const products = await prisma.furniture.findMany({
-      where: where,
-      include: {
-        images: { where: { isActive: true }, include: { image: true }, orderBy: { sortOrder: 'asc' } },
-        category: true
-      },
-      orderBy: { createdAt: 'desc' }
-    });
-
-    return products.map(p => ({
-      ...p,
-      id: p.furnitureId,
-      title: p.furnitureName,
-      imgSrc: p.images.find(img => img.sortOrder === 1)?.image?.filePath || p.images[0]?.image?.filePath,
-      imgHoverSrc: p.images.find(img => img.sortOrder === 2)?.image?.filePath || p.images[0]?.image?.filePath,
-      type: 'furniture'
-    }));
-  } catch (error) {
-    console.error("Error fetching category products:", error);
-    return [];
-  }
-}
 
 // Alt kategoriler için mapping
 const getSubCategoryMapping = () => {
@@ -75,6 +35,74 @@ const getSubCategoryMapping = () => {
   });
   return subCategories;
 };
+
+// Çok Daha Kesin Veri Çekici
+async function getCategoryProducts(categorySlug, subCategorySlug = null) {
+  try {
+    let where = { isActive: true };
+    
+    if (subCategorySlug) {
+      // Alt kategoriye göre filtrele
+      // Slug'dan tam kategori ismini bulmaya çalışalım
+      const subCat = getSubCategoryMapping()[subCategorySlug];
+      if (subCat) {
+        where.category = { categoryName: subCat.title };
+      }
+    } else if (categorySlug) {
+      // Ana kategoriye göre filtrele (Oturma Odası altındaki HER ŞEY)
+      // Prisma'nın 'some' veya 'path' yapısı yerine daha kesin bir yol:
+      const parentCatName = categoryMappings[categorySlug]?.title.split(' ')[0]; // "Oturma", "Yemek" vb.
+      where.category = { 
+        OR: [
+          { categoryName: { contains: parentCatName, mode: 'insensitive' } },
+          { parent: { categoryName: { contains: parentCatName, mode: 'insensitive' } } }
+        ]
+      };
+    }
+
+    const products = await prisma.furniture.findMany({
+      where,
+      include: {
+        images: { where: { isActive: true }, include: { image: true }, orderBy: { sortOrder: 'asc' } },
+        category: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    // Eğer mobilya bulunamazsa, bu kategorideki TAKIMLARI da arayalım
+    const sets = await prisma.furnitureSet.findMany({
+      where,
+      include: {
+        furnitureSetImages: { where: { isActive: true }, include: { image: true }, orderBy: { sortOrder: 'asc' } },
+        category: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const formattedFurnitures = products.map(p => ({
+      ...p,
+      id: p.furnitureId,
+      title: p.furnitureName,
+      imgSrc: p.images.find(img => img.sortOrder === 1)?.image?.filePath || p.images[0]?.image?.filePath,
+      imgHoverSrc: p.images.find(img => img.sortOrder === 2)?.image?.filePath || p.images[0]?.image?.filePath,
+      type: 'furniture'
+    }));
+
+    const formattedSets = sets.map(s => ({
+      ...s,
+      id: s.setId,
+      title: s.setName,
+      imgSrc: s.furnitureSetImages.find(img => img.sortOrder === 1)?.image?.filePath || s.furnitureSetImages[0]?.image?.filePath,
+      imgHoverSrc: s.furnitureSetImages.find(img => img.sortOrder === 2)?.image?.filePath || s.furnitureSetImages[0]?.image?.filePath,
+      type: 'furniture_set'
+    }));
+
+    return [...formattedSets, ...formattedFurnitures];
+  } catch (error) {
+    console.error("Error fetching category products:", error);
+    return [];
+  }
+}
 
 export default async function CategoryPage({ params, searchParams }) {
   const { category } = await params;

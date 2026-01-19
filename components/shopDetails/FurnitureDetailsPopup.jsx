@@ -7,8 +7,24 @@ import Quantity from "./Quantity";
 import SliderWithGalleryPopup from "./sliders/SliderWithGalleryPopup";
 import { useContextElement } from "@/context/Context";
 import { getColorHex } from "@/utils/colorUtils";
+import Link from "next/link";
 
 export default function FurnitureDetailsPopup({ product }) {
+  // Slug helper
+  const slugify = (text) => {
+    if (!text) return "";
+    return text.toString().toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[ığüşöç]/g, (m) => ({'ı':'i','ğ':'g','ü':'u','ş':'s','ö':'o','ç':'c'}[m]))
+      .replace(/[^\w\-]+/g, '')
+      .replace(/\-\-+/g, '-')
+      .replace(/^-+/, '')
+      .replace(/-+$/, '');
+  };
+
+  const categoryName = product.category?.categoryName || product.categoryName || "Mobilya";
+  const categorySlug = product.categorySlug || slugify(categoryName);
+
   const [currentColor, setCurrentColor] = useState(product.colors?.[0] || {});
   const [currentSize, setCurrentSize] = useState(product.sizes?.[0]?.value || product.sizes?.[0] || "");
   const [quantity, setQuantity] = useState(1);
@@ -42,6 +58,21 @@ export default function FurnitureDetailsPopup({ product }) {
     >
       <div className="tf-main-product section-image-zoom">
         <div className="container">
+          <div className="row mb-4">
+            <div className="col-12">
+              <nav className="tf-breadcrumb">
+                <div className="tf-breadcrumb-list" style={{ fontSize: '13px', color: '#777' }}>
+                  <Link href="/" className="text-muted">Home</Link>
+                  <span className="mx-2">/</span>
+                  <Link href={`/${categorySlug}`} className="text-muted" style={{ textTransform: 'capitalize' }}>
+                    {categoryName}
+                  </Link>
+                  <span className="mx-2">/</span>
+                  <span className="text-dark fw-6">{product.title}</span>
+                </div>
+              </nav>
+            </div>
+          </div>
           <div className="row">
             <div className="col-md-8">
               <div className="tf-product-media-wrap">
