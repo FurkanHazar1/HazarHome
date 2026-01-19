@@ -2,7 +2,7 @@ import Footer1 from "@/components/footers/Footer1";
 import Header2 from "@/components/headers/Header4";
 import Products from "@/components/shopDetails/Products";
 import FurnitureSetDetailsPopup from "@/components/shopDetails/FurnitureSetDetailsPopup";
-import FurnitureSetDetailsTab from "@/components/shopDetails/FurnitureSetDetailsTab";
+import FurnitureDetailsTab from "@/components/shopDetails/FurnitureDetailsTab";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import React from "react";
@@ -63,11 +63,14 @@ export default async function page({ params }) {
     notFound();
   }
 
+  // Ensure type is set for tabs
+  const productWithStatus = { ...product, type: 'furniture_set' };
+
   return (
     <>
       <Header2 />
-      <FurnitureSetDetailsPopup product={product} />
-      <FurnitureSetDetailsTab product={product} />
+      <FurnitureSetDetailsPopup product={productWithStatus} />
+      <FurnitureDetailsTab product={productWithStatus} />
       <Products />
       <Footer1 />
     </>

@@ -12,7 +12,7 @@ import {
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 
-export const revalidate = 0; // Şimdilik önbelleği kapatalım ki yeni ürünleri hemen görün
+export const revalidate = 3600; // 1 hour cache
 
 // Kategori mapping'i
 const categoryMappings = {
@@ -36,30 +36,36 @@ const getSubCategoryMapping = () => {
   return subCategories;
 };
 
-// Çok Daha Kesin Veri Çekici
+// Data Fetcher
 async function getCategoryProducts(categorySlug, subCategorySlug = null) {
   try {
-    let where = { isActive: true };
+    const where = { isActive: true };
     
     if (subCategorySlug) {
-      // Alt kategoriye göre filtrele
-      // Slug'dan tam kategori ismini bulmaya çalışalım
-      const subCat = getSubCategoryMapping()[subCategorySlug];
+      // Find category by slug (handle potential undefined)
+      const subCatMap = getSubCategoryMapping();
+      const subCat = subCatMap[subCategorySlug];
+      
       if (subCat) {
-        where.category = { categoryName: subCat.title };
+         // Try to match by exact category name first
+         where.category = { categoryName: { equals: subCat.title, mode: 'insensitive' } };
+      } else {
+         // Fallback to simple slug replacement
+         const subCatName = subCategorySlug.replace(/-/g, ' ');
+         where.category = { categoryName: { equals: subCatName, mode: 'insensitive' } };
       }
     } else if (categorySlug) {
-      // Ana kategoriye göre filtrele (Oturma Odası altındaki HER ŞEY)
-      // Prisma'nın 'some' veya 'path' yapısı yerine daha kesin bir yol:
-      const parentCatName = categoryMappings[categorySlug]?.title.split(' ')[0]; // "Oturma", "Yemek" vb.
-      where.category = { 
-        OR: [
-          { categoryName: { contains: parentCatName, mode: 'insensitive' } },
-          { parent: { categoryName: { contains: parentCatName, mode: 'insensitive' } } }
-        ]
-      };
+      // Parent category logic
+      if (categorySlug === 'oturma-odasi') {
+         where.category = { parent: { categoryName: { contains: 'Oturma', mode: 'insensitive' } } };
+      } else if (categorySlug === 'yemek-odasi') {
+         where.category = { parent: { categoryName: { contains: 'Yemek', mode: 'insensitive' } } };
+      } else if (categorySlug === 'yatak-odasi') {
+         where.category = { parent: { categoryName: { contains: 'Yatak', mode: 'insensitive' } } };
+      }
     }
 
+    // 1. Fetch Furnitures
     const products = await prisma.furniture.findMany({
       where,
       include: {
@@ -69,7 +75,7 @@ async function getCategoryProducts(categorySlug, subCategorySlug = null) {
       orderBy: { createdAt: 'desc' }
     });
 
-    // Eğer mobilya bulunamazsa, bu kategorideki TAKIMLARI da arayalım
+    // 2. Fetch Furniture Sets (Takımlar) - Same criteria
     const sets = await prisma.furnitureSet.findMany({
       where,
       include: {
@@ -79,25 +85,31 @@ async function getCategoryProducts(categorySlug, subCategorySlug = null) {
       orderBy: { createdAt: 'desc' }
     });
 
+    // Format Furnitures
     const formattedFurnitures = products.map(p => ({
       ...p,
       id: p.furnitureId,
       title: p.furnitureName,
       imgSrc: p.images.find(img => img.sortOrder === 1)?.image?.filePath || p.images[0]?.image?.filePath,
       imgHoverSrc: p.images.find(img => img.sortOrder === 2)?.image?.filePath || p.images[0]?.image?.filePath,
+      price: Number(p.price),
       type: 'furniture'
     }));
 
+    // Format Sets
     const formattedSets = sets.map(s => ({
       ...s,
       id: s.setId,
       title: s.setName,
       imgSrc: s.furnitureSetImages.find(img => img.sortOrder === 1)?.image?.filePath || s.furnitureSetImages[0]?.image?.filePath,
       imgHoverSrc: s.furnitureSetImages.find(img => img.sortOrder === 2)?.image?.filePath || s.furnitureSetImages[0]?.image?.filePath,
+      price: Number(s.price),
       type: 'furniture_set'
     }));
 
-    return [...formattedSets, ...formattedFurnitures];
+    // Combine and Sort by Date
+    return [...formattedSets, ...formattedFurnitures].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
   } catch (error) {
     console.error("Error fetching category products:", error);
     return [];
