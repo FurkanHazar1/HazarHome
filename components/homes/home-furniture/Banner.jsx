@@ -1,11 +1,13 @@
 import React from "react";
 import Link from "next/link";
+import { toPublicUrl } from "@/lib/image-helpers";
+
 export default function Banner() {
   return (
     <section
       className="banner-hero-collection-wrap banner-parallax"
       style={{
-        backgroundImage: "url('/images/menu/banner/image.png')",
+        backgroundImage: `url(${toPublicUrl("images/banner.png")})`,
       }}
     >
       <div className="box-content">
