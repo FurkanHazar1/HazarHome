@@ -1,5 +1,6 @@
 import { Providers } from "@/components/providers";
 import "./globals.css";
+import Script from "next/script";
 
 export const metadata = {
   title: {
@@ -21,6 +22,9 @@ export const metadata = {
     icon: "/favicon.ico",
     shortcut: "/favicon.ico",
     apple: "/apple-touch-icon.png",
+  },
+  verification: {
+    google: "googleab02517afc134290",
   },
 };
 
