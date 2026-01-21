@@ -26,7 +26,6 @@ export default function LookbookComponent({ product = lookbookProducts[0], class
           <div className="product-title">
             <Link href={product.href}>{product.title}</Link>
           </div>
-          <div className="price">{typeof product.price === 'number' ? product.price.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : product.price} TL</div>
         </div>
         <Link href={product.href} className="">
            <i className="icon-arrow1-top-left" />

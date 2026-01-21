@@ -29,28 +29,25 @@ export default function Announcment() {
       <div className="wrap-announcement-bar">
         <div className="box-sw-announcement-bar speed-1">
           <div className="announcement-bar-item">
-            <p>DÜNYANIN HER YERİNE ÜCRETSİZ KARGO</p>
+            <p>ESTETİK VE KONFORUN ADRESİ: HAZAR HOME</p>
           </div>
           <div className="announcement-bar-item">
-            <p>YENİ SEZON, YENİ STİLLER: KAÇIRMAYACAĞINIZ  İNDİRİMİ</p>
+            <p>YENİ SEZON MOBİLYA KOLEKSİYONLARINI KEŞFEDİN</p>
           </div>
           <div className="announcement-bar-item">
-            <p>DÜNYANIN HER YERİNE ÜCRETSİZ KARGO</p>
+            <p>MODERN TASARIMLAR, KALİTELİ İŞÇİLİK</p>
           </div>
           <div className="announcement-bar-item">
-            <p>YENİ SEZON, YENİ STİLLER: KAÇIRMAYACAĞINIZ  İNDİRİMİ</p>
+            <p>EVİNİZE ŞIKLIK KATAN MODERN DOKUNUŞLAR</p>
           </div>
          
           <div className="announcement-bar-item">
-            <p>DÜNYANIN HER YERİNE ÜCRETSİZ KARGO</p>
+            <p>ŞIK VE KONFORLU YAŞAM ALANLARI İÇİN BURADAYIZ</p>
           </div>
          
-          
           <div className="announcement-bar-item">
-            <p>YENİ SEZON, YENİ STİLLER: KAÇIRMAYACAĞINIZ  İNDİRİMİ</p>
+            <p>YENİ SEZONDA EN ÖZEL MOBİLYA TASARIMLARI</p>
           </div>
-         
-          
         </div>
       </div>
       <span className="icon-close close-announcement-bar" />
