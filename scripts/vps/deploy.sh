@@ -11,7 +11,7 @@ git pull
 
 # 2. Bağımlılıkları yükle
 echo "Paketler yükleniyor..."
-npm ci
+npm install --legacy-peer-deps
 
 # 3. Prisma Client'ı oluştur
 echo "Veritabanı şeması güncelleniyor..."

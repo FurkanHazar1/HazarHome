@@ -31,7 +31,7 @@ echo "y" | sudo ufw enable
 # 5. Proje Bağımlılıkları
 echo -e "${YELLOW}[5/6] Proje bağımlılıkları yükleniyor...${NC}"
 # Scriptin çalıştırıldığı yer proje kök dizini varsayılır
-npm ci
+npm install --legacy-peer-deps
 npx prisma generate
 npm run build
 
