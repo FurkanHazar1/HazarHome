@@ -148,9 +148,11 @@ export async function POST(request: Request) {
     }
 
     // Transaction to create feature and pins
-    const feature = await prisma.$transaction(async (tx) => {
+    let createdFeature: any = null
+
+    await prisma.$transaction(async (tx) => {
       // 1. Create Feature
-      const newFeature = await tx.feature.create({
+      createdFeature = await tx.feature.create({
         data: {
           title,
           description,
@@ -164,7 +166,7 @@ export async function POST(request: Request) {
       if (pins && pins.length > 0) {
         await tx.featurePin.createMany({
           data: pins.map((pin: any) => ({
-            featureId: newFeature.featureId,
+            featureId: createdFeature.featureId,
             furnitureId: pin.furnitureId || null,
             furnitureSetId: pin.furnitureSetId || null,
             xPosition: parseFloat(String(pin.xPosition)),
@@ -172,8 +174,6 @@ export async function POST(request: Request) {
           }))
         })
       }
-
-      return feature
     })
 
     try {
@@ -183,7 +183,7 @@ export async function POST(request: Request) {
       console.error('Revalidation error:', e);
     }
 
-    return NextResponse.json(feature)
+    return NextResponse.json(createdFeature)
   } catch (error) {
     console.error('Error creating feature:', error)
     return NextResponse.json(
