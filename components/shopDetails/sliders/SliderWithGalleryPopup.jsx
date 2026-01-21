@@ -124,6 +124,7 @@ export default function SliderWithGalleryPopup({
                 src={slide.src}
                 fill={true}
                 loading="lazy"
+                unoptimized={true}
                 style={{
                   objectFit: 'contain',
                   objectPosition: 'center',
