@@ -183,7 +183,7 @@ export async function POST(request: Request) {
       console.error('Revalidation error:', e);
     }
 
-    return NextResponse.json(newFeature)
+    return NextResponse.json(feature)
   } catch (error) {
     console.error('Error creating feature:', error)
     return NextResponse.json(
