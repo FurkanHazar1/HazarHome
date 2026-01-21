@@ -84,6 +84,7 @@ export default function ShopGram() {
                       width={500}
                       height={500}
                       style={shopgramImgStyle}
+                      unoptimized={true}
                     />
                   </div>
                   {/* Hover'da ürün adını göstermek isterseniz buraya eklenebilir */}

@@ -110,6 +110,7 @@ export default function Hero({ slides: initialSlides }) {
                     height: '100%',
                     objectFit: 'cover'
                   }}
+                  unoptimized={true}
                 />
               </div>
             </div>

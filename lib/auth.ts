@@ -75,11 +75,11 @@ export const authOptions: NextAuthOptions = {
 
   session: {
     strategy: "jwt",
-    maxAge: 24 * 60 * 60, // 24 saat
+    maxAge: 60 * 60, // 1 saat (Güvenlik için düşürüldü)
   },
 
   jwt: {
-    maxAge: 24 * 60 * 60, // 24 saat
+    maxAge: 60 * 60, // 1 saat
   },
 
   callbacks: {

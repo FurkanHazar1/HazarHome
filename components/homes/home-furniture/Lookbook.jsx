@@ -76,6 +76,7 @@ export default function Lookbook({ features: initialFeatures }) {
                     height={feature.image?.height || 1059}
                     priority={index === 0}
                     style={{ width: 'auto', height: 'var(--lookbook-img-height, 70vh)', display: 'block', maxWidth: 'none' }}
+                    unoptimized={true}
                   />
                   
                   {/* Pins */}

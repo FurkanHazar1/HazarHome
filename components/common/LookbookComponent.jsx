@@ -19,6 +19,7 @@ export default function LookbookComponent({ product = lookbookProducts[0], class
             sizes="(max-width: 768px) 250px, 250px"
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             priority={true}
+            unoptimized={true}
           />
         </Link>
         <div className="content-wrap">
