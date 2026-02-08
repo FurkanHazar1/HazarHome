@@ -165,7 +165,6 @@ export default function FurnitureSetAdd() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (selectedItems.length === 0) return alert('Lütfen takıma en az bir mobilya ekleyin')
     
     setLoading(true)
     

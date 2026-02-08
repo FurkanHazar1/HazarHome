@@ -58,12 +58,20 @@ async function getSet(id) {
       id: product.setId,
       title: product.setName,
       imgSrc: product.furnitureSetImages?.[0]?.image?.filePath,
+      images: product.furnitureSetImages.map(img => ({
+        image: {
+          filePath: img.image?.filePath,
+          altText: img.image?.altText || product.setName,
+          width: img.image?.width,
+          height: img.image?.height
+        }
+      })),
       categorySlug: product.category?.categoryName?.toLowerCase() || 'furniture-set',
       setItems: product.furnitureSetItems.map(item => ({
         id: item.furnitureId,
         name: item.furniture?.furnitureName,
         quantity: item.quantity,
-        image: item.furniture?.images?.[0]?.image?.filePath
+        image: toPublicUrl(item.furniture?.images?.[0]?.image?.filePath)
       }))
     };
   } catch (error) {

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 const tabs = [
   { title: "Açıklama", active: true },
@@ -313,14 +314,23 @@ export default function FurnitureDetailsTab({ product }) {
                             {product.setItems.map((item, index) => (
                               <div key={item.furnitureId || item.name || index} className="set-item-card border rounded p-4 mb-4">
                                 <div className="row">
+import Image from "next/image"; // Add import at the top if missing, but it is better to be safe. Since I cannot see imports easily in one go, I will assume Image is not imported or import it. Wait, checking file content again. Image is NOT imported.
+
+// ... rest of imports
+
+// Inside the component:
                                   <div className="col-md-3">
                                     {item.image && (
-                                      <img 
-                                        src={item.image} 
-                                        alt={item.name}
-                                        className="img-fluid rounded"
-                                        style={{maxHeight: '150px', objectFit: 'cover'}}
-                                      />
+                                      <div style={{ position: 'relative', width: '100%', height: '150px' }}>
+                                        <Image 
+                                          src={item.image} 
+                                          alt={item.name}
+                                          fill
+                                          className="rounded"
+                                          style={{ objectFit: 'cover' }}
+                                          unoptimized={true}
+                                        />
+                                      </div>
                                     )}
                                   </div>
                                   <div className="col-md-9">
